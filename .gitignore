@@ -1,0 +1,50 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+
+# overrides:
+commit
+run
+*.sublime-*
+build/sysroot
+.modifydates
+build/test
+*.ll
+*.bc
+
+*.ir
+*.o.m
+shakefile.hi
+shakefile
+.shake.database
+checker-276
+countloc
+imgui.ini
+build/bin
