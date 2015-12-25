@@ -43,8 +43,8 @@ int main(int argc, char** argv)
 	ImFont* menlo = Util::Font::get("menlo", 16);
 
 
-	bool show_test_window = true;
-	bool show_another_window = false;
+	// bool show_test_window = true;
+	// bool show_another_window = false;
 	ImVec4 clear_color = ImColor(114, 144, 154);
 
 	// Main loop
@@ -62,37 +62,73 @@ int main(int argc, char** argv)
 		ImGui_ImplSdl_NewFrame(window);
 		ImGui::PushFont(menlo);
 
-		// 1. Show a simple window
-		// Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
-		{
-			static float f = 0.0f;
-			ImGui::Text("Hello, world!");
-			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-			ImGui::ColorEdit3("clear color", (float*) &clear_color);
-			if(ImGui::Button("Test Window")) show_test_window ^= 1;
-			if(ImGui::Button("Another Window")) show_another_window ^= 1;
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		}
 
-		// 2. Show another simple window, this time using an explicit Begin/End pair
-		if(show_another_window)
+		// ImGui::SetNextWindowSize({ 500, 300 });
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(500, 300));
+		ImGui::Begin("Terminal", 0, { 500, 600 });
 		{
-			ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiSetCond_FirstUseEver);
-			ImGui::Begin("Another Window", &show_another_window);
-			ImGui::Text("Hello");
-			ImGui::End();
-		}
+			static char text[1024*16] =
+				"/*\n"
+				" The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
+				" the hexadecimal encoding of one offending instruction,\n"
+				" more formally, the invalid operand with locked CMPXCHG8B\n"
+				" instruction bug, is a design flaw in the majority of\n"
+				" Intel Pentium, Pentium MMX, and Pentium OverDrive\n"
+				" processors (all in the P5 microarchitecture).\n"
+				"*/\n\n"
+				"label:\n"
+				"\tlock cmpxchg8b eax\n";
 
-		// 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
-		if(show_test_window)
-		{
-			ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-			ImGui::ShowTestWindow(&show_test_window);
+
+			// ImGui::GetWindowHeight()
+			ImGui::InputTextMultiline("##source", text, sizeof(text), ImVec2(-1, -1), ImGuiInputTextFlags_AllowTabInput);
 		}
+		ImGui::End();
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
+
+
+
+
+		ImGui::ShowStyleEditor();
+
+		// // 1. Show a simple window
+		// // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
+		// {
+		// 	static float f = 0.0f;
+		// 	ImGui::Text("Hello, world!");
+		// 	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+		// 	ImGui::ColorEdit3("clear color", (float*) &clear_color);
+		// 	if(ImGui::Button("Test Window")) show_test_window ^= 1;
+		// 	if(ImGui::Button("Another Window")) show_another_window ^= 1;
+		// 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		// }
+
+		// // 2. Show another simple window, this time using an explicit Begin/End pair
+		// if(show_another_window)
+		// {
+		// 	ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiSetCond_FirstUseEver);
+		// 	ImGui::Begin("Another Window", &show_another_window);
+		// 	ImGui::Text("Hello");
+		// 	ImGui::End();
+		// }
+
+		// // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
+		// if(show_test_window)
+		// {
+		// 	ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
+		// 	ImGui::ShowTestWindow(&show_test_window);
+		// }
+
+
 
 		// Rendering
 		ImGui::PopFont();
 
+
+
+		// call back to opengl
 		glViewport(0, 0, (int) ImGui::GetIO().DisplaySize.x, (int) ImGui::GetIO().DisplaySize.y);
 		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 		glClear(GL_COLOR_BUFFER_BIT);
