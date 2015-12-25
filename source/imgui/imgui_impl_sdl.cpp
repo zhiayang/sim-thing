@@ -44,7 +44,7 @@ void ImGui_ImplSdl_RenderDrawLists(ImDrawData* draw_data)
 	draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
 	// Setup viewport, orthographic projection matrix
-	glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
+	glViewport(0, 0, (GLsizei) fb_width, (GLsizei) fb_height);
 
 	// Setup orthographic projection matrix
 	glMatrixMode(GL_PROJECTION);
@@ -216,6 +216,13 @@ bool    ImGui_ImplSdl_Init(SDL_Window *window)
 	SDL_GetWindowWMInfo(window, &wmInfo);
 	io.ImeWindowHandle = wmInfo.info.win.window;
 #endif
+
+	int fb_w = 0;
+	int fb_h = 0;
+
+	SDL_GL_GetDrawableSize(window, &fb_w, &fb_h);
+	ImGui::GetIO().DisplayFramebufferScale.x = fb_w / ImGui::GetIO().DisplaySize.x;
+	ImGui::GetIO().DisplayFramebufferScale.y = fb_h / ImGui::GetIO().DisplaySize.y;
 
 	return true;
 }

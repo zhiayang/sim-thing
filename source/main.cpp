@@ -18,21 +18,29 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	ImGuiIO& io = ImGui::GetIO();
+	io.DisplaySize = { 1280, 720 };
+
 	// Setup window
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+
 	SDL_DisplayMode current;
 	SDL_GetCurrentDisplayMode(0, &current);
-	SDL_Window* window = SDL_CreateWindow("ImGui SDL2+OpenGL example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
+	SDL_Window* window = SDL_CreateWindow("ImGui SDL2+OpenGL example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		io.DisplaySize.x, io.DisplaySize.y,
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+
 	SDL_GLContext glcontext = SDL_GL_CreateContext(window);
 
 	// Setup ImGui binding
 	ImGui_ImplSdl_Init(window);
 
 
+	ImFont* menlo = Util::Font::get("menlo", 16);
 
 
 	bool show_test_window = true;
@@ -52,6 +60,7 @@ int main(int argc, char** argv)
 		}
 
 		ImGui_ImplSdl_NewFrame(window);
+		ImGui::PushFont(menlo);
 
 		// 1. Show a simple window
 		// Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -82,6 +91,8 @@ int main(int argc, char** argv)
 		}
 
 		// Rendering
+		ImGui::PopFont();
+
 		glViewport(0, 0, (int) ImGui::GetIO().DisplaySize.x, (int) ImGui::GetIO().DisplaySize.y);
 		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 		glClear(GL_COLOR_BUFFER_BIT);
