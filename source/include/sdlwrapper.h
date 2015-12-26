@@ -19,7 +19,6 @@
 namespace SDL
 {
 	struct Texture;
-	struct Font;
 
 	struct Window
 	{
@@ -68,7 +67,7 @@ namespace SDL
 		void Render(Texture* text, Math::Rectangle src, Math::Rectangle dest);
 
 		// text
-		void RenderText(std::string txt, Font* font, Math::Vector2 pt);
+		void RenderText(std::string txt, ImFont* font, Math::Vector2 pt);
 
 		void SetColour(Util::Colour c);
 		Util::Colour GetColour() { return this->drawColour; }
@@ -93,7 +92,6 @@ namespace SDL
 	{
 		Surface(std::string path);
 		Surface(AssetLoader::Asset* ass);
-		Surface(Font* font, std::string txt, Util::Colour c);
 		~Surface();
 
 		SDL_Surface* sdlSurf;

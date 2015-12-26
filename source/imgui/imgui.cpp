@@ -529,6 +529,8 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
 
+#include "backend_abstraction.h"
+
 #include <ctype.h>      // toupper, isprint
 #include <math.h>       // sqrtf, fabsf, fmodf, powf, cosf, sinf, floorf, ceilf
 #include <stdlib.h>     // NULL, malloc, free, qsort, atoi
@@ -1994,6 +1996,8 @@ void ImGui::NewFrame()
 	g.IO.WantCaptureKeyboard = (g.ActiveId != 0) || (g.CaptureKeyboardNextFrame);
 	g.IO.WantTextInput = (g.ActiveId != 0 && g.InputTextState.Id == g.ActiveId);
 	g.MouseCursor = ImGuiMouseCursor_Arrow;
+	ImGuiBackend::SetCursor(ImGuiBackend::CursorType::Arrow);
+
 	g.CaptureMouseNextFrame = g.CaptureKeyboardNextFrame = false;
 	g.OsImePosRequest = ImVec2(1.0f, 1.0f); // OS Input Method Editor showing on top-left of our window by default
 
@@ -7277,6 +7281,8 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
 	{
 		SetHoveredID(id);
 		g.MouseCursor = ImGuiMouseCursor_TextInput;
+
+		ImGuiBackend::SetCursor(ImGuiBackend::CursorType::IBeam);
 	}
 	const bool user_clicked = hovered && io.MouseClicked[0];
 	const bool user_scrolled = is_multiline && g.ActiveId == 0 && edit_state.Id == id && g.ActiveIdPreviousFrame == draw_window->GetID("#SCROLLY");

@@ -233,6 +233,8 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
 	{
 		SetHoveredID(id);
 		g.MouseCursor = ImGuiMouseCursor_TextInput;
+
+		ImGuiBackend::SetCursor(ImGuiBackend::CursorType::IBeam);
 	}
 	const bool user_clicked = hovered && io.MouseClicked[0];
 	const bool user_scrolled = is_multiline && g.ActiveId == 0 && edit_state.Id == id && g.ActiveIdPreviousFrame == draw_window->GetID("#SCROLLY");

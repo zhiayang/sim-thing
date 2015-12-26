@@ -4,6 +4,9 @@
 
 #include "glwrapper.h"
 #include "sdlwrapper.h"
+#include "imguiwrapper.h"
+
+#include "imgui.h"
 
 using namespace Math;
 
@@ -186,13 +189,11 @@ namespace SDL
 		glEnd();
 	}
 
-	void Renderer::RenderText(std::string txt, SDL::Font* font, Math::Vector2 pt)
+	void Renderer::RenderText(std::string txt, ImFont* font, Math::Vector2 pt)
 	{
-		SDL::Surface* surface = new SDL::Surface(font, txt, this->drawColour);
-		SDL::Texture* texture = new SDL::Texture(surface, this);
-
-		this->Render(texture, pt);
-		delete texture;				// this deletes surface as well.
+		// auto dl = ImGui::GetWindowDrawList();
+		// font->RenderText(font->FontSize, { (float) pt.x, (float) pt.y }, Util::Colour::white().hex(), dl->_ClipRectStack.back(),
+		// 	txt.c_str(), txt.c_str() + txt.length(), dl);
 	}
 
 	void Renderer::SetColour(Util::Colour c)

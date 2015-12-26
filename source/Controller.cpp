@@ -14,8 +14,8 @@
 // static const double targetFramerate		= 60.0;
 // static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
-void Controller::UpdateLoop()
-{
+// void Controller::UpdateLoop()
+// {
 	// using namespace std::chrono;
 	// // SDL::Texture* text = new SDL::Texture("aqua.png", this->renderer);
 	// // delete text;
@@ -38,10 +38,10 @@ void Controller::UpdateLoop()
 	// 		accumulator -= fixedDeltaTimeNs;
 	// 	}
 	// }
-}
+// }
 
-void Controller::RenderLoop()
-{
+// void Controller::RenderLoop()
+// {
 	// double frameTime = 1;
 
 	// std::vector<double> prevFps;
@@ -112,8 +112,8 @@ void Controller::RenderLoop()
 	// 			// todo: we missed our framerate.
 	// 		}
 	// 	}
-	// }
-}
+// 	// }
+// }
 
 
 
@@ -121,8 +121,8 @@ void Controller::RenderLoop()
 
 
 
-void Controller::start()
-{
+// void Controller::start()
+// {
 	// // init the game state first
 	// this->sceneController = new Gravity::SceneController(*this);
 	// this->sceneController->pushScene(new Gravity::CodeWindowScene(0, 0, this->window->width / 2, this->window->height));
@@ -149,7 +149,7 @@ void Controller::start()
 	// }
 
 	// SDL_Quit();
-}
+// }
 
 
 

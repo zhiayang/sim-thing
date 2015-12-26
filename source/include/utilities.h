@@ -19,6 +19,30 @@ namespace Util
 		void cycle();
 	};
 
+	namespace Time
+	{
+		inline uint64_t ns()
+		{
+			using namespace std;
+			return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
+		}
+
+		inline double µs()
+		{
+			return ns() / 1000.0;
+		}
+
+		inline double ms()
+		{
+			return µs() / 1000.0;
+		}
+
+		inline double sec()
+		{
+			return ms() / 1000.0;
+		}
+	};
+
 	struct Colour
 	{
 		Colour(const Colour& other)
@@ -90,6 +114,10 @@ namespace Util
 				std::max(this->b + other.b, 0xFF), std::max(this->a + other.a, 0xFF));
 		}
 
+		uint32_t hex()
+		{
+			return (r << 24) | (g << 16) | (b << 8) | a;
+		}
 
 
 		static Colour black() { return Colour(0, 0, 0); }
