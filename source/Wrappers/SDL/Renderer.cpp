@@ -14,17 +14,25 @@ namespace SDL
 {
 	void Renderer::Clear()
 	{
-		glClear(GL_COLOR_BUFFER_BIT);
+		RenderCommand rc;
+		rc.type = RenderCommand::CommandType::Clear;
+		rc.colour = this->clearColour;
+
+		this->renderList.push_back(rc);
 	}
 
 	void Renderer::RenderPoint(Math::Vector2 pt)
 	{
-		glBegin(GL_POINTS);
-		this->updateGlColour();
+		RenderCommand rc;
+		rc.mode = GL_POINTS;
+		rc.colour = this->drawColour;
+		rc.type = RenderCommand::CommandType::RenderVerts;
 
-		glVertex2d(pt.x, pt.y);
+		// need to convert to opengl coords
+		// a rect where 0,0 is the centre, -1 and 1 are the sides.
 
-		glEnd();
+		rc.vertices.push_back({ pt.x - 1.0, -1.0 * (pt.y - 1.0) });
+		this->renderList.push_back(rc);
 	}
 
 	void Renderer::RenderCircle(Math::Circle circ, bool fill)
@@ -84,57 +92,45 @@ namespace SDL
 
 	void Renderer::RenderRect(Math::Rectangle rect, bool fill)
 	{
-		if(fill)	glBegin(GL_POLYGON);
-		else		glBegin(GL_LINE_LOOP);
+		RenderCommand rc;
+		rc.mode = (fill ? GL_POLYGON : GL_LINE_LOOP);
+		rc.colour = this->drawColour;
+		rc.type = RenderCommand::CommandType::RenderVerts;
 
-		glColor4ub(this->drawColour.r, this->drawColour.g, this->drawColour.b, this->drawColour.a);
 
-		glVertex2d(rect.origin.x, rect.origin.y);
-		glVertex2d(rect.origin.x + rect.width, rect.origin.y);
-		glVertex2d(rect.origin.x + rect.width, rect.origin.y + rect.height);
-		glVertex2d(rect.origin.x, rect.origin.y + rect.height);
 
-		glEnd();
+		rc.vertices.push_back({ rect.origin.x - 1.0, -1.0 * (rect.origin.y - 1.0) });
+		rc.vertices.push_back({ rect.origin.x - 1.0 + rect.width * 2.0, -1.0 * (rect.origin.y - 1.0) });
+		rc.vertices.push_back({ rect.origin.x - 1.0 + rect.width * 2.0, -1.0 * (rect.origin.y - 1.0 + rect.height * 2.0) });
+		rc.vertices.push_back({ rect.origin.x - 1.0, -1.0 * (rect.origin.y - 1.0 + rect.height * 2.0) });
+
+
+		// if(fill)	glBegin(GL_POLYGON);
+		// else		glBegin(GL_LINE_LOOP);
+
+		// glColor4ub(this->drawColour.r, this->drawColour.g, this->drawColour.b, this->drawColour.a);
+
+		// glVertex2d(rect.origin.x, rect.origin.y);
+		// glVertex2d(rect.origin.x + rect.width, rect.origin.y);
+		// glVertex2d(rect.origin.x + rect.width, rect.origin.y + rect.height);
+		// glVertex2d(rect.origin.x, rect.origin.y + rect.height);
+
+		// glEnd();
+
+		this->renderList.push_back(rc);
 	}
 
 	void Renderer::RenderLine(Math::Vector2 start, Math::Vector2 end)
 	{
-		glBegin(GL_LINES);
-		this->updateGlColour();
+		RenderCommand rc;
+		rc.mode = GL_LINES;
+		rc.colour = this->drawColour;
+		rc.type = RenderCommand::CommandType::RenderVerts;
 
-		glVertex2d(start.x, start.y);
-		glVertex2d(end.x, end.y);
+		rc.vertices.push_back({ start.x - 1.0, -1.0 * (start.y - 1.0) });
+		rc.vertices.push_back({ end.x - 1.0, -1.0 * (end.y - 1.0) });
 
-		glEnd();
-	}
-
-	void Renderer::RenderEqTriangle(Math::Vector2 centre, double side)
-	{
-		glBegin(GL_TRIANGLES);
-		this->updateGlColour();
-
-		// left edge (x1, y1)
-		// top edge (x2, y2)
-		// right edge (x3, y3)
-
-		// height = sqrt((hyp^2) - ((side / 2)^2))
-		double halfSide = side / 2;
-		double height = sqrt((side * side) - (halfSide * halfSide));
-
-
-		// x1 = origin.x - (side / 2), y1 = origin.y + (1/3 * height)
-		// x3 = origin.x + (side / 2), y3 = origin.y + (1/3 * height)
-		// x2 = origin.x, y2 = origin.y - (2/3 * height)
-
-		Math::Vector2 left(centre.x - halfSide, centre.y + ((1.0 / 3.0) * height));
-		Math::Vector2 right(centre.x + halfSide, centre.y + ((1.0 / 3.0) * height));
-		Math::Vector2 top(centre.x, centre.y - ((2.0 / 3.0) * height));
-
-		glVertex2d(left.x, left.y);
-		glVertex2d(top.x, top.y);
-		glVertex2d(right.x, right.y);
-
-		glEnd();
+		this->renderList.push_back(rc);
 	}
 
 
@@ -148,66 +144,206 @@ namespace SDL
 
 
 
-	void Renderer::Render(Texture* tex, Math::Vector2 pt)
+
+	void Renderer::RenderTex(Texture* tex, Math::Vector2 pt)
 	{
-		this->Render(tex, pt.x, pt.y);
+		this->RenderTex(tex, pt.x, pt.y);
 	}
 
-	void Renderer::Render(Texture* tex, uint32_t x, uint32_t y)
+	void Renderer::RenderTex(Texture* tex, uint32_t x, uint32_t y)
 	{
-		this->Render(tex, Math::Rectangle(0, 0, tex->width, tex->height), Math::Rectangle(x, y, tex->width, tex->height));
+		this->RenderTex(tex, Math::Rectangle(0, 0, tex->width, tex->height), Math::Rectangle(x, y, tex->width, tex->height));
 	}
 
-	void Renderer::Render(Texture* tex, Math::Rectangle dest)
+	void Renderer::RenderTex(Texture* tex, Math::Rectangle dest)
 	{
-		this->Render(tex, dest.origin.x, dest.origin.y);
+		this->RenderTex(tex, dest.origin.x, dest.origin.y);
 	}
 
-	void Renderer::Render(Texture* tex, Math::Rectangle src, Math::Rectangle dest)
+	void Renderer::RenderTex(Texture* tex, Math::Rectangle src, Math::Rectangle dest)
 	{
-		double x = dest.origin.x;
-		double y = dest.origin.y;
-
-		double w = dest.width;
-		double h = dest.height;
-
-		double texOffsetX1 = (double) src.origin.x / (double) tex->width;
-		double texOffsetY1 = (double) src.origin.y / (double) tex->height;
-		double texOffsetX2 = (double) ((src.origin.x + src.width) / (double) tex->width);
-		double texOffsetY2 = (double) ((src.origin.y + src.height) / (double) tex->height);
-
-
-		glBindTexture(GL_TEXTURE_2D, tex->glTextureID);
-		this->updateGlColour();
-		glBegin(GL_QUADS);
-		{
-			glTexCoord2d(texOffsetX1, texOffsetY1);		glVertex3d(x, y, 0);
-			glTexCoord2d(texOffsetX2, texOffsetY1);		glVertex3d(x + w, y, 0);
-			glTexCoord2d(texOffsetX2, texOffsetY2);		glVertex3d(x + w, y + h, 0);
-			glTexCoord2d(texOffsetX1, texOffsetY2);		glVertex3d(x, y + h, 0);
-		}
-		glEnd();
+		this->renderList.push_back(RenderCommand::createRenderTexture(tex, src, dest));
 	}
 
-	void Renderer::RenderText(std::string txt, ImFont* font, Math::Vector2 pt)
+	void Renderer::RenderString(std::string txt, Util::Font font, Math::Vector2 pt)
 	{
-		// auto dl = ImGui::GetWindowDrawList();
-		// font->RenderText(font->FontSize, { (float) pt.x, (float) pt.y }, Util::Colour::white().hex(), dl->_ClipRectStack.back(),
-		// 	txt.c_str(), txt.c_str() + txt.length(), dl);
+		this->renderList.push_back(RenderCommand::createRenderString(txt, font, this->drawColour, pt));
 	}
 
 	void Renderer::SetColour(Util::Colour c)
 	{
-		// SDL_SetRenderDrawBlendMode(this->sdlRenderer, SDL_BLENDMODE_BLEND);
-		// SDL_SetRenderDrawColor(this->sdlRenderer, c.r, c.g, c.b, c.a);
 		this->drawColour = c;
 	}
 
-	void Renderer::updateGlColour()
+
+	void Renderer::RenderAll()
 	{
-		glColor4ub(this->drawColour.r, this->drawColour.g, this->drawColour.b, this->drawColour.a);
+		for(auto rc : this->renderList)
+			rc.doRender();
+
+		this->renderList.clear();
+	}
+
+
+
+
+
+
+
+
+
+
+
+	void RenderCommand::doRender()
+	{
+		if(this->type == CommandType::Clear)
+		{
+			glClearColor(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+		else if(this->type == CommandType::RenderVerts)
+		{
+			glBegin(this->mode);
+			glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
+
+			for(auto v : this->vertices)
+				glVertex2d(v.x, v.y);
+
+			glEnd();
+		}
+		else if(this->type == CommandType::RenderTex)
+		{
+			glBindTexture(GL_TEXTURE_2D, this->texture->glTextureID);
+			glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
+
+
+			float x1 = this->vertices[0].x;
+			float y1 = this->vertices[0].y;
+
+			float x2 = this->vertices[1].x;
+			float y2 = this->vertices[1].y;
+
+			float texOffsetX1 = this->vertices[2].x;
+			float texOffsetY1 = this->vertices[2].y;
+
+			float texOffsetX2 = this->vertices[3].x;
+			float texOffsetY2 = this->vertices[3].y;
+
+			glBegin(GL_QUADS);
+			{
+				printf("coords: (%f, %f) // (%f, %f), tex: (%f, %f) // (%f, %f)\n", x1, y1, x2, y2,
+					texOffsetX1, texOffsetY1, texOffsetX2, texOffsetY2);
+
+				glTexCoord2f(texOffsetX1, texOffsetY1);		glVertex3f(x1, y1, 0);
+				glTexCoord2f(texOffsetX2, texOffsetY1);		glVertex3f(x2, y1, 0);
+				glTexCoord2f(texOffsetX2, texOffsetY2);		glVertex3f(x2, y2, 0);
+				glTexCoord2f(texOffsetX1, texOffsetY2);		glVertex3f(x1, y2, 0);
+			}
+			glEnd();
+		}
+		else if(this->type == CommandType::RenderString)
+		{
+			SDL::Surface* surface = SDL::Surface::fromText(this->font, this->colour, this->str);
+			SDL::Texture* tex = new SDL::Texture(surface, 0);
+
+			double x = this->vertices[0].x;
+			double y = this->vertices[0].y;
+
+			// auto rc = createRenderTexture(tex, Math::Rectangle(0, 0, 1, 1),
+			// 	Math::Rectangle(x - 1.0, -1.0 * (y - 1.0), x - 1.0 + 2.0 * tex->width, -1 * (y - 1.0 + 2.0 * tex->height)));
+
+			auto rc = createRenderTexture(tex, Math::Rectangle(0, 0, 1, 1),
+				Math::Rectangle(x - 1.0, -1.0 * (y - 1.0), 1.0, 1.0));
+
+			rc.doRender();
+		}
+	}
+
+	RenderCommand RenderCommand::createRenderTexture(Texture* tex, Math::Rectangle src, Math::Rectangle dest)
+	{
+		// we setup four vertices
+		double x1 = dest.origin.x - 1.0;
+		double y1 = -1.0 * (dest.origin.y - 1.0);
+
+		double w = dest.width / (double) tex->width;
+		double h = dest.height / (double) tex->height;
+
+		double x2 = dest.origin.x - 1.0 + 2.0 * w;
+		double y2 = -1.0 * (dest.origin.y - 1.0 + 2.0 * h);
+
+		double texOffsetX1 = (double) src.origin.x / (double) tex->width;
+		double texOffsetY1 = (double) src.origin.y / (double) tex->height;
+
+		double texOffsetX2 = (double) (src.origin.x + src.width) / (double) tex->width;
+		double texOffsetY2 = (double) (src.origin.y + src.height) / (double) tex->height;
+
+		Math::Vector2 v1 { x1, y1 };
+		Math::Vector2 v2 { x2, y2 };
+		Math::Vector2 v3 { texOffsetX1, texOffsetY1 };
+		Math::Vector2 v4 { texOffsetX2, texOffsetY2 };
+
+		RenderCommand rc;
+		rc.type = CommandType::RenderTex;
+
+		rc.vertices.push_back(v1);
+		rc.vertices.push_back(v2);
+		rc.vertices.push_back(v3);
+		rc.vertices.push_back(v4);
+
+		rc.texture = tex;
+
+		return rc;
+	}
+
+	RenderCommand RenderCommand::createRenderVertices(std::vector<Math::Vector2> vertices, GLenum mode, Util::Colour col, bool fill)
+	{
+		RenderCommand rc;
+		rc.type = CommandType::RenderVerts;
+
+		rc.colour = col;
+		rc.vertices = vertices;
+		rc.fill = fill;
+		rc.mode = mode;
+
+		return rc;
+	}
+
+	RenderCommand RenderCommand::createRenderString(std::string s, Util::Font font, Util::Colour col, Math::Vector2 pos)
+	{
+		RenderCommand rc;
+		rc.type = CommandType::RenderString;
+
+		rc.colour = col;
+		rc.vertices = { pos };
+		rc.str = s;
+		rc.font = font;
+
+		return rc;
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

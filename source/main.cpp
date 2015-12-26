@@ -28,14 +28,16 @@ int main(int argc, char** argv)
 	SDL_GLContext glcontext = r.first;
 	SDL::Renderer* renderer = r.second;
 
-	ImGuiIO& io = ImGui::GetIO();
+	// ImGuiIO& io = ImGui::GetIO();
 
-	ImFont* menlo = Util::Font::get("monaco", 16);
+	Util::Font primaryFont = Util::getFont("menlo", 16);
+	ImFont* menlo = primaryFont.imgui;
 
 
 	double frameTime = 16.6667;
 	std::deque<double> prevFps(32);
 
+	SDL::Texture* pic = new SDL::Texture("test.png", renderer);
 
 	// Main loop
 	bool done = false;
@@ -78,9 +80,19 @@ int main(int argc, char** argv)
 				}
 				#endif
 
-				ImGui::BeginMainMenuBar();
-				ImGui::Text("FPS: %.2lf", fps);
-				ImGui::EndMainMenuBar();
+				renderer->RenderTex(pic, { 0, 0 });
+
+				// auto c = renderer->GetColour();
+				// renderer->SetColour(Util::Colour::white());
+				// renderer->RenderString(std::string("FPS: ") + std::to_string((int) fps), primaryFont, Math::Vector2(0, 0));
+
+				// renderer->RenderRect(Math::Rectangle(0.25, 0.25, 0.5, 0.5));
+
+				// renderer->SetColour(c);
+
+				// ImGui::BeginMainMenuBar();
+				// ImGui::Text("FPS: %.2lf", fps);
+				// ImGui::EndMainMenuBar();
 			}
 		}
 
@@ -118,7 +130,6 @@ int main(int argc, char** argv)
 
 
 
-
 		// // 1. Show a simple window
 		// // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
 		// {
@@ -151,9 +162,6 @@ int main(int argc, char** argv)
 		ImGui::PopFont();
 
 		IG::EndFrame(renderer);
-
-
-
 
 		// more fps computation
 		{

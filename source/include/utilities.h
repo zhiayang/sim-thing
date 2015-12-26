@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <algorithm>
 
+#include <SDL2/SDL_ttf.h>
+
 struct ImFont;
 
 namespace Util
@@ -134,11 +136,19 @@ namespace Util
 
 
 
-	namespace Font
+	struct Font
 	{
-		ImFont* get(std::string name, int size, bool hinting = true);
-		void closeAll();
-	}
+		Font() { }
+		Font(ImFont* i, TTF_Font* s) : imgui(i), sdl(s) { }
+		Font(const Font& other) : imgui(other.imgui), sdl(other.sdl) { }
+		Font& operator = (const Font& other) { this->sdl = other.sdl; this->imgui = other.imgui; return *this; }
+
+		ImFont* imgui = 0;
+		TTF_Font* sdl = 0;
+	};
+
+	Font getFont(std::string name, int size, bool hinting = true);
+	void closeAllFonts();
 }
 
 template<class T>

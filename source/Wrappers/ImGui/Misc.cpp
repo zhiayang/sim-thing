@@ -14,7 +14,7 @@ namespace IG
 	std::pair<SDL_GLContext, SDL::Renderer*> Initialise(int width, int height, Util::Colour clear)
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = { 1280, 720 };
+		io.DisplaySize = { (float) width, (float) height };
 
 		// Setup window
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);

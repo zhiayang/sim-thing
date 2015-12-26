@@ -39,6 +39,55 @@ namespace SDL
 		int height;
 	};
 
+
+	struct RenderCommand
+	{
+		enum class CommandType
+		{
+			Invalid,
+			Clear,
+			RenderTex,
+			RenderVerts,
+			RenderString,
+		};
+
+		RenderCommand() { }
+
+		RenderCommand(const RenderCommand& o) : fill(o.fill), colour(o.colour), texture(o.texture),
+			vertices(o.vertices), type(o.type), str(o.str), font(o.font), mode(o.mode) { }
+
+		RenderCommand& operator = (const RenderCommand& o)
+		{
+			this->fill = o.fill;
+			this->colour = o.colour;
+			this->texture = o.texture;
+			this->vertices = o.vertices;
+			this->type = o.type;
+			this->str = o.str;
+			this->font = o.font;
+			this->mode = o.mode;
+
+			return *this;
+		}
+
+		void doRender();
+
+		static RenderCommand createRenderString(std::string s, Util::Font font, Util::Colour col, Math::Vector2 pos);
+		static RenderCommand createRenderTexture(Texture* tex, Math::Rectangle src, Math::Rectangle dest);
+		static RenderCommand createRenderVertices(std::vector<Math::Vector2> vertices, GLenum mode, Util::Colour col, bool fill);
+
+		bool fill = 0;
+		Util::Colour colour;
+		Texture* texture = 0;
+		std::vector<Math::Vector2> vertices;
+		CommandType type = CommandType::Invalid;
+
+		std::string str;
+		Util::Font font;
+
+		GLenum mode;
+	};
+
 	struct Renderer
 	{
 		Renderer(Window* win, SDL_GLContext glc, Util::Colour clear)
@@ -52,22 +101,20 @@ namespace SDL
 		}
 
 		void Clear();
+		void RenderAll();
 
 		// primitive shapes
 		void RenderPoint(Math::Vector2 pt);
 		void RenderCircle(Math::Circle circ, bool fill = true);
 		void RenderRect(Math::Rectangle rect, bool fill = true);
 		void RenderLine(Math::Vector2 start, Math::Vector2 end);
-		void RenderEqTriangle(Math::Vector2 centre, double side);
 
 		// textures
-		void Render(Texture* text, Math::Vector2 at);
-		void Render(Texture* text, uint32_t x, uint32_t y);
-		void Render(Texture* text, Math::Rectangle dest);
-		void Render(Texture* text, Math::Rectangle src, Math::Rectangle dest);
+		void RenderTex(Texture* text, Math::Vector2 at);
+		void RenderTex(Texture* text, uint32_t x, uint32_t y);
+		void RenderTex(Texture* text, Math::Rectangle dest);
+		void RenderTex(Texture* text, Math::Rectangle src, Math::Rectangle dest);
 
-		// text
-		void RenderText(std::string txt, ImFont* font, Math::Vector2 pt);
 
 		void SetColour(Util::Colour c);
 		Util::Colour GetColour() { return this->drawColour; }
@@ -75,17 +122,24 @@ namespace SDL
 		void SetClearColour(Util::Colour c);
 		Util::Colour GetClearColour() { return this->clearColour; }
 
+
+
+
+
+		// text
+		void RenderString(std::string txt, Util::Font font, Math::Vector2 pt);
+
+
+
+		std::vector<RenderCommand> renderList;
+
 		Util::Colour drawColour;
 		Util::Colour clearColour;
 
-
 		Window* window;
-
 		SDL_GLContext glContext;
 
 
-		private:
-			void updateGlColour();
 	};
 
 	struct Surface
@@ -94,8 +148,14 @@ namespace SDL
 		Surface(AssetLoader::Asset* ass);
 		~Surface();
 
+		static Surface* fromText(Util::Font font, Util::Colour colour, std::string txt);
+
 		SDL_Surface* sdlSurf;
 		AssetLoader::Asset* asset;
+
+
+		private:
+			Surface(SDL_Surface* sdlSurf);
 	};
 
 	struct Texture

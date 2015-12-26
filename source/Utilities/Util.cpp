@@ -11,6 +11,8 @@
 
 #include "imgui.h"
 
+#include <SDL2/SDL_ttf.h>
+
 namespace Util
 {
 	namespace Random
@@ -30,33 +32,35 @@ namespace Util
 		}
 	}
 
-	namespace Font
+
+	typedef std::tuple<std::string, int> FontTuple;
+	static std::map<FontTuple, Font> fontMap;
+
+	Font getFont(std::string name, int size, bool hinting)
 	{
-		typedef std::tuple<std::string, int> FontTuple;
-		static std::map<FontTuple, ImFont*> fontMap;
-
-		ImFont* get(std::string name, int size, bool hinting)
+		FontTuple tup(name, size);
+		if(fontMap.find(tup) != fontMap.end())
 		{
-			FontTuple tup(name, size);
-			if(fontMap.find(tup) != fontMap.end())
-			{
-				return fontMap[tup];
-			}
-
-			// SDL::Font* f = new SDL::Font(AssetLoader::getResourcePath() + "fonts/" + name + ".ttf", size, hinting);
-			ImFont* f = ImGui::GetIO().Fonts->AddFontFromFileTTF((AssetLoader::getResourcePath() + "fonts/" + name + ".ttf").c_str(), size);
-			fontMap[tup] = f;
-
-			return f;
+			return fontMap[tup];
 		}
 
-		void closeAll()
+		std::string path = AssetLoader::getResourcePath() + "fonts/" + name + ".ttf";
+
+		ImFont* imguif = ImGui::GetIO().Fonts->AddFontFromFileTTF(path.c_str(), size);
+		TTF_Font* sdlf = TTF_OpenFont(path.c_str(), size);
+
+		Font f { imguif, sdlf };
+		fontMap[tup] = f;
+
+		return f;
+	}
+
+	void closeAllFonts()
+	{
+		for(auto pair : fontMap)
 		{
-			for(auto pair : fontMap)
-			{
-				assert(pair.second);
-				pair.second->Clear();
-			}
+			pair.second.imgui->Clear();
+			TTF_CloseFont(pair.second.sdl);
 		}
 	}
 }

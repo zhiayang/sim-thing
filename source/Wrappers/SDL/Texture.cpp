@@ -15,10 +15,10 @@ namespace SDL
 
 	}
 
-	Texture::Texture(Surface* surf, Renderer* r)
+	Texture::Texture(Surface* surf, Renderer*)
 	{
 		assert(surf);
-		assert(r);
+
 		this->surf = surf;
 
 		this->width = this->surf->sdlSurf->w;

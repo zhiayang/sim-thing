@@ -3911,7 +3911,10 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 				resize_col = GetColorU32(held ? ImGuiCol_ResizeGripActive : hovered ? ImGuiCol_ResizeGripHovered : ImGuiCol_ResizeGrip);
 
 				if(hovered || held)
+				{
 					g.MouseCursor = ImGuiMouseCursor_ResizeNWSE;
+					ImGuiBackend::SetCursor(ImGuiBackend::CursorType::ResizeNSEW);
+				}
 
 				if(g.HoveredWindow == window && held && g.IO.MouseDoubleClicked[0])
 				{
@@ -7280,8 +7283,8 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
 	if(hovered)
 	{
 		SetHoveredID(id);
-		g.MouseCursor = ImGuiMouseCursor_TextInput;
 
+		g.MouseCursor = ImGuiMouseCursor_TextInput;
 		ImGuiBackend::SetCursor(ImGuiBackend::CursorType::IBeam);
 	}
 	const bool user_clicked = hovered && io.MouseClicked[0];
@@ -8969,7 +8972,10 @@ void ImGui::Columns(int columns_count, const char* id, bool border)
 			bool hovered, held;
 			ButtonBehavior(column_rect, column_id, &hovered, &held, true);
 			if(hovered || held)
+			{
 				g.MouseCursor = ImGuiMouseCursor_ResizeEW;
+				ImGuiBackend::SetCursor(ImGuiBackend::CursorType::ResizeEW);
+			}
 
 			// Draw before resize so our items positioning are in sync with the line being drawn
 			const ImU32 col = GetColorU32(held ? ImGuiCol_ColumnActive : hovered ? ImGuiCol_ColumnHovered : ImGuiCol_Column);

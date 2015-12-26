@@ -16,6 +16,7 @@ namespace SDL
 	void Initialise()
 	{
 		SDL::Initialise(SDL_INIT_EVERYTHING);
+		TTF_Init();
 	}
 
 	void Initialise(uint32_t subs)

@@ -23,6 +23,8 @@ namespace IG
 
 		ImGui::Render();
 
+		renderer->RenderAll();
+
 		SDL_GL_SwapWindow(renderer->window->sdlWin);
 	}
 }
