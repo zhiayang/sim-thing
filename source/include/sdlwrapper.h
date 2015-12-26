@@ -18,16 +18,16 @@
 
 namespace SDL
 {
-	#define USE_OPENGL		1
-
 	struct Texture;
 	struct Font;
 
 	struct Window
 	{
-		Window(std::string title, int w, int h) : width(w), height(h)
+		Window(std::string title, int w, int h, bool resizeable) : width(w), height(h)
 		{
-			this->sdlWin = SDL_CreateWindow(title.c_str(), 100, 100, w, h, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+			this->sdlWin = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
+				SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | (resizeable ? SDL_WINDOW_RESIZABLE : 0));
+
 			if(!this->sdlWin) ERROR("Failed to initialise SDL Window! (%dx%d)", w, h);
 
 			LOG("Created new SDL Window with dimensions %dx%d", this->width, this->height);
@@ -42,20 +42,17 @@ namespace SDL
 
 	struct Renderer
 	{
-		Renderer(Window* win, uint32_t flags)
+		Renderer(Window* win, SDL_GLContext glc, Util::Colour clear)
 		{
 			assert(win);
 			this->window = win;
-
-			this->sdlRenderer = SDL_CreateRenderer(this->window->sdlWin, -1, flags);
-			if(!this->sdlRenderer) ERROR("Failed to create SDL Rendrer");
+			this->glContext = glc;
+			this->clearColour = clear;
 
 			LOG("Created new SDL Renderer");
 		}
 
 		void Clear();
-		void Flush();
-
 
 		// primitive shapes
 		void RenderPoint(Math::Vector2 pt);
@@ -76,9 +73,16 @@ namespace SDL
 		void SetColour(Util::Colour c);
 		Util::Colour GetColour() { return this->drawColour; }
 
-		SDL_Renderer* sdlRenderer;
+		void SetClearColour(Util::Colour c);
+		Util::Colour GetClearColour() { return this->clearColour; }
+
 		Util::Colour drawColour;
+		Util::Colour clearColour;
+
+
 		Window* window;
+
+		SDL_GLContext glContext;
 
 
 		private:

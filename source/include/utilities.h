@@ -21,14 +21,67 @@ namespace Util
 
 	struct Colour
 	{
-		Colour(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) : r(red), g(green), b(blue), a(alpha) { }
-		Colour(uint8_t red, uint8_t green, uint8_t blue) : r(red), g(green), b(blue), a(0xFF) { }
-		Colour() : r(0), g(0), b(0), a(0) { }
+		Colour(const Colour& other)
+		{
+			this->r = other.r;
+			this->g = other.g;
+			this->b = other.b;
+			this->a = other.a;
+
+			this->fr = other.fr;
+			this->fg = other.fg;
+			this->fb = other.fb;
+			this->fa = other.fa;
+		}
+
+		Colour& operator = (const Colour& other)
+		{
+			this->r = other.r;
+			this->g = other.g;
+			this->b = other.b;
+			this->a = other.a;
+
+			this->fr = other.fr;
+			this->fg = other.fg;
+			this->fb = other.fb;
+			this->fa = other.fa;
+
+			return *this;
+		}
+
+		Colour(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) : r(red), g(green), b(blue), a(alpha)
+		{
+			fr = (1.0f / 255.0f) * r;
+			fg = (1.0f / 255.0f) * g;
+			fb = (1.0f / 255.0f) * b;
+			fa = (1.0f / 255.0f) * a;
+		}
+
+		Colour(uint8_t red, uint8_t green, uint8_t blue) : r(red), g(green), b(blue), a(0xFF)
+		{
+			fr = (1.0f / 255.0f) * r;
+			fg = (1.0f / 255.0f) * g;
+			fb = (1.0f / 255.0f) * b;
+			fa = (1.0f / 255.0f) * a;
+		}
+
+		Colour() : r(0), g(0), b(0), a(0)
+		{
+			fr = (1.0f / 255.0f) * r;
+			fg = (1.0f / 255.0f) * g;
+			fb = (1.0f / 255.0f) * b;
+			fa = (1.0f / 255.0f) * a;
+		}
 
 		uint8_t r;
 		uint8_t g;
 		uint8_t b;
 		uint8_t a;
+
+		float fr;
+		float fg;
+		float fb;
+		float fa;
 
 		Colour operator+(Colour other)
 		{
@@ -37,10 +90,7 @@ namespace Util
 				std::max(this->b + other.b, 0xFF), std::max(this->a + other.a, 0xFF));
 		}
 
-		void* toSDL()
-		{
-			return (void*) this;
-		}
+
 
 		static Colour black() { return Colour(0, 0, 0); }
 		static Colour white() { return Colour(0xFF, 0xFF, 0xFF); }

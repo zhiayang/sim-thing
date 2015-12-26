@@ -8,59 +8,37 @@
 #include "imgui_impl_sdl.h"
 
 #include "sdlwrapper.h"
+#include "imguiwrapper.h"
 
 int main(int argc, char** argv)
 {
 	// Setup SDL
-	if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
-	{
-		printf("Error: %s\n", SDL_GetError());
-		return -1;
-	}
+	SDL::Initialise();
 
-	ImGuiIO& io = ImGui::GetIO();
-	io.DisplaySize = { 1280, 720 };
+	auto r = IG::Initialise(1024, 640, Util::Colour(114, 144, 154));
+	SDL_GLContext glcontext = r.first;
+	SDL::Renderer* renderer = r.second;
 
-	// Setup window
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-
-	SDL_DisplayMode current;
-	SDL_GetCurrentDisplayMode(0, &current);
-	SDL_Window* window = SDL_CreateWindow("ImGui SDL2+OpenGL example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		io.DisplaySize.x, io.DisplaySize.y,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-
-	SDL_GLContext glcontext = SDL_GL_CreateContext(window);
-
-	// Setup ImGui binding
-	ImGui_ImplSdl_Init(window);
-	// io.FontAllowUserScaling = true;
-	// io.FontGlobalScale = 2.0;
 
 	ImFont* menlo = Util::Font::get("monaco", 16);
 
 
-	// bool show_test_window = true;
-	// bool show_another_window = false;
-	ImVec4 clear_color = ImColor(114, 144, 154);
+
+
 
 	// Main loop
 	bool done = false;
 	while(!done)
 	{
 		SDL_Event event;
-		while(SDL_PollEvent(&event))
 		{
-			ImGui_ImplSdl_ProcessEvent(&event);
-			if(event.type == SDL_QUIT)
-				done = true;
+			auto t = IG::ProcessEvents();
+
+			event = t.first;
+			done = t.second;
 		}
 
-		ImGui_ImplSdl_NewFrame(window);
+		IG::BeginFrame(renderer);
 		ImGui::PushFont(menlo);
 
 
@@ -121,24 +99,17 @@ int main(int argc, char** argv)
 		// }
 
 
-
-		// Rendering
 		ImGui::PopFont();
 
 
 
-		// call back to opengl
-		glViewport(0, 0, (int) ImGui::GetIO().DisplaySize.x, (int) ImGui::GetIO().DisplaySize.y);
-		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-		glClear(GL_COLOR_BUFFER_BIT);
-		ImGui::Render();
-		SDL_GL_SwapWindow(window);
+		IG::EndFrame(renderer);
 	}
 
 	// Cleanup
 	ImGui_ImplSdl_Shutdown();
 	SDL_GL_DeleteContext(glcontext);
-	SDL_DestroyWindow(window);
+	SDL_DestroyWindow(renderer->window->sdlWin);
 	SDL_Quit();
 
 	return 0;

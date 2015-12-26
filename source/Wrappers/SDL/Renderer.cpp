@@ -14,12 +14,6 @@ namespace SDL
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 
-	void Renderer::Flush()
-	{
-		SDL_RenderPresent(this->sdlRenderer);
-	}
-
-
 	void Renderer::RenderPoint(Math::Vector2 pt)
 	{
 		glBegin(GL_POINTS);
