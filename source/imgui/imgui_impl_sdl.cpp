@@ -7,7 +7,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 #include <SDL2/SDL_opengl.h>
-#include <imgui.h>
+
+#include "imgui.h"
 #include "imgui_impl_sdl.h"
 
 // Data
@@ -205,6 +206,11 @@ bool    ImGui_ImplSdl_Init(SDL_Window *window)
 	io.KeyMap[ImGuiKey_X] = SDLK_x;
 	io.KeyMap[ImGuiKey_Y] = SDLK_y;
 	io.KeyMap[ImGuiKey_Z] = SDLK_z;
+
+	#if ENABLE_OSX_TEXT_EDITING
+	io.KeyMap[ImGuiKey_LeftCmd] = SDLK_LGUI;
+	io.KeyMap[ImGuiKey_RightCmd] = SDLK_RGUI;
+	#endif
 
 	io.RenderDrawListsFn = ImGui_ImplSdl_RenderDrawLists;   // Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
 	io.SetClipboardTextFn = ImGui_ImplSdl_SetClipboardText;

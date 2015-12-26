@@ -13,10 +13,6 @@
 #define ENABLE_OSX_TEXT_EDITING 0
 #endif
 
-#if ENABLE_OSX_TEXT_EDITING
-#include <SDL2/SDL.h>
-#endif
-
 
 
 

@@ -39,6 +39,7 @@ main = shakeArgs shakeOptions { shakeFiles = "build" } $ do
 	phony "clean" $ do
 		putNormal "Cleaning files"
 		removeFilesAfter "source" ["//*.o"]
+		removeFilesAfter "source" ["//*.o.m"]
 		removeFilesAfter "build" ["bin/*"]
 
 
