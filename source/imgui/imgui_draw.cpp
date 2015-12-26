@@ -939,8 +939,8 @@ ImFontConfig::ImFontConfig()
     FontDataOwnedByAtlas = true;
     FontNo = 0;
     SizePixels = 0.0f;
-    OversampleH = 3;
-    OversampleV = 1;
+    OversampleH = 2 * ImGui::GetIO().DisplayFramebufferScale.x;
+    OversampleV = 2 * ImGui::GetIO().DisplayFramebufferScale.y;
     PixelSnapH = false;
     GlyphExtraSpacing = ImVec2(0.0f, 0.0f);
     GlyphRanges = NULL;

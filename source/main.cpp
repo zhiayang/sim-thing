@@ -38,9 +38,10 @@ int main(int argc, char** argv)
 
 	// Setup ImGui binding
 	ImGui_ImplSdl_Init(window);
+	// io.FontAllowUserScaling = true;
+	// io.FontGlobalScale = 2.0;
 
-
-	ImFont* menlo = Util::Font::get("menlo", 16);
+	ImFont* menlo = Util::Font::get("monaco", 16);
 
 
 	// bool show_test_window = true;
@@ -63,12 +64,11 @@ int main(int argc, char** argv)
 		ImGui::PushFont(menlo);
 
 
-		// ImGui::SetNextWindowSize({ 500, 300 });
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(500, 300));
 		ImGui::Begin("Terminal", 0, { 500, 600 });
 		{
-			static char text[1024*16] =
+			static char text[1024 * 16] =
 				"/*\n"
 				" The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
 				" the hexadecimal encoding of one offending instruction,\n"
@@ -81,17 +81,16 @@ int main(int argc, char** argv)
 				"\tlock cmpxchg8b eax\n";
 
 
-			// ImGui::GetWindowHeight()
 			ImGui::InputTextMultiline("##source", text, sizeof(text), ImVec2(-1, -1), ImGuiInputTextFlags_AllowTabInput);
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();
 		ImGui::PopStyleVar();
 
-
-
-
 		ImGui::ShowStyleEditor();
+
+
+
 
 		// // 1. Show a simple window
 		// // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
