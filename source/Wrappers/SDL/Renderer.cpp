@@ -215,37 +215,30 @@ namespace SDL
 		{
 			glEnable(GL_TEXTURE_2D);
 
-			glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
 			glBindTexture(GL_TEXTURE_2D, this->texture->glTextureID);
 
+			glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
 
-			// float x1 = this->vertices[0].x;
-			// float y1 = this->vertices[0].y;
 
-			// float x2 = this->vertices[1].x;
-			// float y2 = this->vertices[1].y;
+			float x1 = this->vertices[0].x;
+			float y1 = this->vertices[0].y;
 
-			// float texOffsetX1 = this->vertices[2].x;
-			// float texOffsetY1 = this->vertices[2].y;
+			float x2 = this->vertices[1].x;
+			float y2 = this->vertices[1].y;
 
-			// float texOffsetX2 = this->vertices[3].x;
-			// float texOffsetY2 = this->vertices[3].y;
+			float texOffsetX1 = this->vertices[2].x;
+			float texOffsetY1 = this->vertices[2].y;
+
+			float texOffsetX2 = this->vertices[3].x;
+			float texOffsetY2 = this->vertices[3].y;
 
 
 			glBegin(GL_QUADS);
 			{
-				// printf("(%d) coords: (%f, %f) // (%f, %f), tex: (%f, %f) // (%f, %f)\n", this->texture->glTextureID, x1, y1, x2, y2,
-					// texOffsetX1, texOffsetY1, texOffsetX2, texOffsetY2);
-
-				// glTexCoord2f(texOffsetX1, texOffsetY1);		glVertex3f(x1, y1, 0);
-				// glTexCoord2f(texOffsetX2, texOffsetY1);		glVertex3f(x2, y1, 0);
-				// glTexCoord2f(texOffsetX2, texOffsetY2);		glVertex3f(x2, y2, 0);
-				// glTexCoord2f(texOffsetX1, texOffsetY2);		glVertex3f(x1, y2, 0);
-
-				glTexCoord2f(0, 0);		glVertex3f(0, 0, 0);
-				glTexCoord2f(1, 0);		glVertex3f(320, 0, 0);
-				glTexCoord2f(1, 1);		glVertex3f(320, 320, 0);
-				glTexCoord2f(0, 1);		glVertex3f(0, 320, 0);
+				glTexCoord2f(texOffsetX1, texOffsetY1);		glVertex3f(x1, y1, 0);
+				glTexCoord2f(texOffsetX2, texOffsetY1);		glVertex3f(x2, y1, 0);
+				glTexCoord2f(texOffsetX2, texOffsetY2);		glVertex3f(x2, y2, 0);
+				glTexCoord2f(texOffsetX1, texOffsetY2);		glVertex3f(x1, y2, 0);
 			}
 			glEnd();
 		}
@@ -270,20 +263,19 @@ namespace SDL
 	RenderCommand RenderCommand::createRenderTexture(Texture* tex, Math::Rectangle src, Math::Rectangle dest)
 	{
 		// we setup four vertices
-		double x1 = dest.origin.x - 1.0;
-		double y1 = -1.0 * (dest.origin.y - 1.0);
+		double x1 = dest.origin.x;
+		double y1 = dest.origin.y;
 
-		double w = dest.width / (double) tex->width;
-		double h = dest.height / (double) tex->height;
-
-		double x2 = dest.origin.x - 1.0 + 2.0 * w;
-		double y2 = -1.0 * (dest.origin.y - 1.0 + 2.0 * h);
+		double x2 = dest.origin.x + dest.width;
+		double y2 = dest.origin.y + dest.height;
 
 		double texOffsetX1 = (double) src.origin.x / (double) tex->width;
 		double texOffsetY1 = (double) src.origin.y / (double) tex->height;
 
 		double texOffsetX2 = (double) (src.origin.x + src.width) / (double) tex->width;
 		double texOffsetY2 = (double) (src.origin.y + src.height) / (double) tex->height;
+
+
 
 		Math::Vector2 v1 { x1, y1 };
 		Math::Vector2 v2 { x2, y2 };
@@ -292,6 +284,7 @@ namespace SDL
 
 		RenderCommand rc;
 		rc.type = CommandType::RenderTex;
+		rc.colour = Util::Colour::white();
 
 		rc.vertices.push_back(v1);
 		rc.vertices.push_back(v2);

@@ -11,116 +11,24 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 
+
+// custom stuff.
+#include "imguiwrapper.h"
+
+
+
+
 // Data
 static double	g_Time = 0.0f;
 static bool		g_MousePressed[3] = { false, false, false };
 static float	g_MouseWheel = 0.0f;
 static GLuint	g_FontTexture = 0;
 
-// This is the main rendering function that you have to implement and provide to ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
-// If text or lines are blurry when integrating ImGui in your engine:
-// - in your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f)
-void ImGui_ImplSdl_RenderDrawLists(ImDrawData* draw_data)
-{
-	// We are using the OpenGL fixed pipeline to make the example code simpler to read!
-	// A probable faster way to render would be to collate all vertices from all cmd_lists into a single vertex buffer.
-	// Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, vertex/texcoord/color pointers.
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_TRANSFORM_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_SCISSOR_TEST);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-	glEnable(GL_TEXTURE_2D);
-	// glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context
-
-
-	// Handle cases of screen coordinates != from framebuffer coordinates (e.g. retina displays)
-	ImGuiIO& io = ImGui::GetIO();
-	int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
-	int fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
-	draw_data->ScaleClipRects(io.DisplayFramebufferScale);
-
-	// Setup viewport, orthographic projection matrix
-	glViewport(0, 0, (GLsizei) fb_width, (GLsizei) fb_height);
-
-	// Setup orthographic projection matrix
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-
-	glOrtho(0.0f, io.DisplaySize.x, io.DisplaySize.y, 0.0f, -1.0f, +1.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-
-	// Render command lists
-	#define OFFSETOF(TYPE, ELEMENT) ((size_t) &(((TYPE*) 0)->ELEMENT))
-	for(int n = 0; n < draw_data->CmdListsCount; n++)
-	{
-		const ImDrawList* cmd_list = draw_data->CmdLists[n];
-		const unsigned char* vtx_buffer = (const unsigned char*) &cmd_list->VtxBuffer.front();
-		const ImDrawIdx* idx_buffer = &cmd_list->IdxBuffer.front();
-
-		glVertexPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, pos)));
-		glTexCoordPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, uv)));
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, col)));
-
-		for(int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.size(); cmd_i++)
-		{
-			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-			if(pcmd->UserCallback)
-			{
-				pcmd->UserCallback(cmd_list, pcmd);
-			}
-			else
-			{
-				glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
-				glScissor((int) pcmd->ClipRect.x, (int) (fb_height - pcmd->ClipRect.w),
-					(int) (pcmd->ClipRect.z - pcmd->ClipRect.x), (int) (pcmd->ClipRect.w - pcmd->ClipRect.y));
-
-				glDrawElements(GL_TRIANGLES, (GLsizei) pcmd->ElemCount, GL_UNSIGNED_SHORT, idx_buffer);
-			}
-			idx_buffer += pcmd->ElemCount;
-		}
-	}
-	#undef OFFSETOF
-
-
-	{
-		glDisable(GL_SCISSOR_TEST);
-		glDisable(GL_BLEND);
-
-		glBindTexture(GL_TEXTURE_2D, 1);
-
-		glBegin(GL_QUADS);
-		{
-			glTexCoord2f(0, 0);		glVertex3f(0, 0, 0);
-			glTexCoord2f(1, 0);		glVertex3f(256, 0, 0);
-			glTexCoord2f(1, 1);		glVertex3f(256, 256, 0);
-			glTexCoord2f(0, 1);		glVertex3f(0, 256, 0);
-		}
-		glEnd();
-	}
-
-
-	// Restore modified state
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
 
 
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glPopAttrib();
-}
+
+
 
 static const char* ImGui_ImplSdl_GetClipboardText()
 {
@@ -236,7 +144,11 @@ bool ImGui_ImplSdl_Init(SDL_Window *window)
 	io.KeyMap[ImGuiKey_RightCmd] = SDLK_RGUI;
 	#endif
 
-	io.RenderDrawListsFn = ImGui_ImplSdl_RenderDrawLists;	// Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
+	// io.RenderDrawListsFn = ImGui_ImplSdl_RenderDrawLists;	// Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
+
+	// yes, we set it to null here.
+	io.RenderDrawListsFn = 0;
+
 	io.SetClipboardTextFn = ImGui_ImplSdl_SetClipboardText;
 	io.GetClipboardTextFn = ImGui_ImplSdl_GetClipboardText;
 

@@ -80,10 +80,10 @@ int main(int argc, char** argv)
 				}
 				#endif
 
-				// renderer->RenderTex(pic, { 0, 0 });
+				renderer->SetColour(Util::Colour::white());
+				renderer->RenderTex(pic, { 0, 0 });
 
 				// auto c = renderer->GetColour();
-				// renderer->SetColour(Util::Colour::red());
 				// renderer->RenderString(std::string("FPS: ") + std::to_string((int) fps), primaryFont, Math::Vector2(0, 0));
 
 				// renderer->RenderRect(Math::Rectangle(0.25, 0.25, 0.5, 0.5));
