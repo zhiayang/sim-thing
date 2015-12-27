@@ -21,9 +21,9 @@ namespace IG
 		glClearColor(renderer->clearColour.fr, renderer->clearColour.fg, renderer->clearColour.fb, renderer->clearColour.fa);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		ImGui::Render();
-
 		renderer->RenderAll();
+
+		ImGui::Render();
 
 		SDL_GL_SwapWindow(renderer->window->sdlWin);
 	}

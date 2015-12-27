@@ -31,19 +31,11 @@ namespace SDL
 		int texmode = 0;
 		if(this->surf->sdlSurf->format->BytesPerPixel == 4)
 		{
-			if(this->surf->sdlSurf->format->Rmask == 0x000000FF)
-				texmode = GL_BGRA_EXT;
-
-			else
-				texmode = GL_RGBA;
+			texmode = GL_RGBA;
 		}
 		else
 		{
-			if(this->surf->sdlSurf->format->Rmask == 0x000000FF)
-				texmode = GL_BGR_EXT;
-
-			else
-				texmode = GL_RGB;
+			texmode = GL_RGB;
 		}
 
 		glTexImage2D(GL_TEXTURE_2D, 0, texmode, this->surf->sdlSurf->w, this->surf->sdlSurf->h, 0, texmode, GL_UNSIGNED_BYTE, this->surf->sdlSurf->pixels);

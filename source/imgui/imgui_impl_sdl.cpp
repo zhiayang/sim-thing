@@ -12,10 +12,10 @@
 #include "imgui_impl_sdl.h"
 
 // Data
-static double       g_Time = 0.0f;
-static bool         g_MousePressed[3] = { false, false, false };
-static float        g_MouseWheel = 0.0f;
-static GLuint       g_FontTexture = 0;
+static double	g_Time = 0.0f;
+static bool		g_MousePressed[3] = { false, false, false };
+static float	g_MouseWheel = 0.0f;
+static GLuint	g_FontTexture = 0;
 
 // This is the main rendering function that you have to implement and provide to ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
 // If text or lines are blurry when integrating ImGui in your engine:
@@ -35,7 +35,7 @@ void ImGui_ImplSdl_RenderDrawLists(ImDrawData* draw_data)
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 	glEnable(GL_TEXTURE_2D);
-	//glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context
+	// glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context
 
 
 	// Handle cases of screen coordinates != from framebuffer coordinates (e.g. retina displays)
@@ -51,21 +51,23 @@ void ImGui_ImplSdl_RenderDrawLists(ImDrawData* draw_data)
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
+
 	glOrtho(0.0f, io.DisplaySize.x, io.DisplaySize.y, 0.0f, -1.0f, +1.0f);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
 
 	// Render command lists
-	#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+	#define OFFSETOF(TYPE, ELEMENT) ((size_t) &(((TYPE*) 0)->ELEMENT))
 	for(int n = 0; n < draw_data->CmdListsCount; n++)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[n];
-		const unsigned char* vtx_buffer = (const unsigned char*)&cmd_list->VtxBuffer.front();
+		const unsigned char* vtx_buffer = (const unsigned char*) &cmd_list->VtxBuffer.front();
 		const ImDrawIdx* idx_buffer = &cmd_list->IdxBuffer.front();
-		glVertexPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, pos)));
-		glTexCoordPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, uv)));
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, col)));
+
+		glVertexPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, pos)));
+		glTexCoordPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, uv)));
+		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, col)));
 
 		for(int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.size(); cmd_i++)
 		{
@@ -77,19 +79,41 @@ void ImGui_ImplSdl_RenderDrawLists(ImDrawData* draw_data)
 			else
 			{
 				glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
-				glScissor((int) pcmd->ClipRect.x, (int) (fb_height - pcmd->ClipRect.w), (int) (pcmd->ClipRect.z - pcmd->ClipRect.x),
-					(int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
-				glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, GL_UNSIGNED_SHORT, idx_buffer);
+				glScissor((int) pcmd->ClipRect.x, (int) (fb_height - pcmd->ClipRect.w),
+					(int) (pcmd->ClipRect.z - pcmd->ClipRect.x), (int) (pcmd->ClipRect.w - pcmd->ClipRect.y));
+
+				glDrawElements(GL_TRIANGLES, (GLsizei) pcmd->ElemCount, GL_UNSIGNED_SHORT, idx_buffer);
 			}
 			idx_buffer += pcmd->ElemCount;
 		}
 	}
 	#undef OFFSETOF
 
+
+	{
+		glDisable(GL_SCISSOR_TEST);
+		glDisable(GL_BLEND);
+
+		glBindTexture(GL_TEXTURE_2D, 1);
+
+		glBegin(GL_QUADS);
+		{
+			glTexCoord2f(0, 0);		glVertex3f(0, 0, 0);
+			glTexCoord2f(1, 0);		glVertex3f(256, 0, 0);
+			glTexCoord2f(1, 1);		glVertex3f(256, 256, 0);
+			glTexCoord2f(0, 1);		glVertex3f(0, 256, 0);
+		}
+		glEnd();
+	}
+
+
 	// Restore modified state
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+
+
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
@@ -174,7 +198,7 @@ bool ImGui_ImplSdl_CreateDeviceObjects()
 	return true;
 }
 
-void    ImGui_ImplSdl_InvalidateDeviceObjects()
+void ImGui_ImplSdl_InvalidateDeviceObjects()
 {
 	if(g_FontTexture)
 	{
@@ -184,10 +208,10 @@ void    ImGui_ImplSdl_InvalidateDeviceObjects()
 	}
 }
 
-bool    ImGui_ImplSdl_Init(SDL_Window *window)
+bool ImGui_ImplSdl_Init(SDL_Window *window)
 {
 	ImGuiIO& io = ImGui::GetIO();
-	io.KeyMap[ImGuiKey_Tab] = SDLK_TAB;                     // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
+	io.KeyMap[ImGuiKey_Tab] = SDLK_TAB;		// Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
 	io.KeyMap[ImGuiKey_LeftArrow] = SDL_SCANCODE_LEFT;
 	io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;
 	io.KeyMap[ImGuiKey_UpArrow] = SDL_SCANCODE_UP;
@@ -212,7 +236,7 @@ bool    ImGui_ImplSdl_Init(SDL_Window *window)
 	io.KeyMap[ImGuiKey_RightCmd] = SDLK_RGUI;
 	#endif
 
-	io.RenderDrawListsFn = ImGui_ImplSdl_RenderDrawLists;   // Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
+	io.RenderDrawListsFn = ImGui_ImplSdl_RenderDrawLists;	// Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
 	io.SetClipboardTextFn = ImGui_ImplSdl_SetClipboardText;
 	io.GetClipboardTextFn = ImGui_ImplSdl_GetClipboardText;
 
@@ -249,12 +273,12 @@ void ImGui_ImplSdl_NewFrame(SDL_Window *window)
 	// Setup display size (every frame to accommodate for window resizing)
 	int w, h;
 	SDL_GetWindowSize(window, &w, &h);
-	io.DisplaySize = ImVec2((float)w, (float)h);
+	io.DisplaySize = ImVec2((float) w, (float) h);
 
 	// Setup time step
 	Uint32	time = SDL_GetTicks();
 	double current_time = time / 1000.0;
-	io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f/60.0f);
+	io.DeltaTime = g_Time > 0.0 ? (float) (current_time - g_Time) : (float) (1.0f/60.0f);
 	g_Time = current_time;
 
 	// Setup inputs
@@ -262,9 +286,9 @@ void ImGui_ImplSdl_NewFrame(SDL_Window *window)
 	int mx, my;
 	Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
 	if(SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
-		io.MousePos = ImVec2((float)mx, (float)my);   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
+		io.MousePos = ImVec2((float) mx, (float) my);	// Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
 	else
-		io.MousePos = ImVec2(-1,-1);
+		io.MousePos = ImVec2(-1, -1);
 
 	io.MouseDown[0] = g_MousePressed[0] || (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;		// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
 	io.MouseDown[1] = g_MousePressed[1] || (mouseMask & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;

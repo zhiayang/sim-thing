@@ -213,31 +213,39 @@ namespace SDL
 		}
 		else if(this->type == CommandType::RenderTex)
 		{
-			glBindTexture(GL_TEXTURE_2D, this->texture->glTextureID);
+			glEnable(GL_TEXTURE_2D);
+
 			glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
+			glBindTexture(GL_TEXTURE_2D, this->texture->glTextureID);
 
 
-			float x1 = this->vertices[0].x;
-			float y1 = this->vertices[0].y;
+			// float x1 = this->vertices[0].x;
+			// float y1 = this->vertices[0].y;
 
-			float x2 = this->vertices[1].x;
-			float y2 = this->vertices[1].y;
+			// float x2 = this->vertices[1].x;
+			// float y2 = this->vertices[1].y;
 
-			float texOffsetX1 = this->vertices[2].x;
-			float texOffsetY1 = this->vertices[2].y;
+			// float texOffsetX1 = this->vertices[2].x;
+			// float texOffsetY1 = this->vertices[2].y;
 
-			float texOffsetX2 = this->vertices[3].x;
-			float texOffsetY2 = this->vertices[3].y;
+			// float texOffsetX2 = this->vertices[3].x;
+			// float texOffsetY2 = this->vertices[3].y;
+
 
 			glBegin(GL_QUADS);
 			{
-				printf("coords: (%f, %f) // (%f, %f), tex: (%f, %f) // (%f, %f)\n", x1, y1, x2, y2,
-					texOffsetX1, texOffsetY1, texOffsetX2, texOffsetY2);
+				// printf("(%d) coords: (%f, %f) // (%f, %f), tex: (%f, %f) // (%f, %f)\n", this->texture->glTextureID, x1, y1, x2, y2,
+					// texOffsetX1, texOffsetY1, texOffsetX2, texOffsetY2);
 
-				glTexCoord2f(texOffsetX1, texOffsetY1);		glVertex3f(x1, y1, 0);
-				glTexCoord2f(texOffsetX2, texOffsetY1);		glVertex3f(x2, y1, 0);
-				glTexCoord2f(texOffsetX2, texOffsetY2);		glVertex3f(x2, y2, 0);
-				glTexCoord2f(texOffsetX1, texOffsetY2);		glVertex3f(x1, y2, 0);
+				// glTexCoord2f(texOffsetX1, texOffsetY1);		glVertex3f(x1, y1, 0);
+				// glTexCoord2f(texOffsetX2, texOffsetY1);		glVertex3f(x2, y1, 0);
+				// glTexCoord2f(texOffsetX2, texOffsetY2);		glVertex3f(x2, y2, 0);
+				// glTexCoord2f(texOffsetX1, texOffsetY2);		glVertex3f(x1, y2, 0);
+
+				glTexCoord2f(0, 0);		glVertex3f(0, 0, 0);
+				glTexCoord2f(1, 0);		glVertex3f(320, 0, 0);
+				glTexCoord2f(1, 1);		glVertex3f(320, 320, 0);
+				glTexCoord2f(0, 1);		glVertex3f(0, 320, 0);
 			}
 			glEnd();
 		}

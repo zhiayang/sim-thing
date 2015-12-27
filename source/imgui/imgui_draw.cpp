@@ -968,8 +968,8 @@ ImFontConfig::ImFontConfig()
     FontNo = 0;
     SizePixels = 0.0f;
 
-    OversampleH = 2 * ImGui::GetIO().DisplayFramebufferScale.x;
-    OversampleV = 2 * ImGui::GetIO().DisplayFramebufferScale.y;
+    OversampleH = 2 * ImGui::GetIO().FontGlobalScale * ImGui::GetIO().DisplayFramebufferScale.x;
+    OversampleV = 2 * ImGui::GetIO().FontGlobalScale * ImGui::GetIO().DisplayFramebufferScale.y;
     PixelSnapH = false;
     GlyphExtraSpacing = ImVec2(0.0f, 0.0f);
     GlyphRanges = NULL;
@@ -1895,8 +1895,8 @@ void ImFont::RenderText(float size, ImVec2 pos, ImU32 col, const ImVec4& clip_re
         text_end = text_begin + strlen(text_begin);
 
     // Align to be pixel perfect
-    pos.x = (float)(int)pos.x + DisplayOffset.x;
-    pos.y = (float)(int)pos.y + DisplayOffset.y;
+    pos.x = (float)(int)(pos.x + DisplayOffset.x);
+    pos.y = (float)(int)(pos.y + DisplayOffset.y);
     float x = pos.x;
     float y = pos.y;
     if(y > clip_rect.w)
