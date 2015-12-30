@@ -63,6 +63,8 @@ typedef int ImGuiSelectableFlags;   // enum ImGuiSelectableFlags_
 struct ImGuiTextEditCallbackData;   // for advanced uses of InputText()
 typedef int (*ImGuiTextEditCallback)(ImGuiTextEditCallbackData *data);
 
+void SetCurrentFont(ImFont* font);
+
 struct ImVec2
 {
 	float x, y;
@@ -1307,6 +1309,15 @@ struct ImFont
 	IMGUI_API const char*       CalcWordWrapPositionA(float scale, const char* text, const char* text_end, float wrap_width) const;
 	IMGUI_API void              RenderText(float size, ImVec2 pos, ImU32 col, const ImVec4& clip_rect, const char* text_begin, const char* text_end, ImDrawList* draw_list, float wrap_width = 0.0f, bool cpu_fine_clip = false) const;
 };
+
+
+
+
+
+
+
+
+
 
 //---- Include imgui_user.h at the end of imgui.h
 //---- So you can include code that extends ImGui using any of the types declared above.

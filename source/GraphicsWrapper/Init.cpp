@@ -1,18 +1,33 @@
-// Misc.cpp
+// Init.cpp
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
 #include <tuple>
 
-#include <imgui.h>
+#include "imgui.h"
 
-#include "imguiwrapper.h"
+#include "graphicswrapper.h"
 #include "imgui_impl_sdl.h"
 
-namespace IG
+namespace Rx
 {
-	std::pair<SDL_GLContext, SDL::Renderer*> Initialise(int width, int height, Util::Colour clear)
+	std::pair<SDL_GLContext, Rx::Renderer*> Initialise(int width, int height, Util::Colour clear)
 	{
+		// initialise SDL
+		{
+			auto err = SDL_Init(SDL_INIT_EVERYTHING);
+			if(err)	ERROR("SDL failed to initialise, subsystem flags: %d", SDL_INIT_EVERYTHING);
+
+			// init SDL_Image
+			if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG)
+				ERROR("Failed to initialise SDL2_image library");
+			TTF_Init();
+		}
+
+
+
+
+
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = { (float) width, (float) height };
 
@@ -26,13 +41,13 @@ namespace IG
 		SDL_DisplayMode current;
 		SDL_GetCurrentDisplayMode(0, &current);
 
-		SDL::Window* window = new SDL::Window("connect", io.DisplaySize.x, io.DisplaySize.y, true);
+		Rx::Window* window = new Rx::Window("connect", io.DisplaySize.x, io.DisplaySize.y, true);
 		SDL_GLContext glcontext = SDL_GL_CreateContext(window->sdlWin);
 
 		// Setup ImGui binding
 		ImGui_ImplSdl_Init(window->sdlWin);
 
-		SDL::Renderer* renderer = new SDL::Renderer(window, glcontext, clear);
+		Rx::Renderer* renderer = new Rx::Renderer(window, glcontext, clear);
 
 		return { glcontext, renderer };
 	}

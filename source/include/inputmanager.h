@@ -4,8 +4,8 @@
 
 #pragma once
 #include "utilities.h"
-#include "sdlwrapper.h"
 #include <unordered_map>
+
 namespace Input
 {
 	enum class Keys

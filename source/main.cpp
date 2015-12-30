@@ -7,8 +7,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 
-#include "sdlwrapper.h"
-#include "imguiwrapper.h"
+#include "graphicswrapper.h"
 
 #include "config.h"
 
@@ -22,22 +21,30 @@ static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 int main(int argc, char** argv)
 {
 	// Setup SDL
-	SDL::Initialise();
-
-	auto r = IG::Initialise(1024, 640, Util::Colour(114, 144, 154));
+	auto r = Rx::Initialise(1024, 640, Util::Colour(114, 144, 154));
 	SDL_GLContext glcontext = r.first;
-	SDL::Renderer* renderer = r.second;
+	Rx::Renderer* renderer = r.second;
 
-	// ImGuiIO& io = ImGui::GetIO();
+	// any lower, and it gets sketchy.
+	// for some reason, increasing oversampling doesn't help beyond a certain point.
+	// in fact, going beyond 8 for some reason wrecks the font totally.
+	// hence, this hack: we pass getFont() the *actual* size we want the font to be, in pixels.
+	// however, it multiplies that by 2 internally, so if we say we want font-size 16, it actually
+	// loads font-size 32.
+	// since our global scale is 0.50, this effectively gives us another *level* of oversampling.
+	// it doesn't seem to affect framerate too much, and produces **MUCH** crisper text.
 
-	Util::Font primaryFont = Util::getFont("menlo", 16);
+	ImGui::GetIO().FontGlobalScale = 0.50;
+
+
+	Rx::Font primaryFont = Rx::getFont("menlo", 14);
 	ImFont* menlo = primaryFont.imgui;
 
 
 	double frameTime = 16.6667;
-	std::deque<double> prevFps(32);
+	std::deque<double> prevFps(50);
 
-	SDL::Texture* pic = new SDL::Texture("test.png", renderer);
+	// Rx::Texture* pic = new Rx::Texture("test.png", renderer);
 
 	// Main loop
 	bool done = false;
@@ -45,14 +52,16 @@ int main(int argc, char** argv)
 	{
 		SDL_Event event;
 		{
-			auto t = IG::ProcessEvents();
+			auto t = Rx::ProcessEvents();
 
 			event = t.first;
 			done = t.second;
 		}
 
+		Rx::PreFrame(renderer);
+		Rx::getFont("menlo", 32);
+		Rx::BeginFrame(renderer);
 
-		IG::BeginFrame(renderer);
 		ImGui::PushFont(menlo);
 
 		// draw fps
@@ -68,7 +77,7 @@ int main(int argc, char** argv)
 				{
 					prevFps.push_back(fps);
 
-					if(prevFps.size() > 32)
+					if(prevFps.size() > 50)
 						prevFps.erase(prevFps.begin());
 
 					double totalfps = 0;
@@ -81,18 +90,18 @@ int main(int argc, char** argv)
 				#endif
 
 				renderer->SetColour(Util::Colour::white());
-				renderer->RenderTex(pic, { 0, 0 });
+				// renderer->RenderTex(pic, { 0, 0 });
 
 				// auto c = renderer->GetColour();
-				// renderer->RenderString(std::string("FPS: ") + std::to_string((int) fps), primaryFont, Math::Vector2(0, 0));
+				renderer->RenderString(std::string("FPS: ") + std::to_string((int) fps), primaryFont, 14, Math::Vector2(50, 50));
 
 				// renderer->RenderRect(Math::Rectangle(0.25, 0.25, 0.5, 0.5));
 
 				// renderer->SetColour(c);
 
-				// ImGui::BeginMainMenuBar();
-				// ImGui::Text("FPS: %.2lf", fps);
-				// ImGui::EndMainMenuBar();
+				ImGui::BeginMainMenuBar();
+				ImGui::Text("FPS: %.2lf", fps);
+				ImGui::EndMainMenuBar();
 			}
 		}
 
@@ -161,7 +170,7 @@ int main(int argc, char** argv)
 
 		ImGui::PopFont();
 
-		IG::EndFrame(renderer);
+		Rx::EndFrame(renderer);
 
 		// more fps computation
 		{
@@ -181,8 +190,6 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-
-
 	}
 
 	// Cleanup

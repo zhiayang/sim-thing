@@ -133,22 +133,6 @@ namespace Util
 		static Colour magenta() { return Colour::blue() + Colour::red(); }
 		static Colour random() { return Colour((uint8_t) Util::Random::get(0, 255), (uint8_t) Util::Random::get(0, 255), (uint8_t) Util::Random::get(0, 255)); }
 	};
-
-
-
-	struct Font
-	{
-		Font() { }
-		Font(ImFont* i, TTF_Font* s) : imgui(i), sdl(s) { }
-		Font(const Font& other) : imgui(other.imgui), sdl(other.sdl) { }
-		Font& operator = (const Font& other) { this->sdl = other.sdl; this->imgui = other.imgui; return *this; }
-
-		ImFont* imgui = 0;
-		TTF_Font* sdl = 0;
-	};
-
-	Font getFont(std::string name, int size, bool hinting = true);
-	void closeAllFonts();
 }
 
 template<class T>

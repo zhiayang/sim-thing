@@ -578,7 +578,7 @@ static float            GetDraggedColumnOffset(int column_index);
 
 static bool             IsKeyPressedMap(ImGuiKey key, bool repeat = true);
 
-static void             SetCurrentFont(ImFont* font);
+void					SetCurrentFont(ImFont* font);
 static void             SetCurrentWindow(ImGuiWindow* window);
 static void             SetWindowScrollY(ImGuiWindow* window, float new_scroll_y);
 static void             SetWindowPos(ImGuiWindow* window, const ImVec2& pos, ImGuiSetCond cond);
@@ -4308,7 +4308,7 @@ float ImGui::CalcItemWidth()
 	return w;
 }
 
-static void SetCurrentFont(ImFont* font)
+void SetCurrentFont(ImFont* font)
 {
 	ImGuiState& g = *GImGui;
 	IM_ASSERT(font && font->IsLoaded());    // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?

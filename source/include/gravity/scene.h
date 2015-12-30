@@ -11,13 +11,13 @@
 
 struct Controller;
 
-namespace SDL { struct Renderer; }
+namespace Rx { struct Renderer; }
 namespace Gravity
 {
 	struct Scene
 	{
 		virtual ~Scene() { }
-		virtual void renderScene(Controller& c, SDL::Renderer* r) = 0;
+		virtual void renderScene(Controller& c, Rx::Renderer* r) = 0;
 		virtual void updateScene(Controller& c, double delta) = 0;
 		virtual bool hidesBehind() = 0;
 	};
@@ -29,7 +29,7 @@ namespace Gravity
 	// little widget things. but scenes themselves contain a world of entities and stuff.
 	struct CodeWindowScene : Scene
 	{
-		virtual void renderScene(Controller& c, SDL::Renderer* r) override;
+		virtual void renderScene(Controller& c, Rx::Renderer* r) override;
 		virtual void updateScene(Controller& c, double delta) override;
 		virtual bool hidesBehind() override;
 
@@ -121,7 +121,7 @@ namespace Gravity
 		size_t getSceneCount();
 
 
-		void renderCurrentScene(SDL::Renderer* r);
+		void renderCurrentScene(Rx::Renderer* r);
 		void updateCurrentScene(double delta);
 
 

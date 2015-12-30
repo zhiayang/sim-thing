@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #include "utilities.h"
-#include "sdlwrapper.h"
+#include "graphicswrapper.h"
 
 #include "imgui.h"
 
@@ -31,40 +31,7 @@ namespace Util
 			return something(g);
 		}
 	}
-
-
-	typedef std::tuple<std::string, int> FontTuple;
-	static std::map<FontTuple, Font> fontMap;
-
-	Font getFont(std::string name, int size, bool hinting)
-	{
-		FontTuple tup(name, size);
-		if(fontMap.find(tup) != fontMap.end())
-		{
-			return fontMap[tup];
-		}
-
-		std::string path = AssetLoader::getResourcePath() + "fonts/" + name + ".ttf";
-
-		ImFont* imguif = ImGui::GetIO().Fonts->AddFontFromFileTTF(path.c_str(), size);
-		TTF_Font* sdlf = TTF_OpenFont(path.c_str(), size);
-
-		Font f { imguif, sdlf };
-		fontMap[tup] = f;
-
-		return f;
-	}
-
-	void closeAllFonts()
-	{
-		for(auto pair : fontMap)
-		{
-			pair.second.imgui->Clear();
-			TTF_CloseFont(pair.second.sdl);
-		}
-	}
 }
-
 
 
 

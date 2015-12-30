@@ -2,8 +2,9 @@
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
-#include "SDLWrapper.h"
-namespace SDL
+#include "graphicswrapper.h"
+
+namespace Rx
 {
 	Texture::Texture(std::string path, Renderer* r) : Texture(AssetLoader::Load(path.c_str()), r)
 	{

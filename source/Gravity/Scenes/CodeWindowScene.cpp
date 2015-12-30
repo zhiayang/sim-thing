@@ -3,11 +3,11 @@
 // Licensed under the Apache License Version 2.0.
 
 #include "gravity/gravity.h"
-#include "sdlwrapper.h"
+#include "graphicswrapper.h"
 
 namespace Gravity
 {
-	void CodeWindowScene::renderScene(Controller& c, SDL::Renderer* r)
+	void CodeWindowScene::renderScene(Controller& c, Rx::Renderer* r)
 	{
 		// draw a box.
 		r->SetColour(Util::Colour::white());

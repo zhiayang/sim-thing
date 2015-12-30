@@ -2,8 +2,9 @@
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
-#include "sdlwrapper.h"
-namespace SDL
+#include "graphicswrapper.h"
+
+namespace Rx
 {
 	Surface::Surface(std::string path) : Surface(AssetLoader::Load(path.c_str()))
 	{
@@ -43,22 +44,6 @@ namespace SDL
 	{
 		this->asset = 0;
 		this->sdlSurf = sdls;
-	}
-
-	Surface* Surface::fromText(Util::Font font, Util::Colour colour, std::string txt)
-	{
-		// create a surface
-
-		SDL_Color sdlc;
-		sdlc.r = colour.r;
-		sdlc.g = colour.g;
-		sdlc.b = colour.b;
-		sdlc.a = colour.a;
-
-		SDL_Surface* sdls = TTF_RenderUTF8_Blended(font.sdl, txt.c_str(), sdlc);
-		if(!sdls) ERROR("Failed to create surface");
-
-		return new Surface(sdls);
 	}
 }
 

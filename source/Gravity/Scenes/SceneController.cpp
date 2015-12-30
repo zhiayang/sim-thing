@@ -35,7 +35,7 @@ namespace Gravity
 		return this->sceneStack.size();
 	}
 
-	void SceneController::renderCurrentScene(SDL::Renderer* r)
+	void SceneController::renderCurrentScene(Rx::Renderer* r)
 	{
 		this->getCurrentScene()->renderScene(this->controller, r);
 	}

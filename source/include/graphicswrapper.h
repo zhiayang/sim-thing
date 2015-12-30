@@ -15,9 +15,43 @@
 #include "assetloader.h"
 #include "mathprimitives.h"
 
+struct ImDrawData;
 
-namespace SDL
+namespace Rx
 {
+	// font stuff
+	struct Font
+	{
+		Font() { }
+		Font(std::string n) : name(n) { }
+		Font(const Font& other) : name(other.name), imgui(other.imgui) { }
+		Font& operator = (const Font& other) { this->name = other.name; this->imgui = other.imgui; return *this; }
+
+		std::string name;
+
+		ImFont* imgui = 0;
+		uint8_t* ttfBuffer = 0;
+		size_t ttfBufferSize = 0;
+	};
+
+	Font getFont(std::string name, int size, bool hinting = true);
+	void closeAllFonts();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	struct Texture;
 
 	struct Window
@@ -46,25 +80,22 @@ namespace SDL
 		{
 			Invalid,
 			Clear,
-			RenderTex,
 			RenderVerts,
-			RenderString,
+			RenderQuads,
 		};
 
 		RenderCommand() { }
 
-		RenderCommand(const RenderCommand& o) : fill(o.fill), colour(o.colour), texture(o.texture),
-			vertices(o.vertices), type(o.type), str(o.str), font(o.font), mode(o.mode) { }
+		RenderCommand(const RenderCommand& o) : fill(o.fill), textureId(o.textureId), colour(o.colour),
+			vertices(o.vertices), type(o.type), mode(o.mode) { }
 
 		RenderCommand& operator = (const RenderCommand& o)
 		{
 			this->fill = o.fill;
+			this->textureId = o.textureId;
 			this->colour = o.colour;
-			this->texture = o.texture;
 			this->vertices = o.vertices;
 			this->type = o.type;
-			this->str = o.str;
-			this->font = o.font;
 			this->mode = o.mode;
 
 			return *this;
@@ -72,18 +103,15 @@ namespace SDL
 
 		void doRender();
 
-		static RenderCommand createRenderString(std::string s, Util::Font font, Util::Colour col, Math::Vector2 pos);
+		static RenderCommand createRenderString(std::string s, Rx::Font font, float size, Util::Colour col, Math::Vector2 pos);
 		static RenderCommand createRenderTexture(Texture* tex, Math::Rectangle src, Math::Rectangle dest);
 		static RenderCommand createRenderVertices(std::vector<Math::Vector2> vertices, GLenum mode, Util::Colour col, bool fill);
 
 		bool fill = 0;
+		int textureId = 0;
 		Util::Colour colour;
-		Texture* texture = 0;
 		std::vector<Math::Vector2> vertices;
 		CommandType type = CommandType::Invalid;
-
-		std::string str;
-		Util::Font font;
 
 		GLenum mode;
 	};
@@ -126,8 +154,8 @@ namespace SDL
 
 
 
-		// text
-		void RenderString(std::string txt, Util::Font font, Math::Vector2 pt);
+
+		void RenderString(std::string txt, Rx::Font font, float size, Math::Vector2 pt);
 
 
 
@@ -147,8 +175,6 @@ namespace SDL
 		Surface(std::string path);
 		Surface(AssetLoader::Asset* ass);
 		~Surface();
-
-		static Surface* fromText(Util::Font font, Util::Colour colour, std::string txt);
 
 		SDL_Surface* sdlSurf;
 		AssetLoader::Asset* asset;
@@ -180,14 +206,36 @@ namespace SDL
 
 
 
+	// imgui stuff
+
+	std::pair<SDL_GLContext, Rx::Renderer*> Initialise(int width, int height, Util::Colour clear);
+	std::pair<SDL_Event, bool> ProcessEvents();
+
+	// rendering stuff.
+	void PreFrame(Rx::Renderer* r);
+	void BeginFrame(Rx::Renderer* r);
+	void EndFrame(Rx::Renderer* r);
+
+
+
+
+	// internal stuff, mostly
+	void SetupOpenGL(ImDrawData* draw_data, int* fb_width, int* fb_height);
+	void RenderImGui(ImDrawData* draw_data, int fb_height);
+	void FinishOpenGL();
 
 
 
 
 
-	void Initialise();
-	void Initialise(uint32_t subs);
+
+
+
+
 }
+
+
+
 
 
 
