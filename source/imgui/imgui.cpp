@@ -2679,31 +2679,33 @@ void ImGui::RenderFrame(ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, bool border,
 // Render a triangle to denote expanded/collapsed state
 void ImGui::RenderCollapseTriangle(ImVec2 p_min, bool opened, float scale, bool shadow)
 {
-	ImGuiState& g = *GImGui;
-	ImGuiWindow* window = GetCurrentWindow();
+	// edit: do nothing.
 
-	const float h = g.FontSize * 1.00f;
-	const float r = h * 0.40f * scale;
-	ImVec2 center = p_min + ImVec2(h*0.50f, h*0.50f*scale);
+	// ImGuiState& g = *GImGui;
+	// ImGuiWindow* window = GetCurrentWindow();
 
-	ImVec2 a, b, c;
-	if (opened)
-	{
-		center.y -= r*0.25f;
-		a = center + ImVec2(0,1)*r;
-		b = center + ImVec2(-0.866f,-0.5f)*r;
-		c = center + ImVec2(0.866f,-0.5f)*r;
-	}
-	else
-	{
-		a = center + ImVec2(1,0)*r;
-		b = center + ImVec2(-0.500f,0.866f)*r;
-		c = center + ImVec2(-0.500f,-0.866f)*r;
-	}
+	// const float h = g.FontSize * 1.00f;
+	// const float r = h * 0.40f * scale;
+	// ImVec2 center = p_min + ImVec2(h*0.50f, h*0.50f*scale);
 
-	if (shadow && (window->Flags & ImGuiWindowFlags_ShowBorders) != 0)
-		window->DrawList->AddTriangleFilled(a+ImVec2(2,2), b+ImVec2(2,2), c+ImVec2(2,2), GetColorU32(ImGuiCol_BorderShadow));
-	window->DrawList->AddTriangleFilled(a, b, c, GetColorU32(ImGuiCol_Text));
+	// ImVec2 a, b, c;
+	// if (opened)
+	// {
+	// 	center.y -= r*0.25f;
+	// 	a = center + ImVec2(0,1)*r;
+	// 	b = center + ImVec2(-0.866f,-0.5f)*r;
+	// 	c = center + ImVec2(0.866f,-0.5f)*r;
+	// }
+	// else
+	// {
+	// 	a = center + ImVec2(1,0)*r;
+	// 	b = center + ImVec2(-0.500f,0.866f)*r;
+	// 	c = center + ImVec2(-0.500f,-0.866f)*r;
+	// }
+
+	// if (shadow && (window->Flags & ImGuiWindowFlags_ShowBorders) != 0)
+	// 	window->DrawList->AddTriangleFilled(a+ImVec2(2,2), b+ImVec2(2,2), c+ImVec2(2,2), GetColorU32(ImGuiCol_BorderShadow));
+	// window->DrawList->AddTriangleFilled(a, b, c, GetColorU32(ImGuiCol_Text));
 }
 
 void ImGui::RenderCheckMark(ImVec2 pos, ImU32 col)
@@ -3688,6 +3690,9 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 		// At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit detection and drawing
 		if (!(flags & ImGuiWindowFlags_NoTitleBar) && !(flags & ImGuiWindowFlags_NoCollapse))
 		{
+			// disable doubleclick to min/max, since we have a button for that now.
+			#ifndef CUSTOMISED_SHIT
+
 			ImRect title_bar_rect = window->TitleBarRect();
 			if (g.HoveredWindow == window && IsMouseHoveringRect(title_bar_rect.Min, title_bar_rect.Max) && g.IO.MouseDoubleClicked[0])
 			{
@@ -3696,6 +3701,8 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 					MarkSettingsDirty();
 				FocusWindow(window);
 			}
+
+			#endif
 		}
 		else
 		{
@@ -4039,8 +4046,17 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 		// Title bar
 		if (!(flags & ImGuiWindowFlags_NoTitleBar))
 		{
-			if (p_opened != NULL)
+			#ifndef CUSTOMISED_SHIT
+			{
+				if(p_opened != NULL)
+					CloseWindowButton(p_opened);
+			}
+			#else
+			{
+				// call no matter what, since we still have the minmax button
 				CloseWindowButton(p_opened);
+			}
+			#endif
 
 			const ImVec2 text_size = CalcTextSize(name, NULL, true);
 			if (!(flags & ImGuiWindowFlags_NoCollapse))
@@ -4511,9 +4527,19 @@ const char* ImGui::GetStyleColName(ImGuiCol idx)
 	case ImGuiCol_ResizeGrip: return "ResizeGrip";
 	case ImGuiCol_ResizeGripHovered: return "ResizeGripHovered";
 	case ImGuiCol_ResizeGripActive: return "ResizeGripActive";
+
 	case ImGuiCol_CloseButton: return "CloseButton";
 	case ImGuiCol_CloseButtonHovered: return "CloseButtonHovered";
 	case ImGuiCol_CloseButtonActive: return "CloseButtonActive";
+
+	case ImGuiCol_MinButton: return "MinButton";
+	case ImGuiCol_MinButtonHovered: return "MinButtonHovered";
+	case ImGuiCol_MinButtonActive: return "MinButtonActive";
+
+	case ImGuiCol_MaxButton: return "MaxButton";
+	case ImGuiCol_MaxButtonHovered: return "MaxButtonHovered";
+	case ImGuiCol_MaxButtonActive: return "MaxButtonActive";
+
 	case ImGuiCol_PlotLines: return "PlotLines";
 	case ImGuiCol_PlotLinesHovered: return "PlotLinesHovered";
 	case ImGuiCol_PlotHistogram: return "PlotHistogram";
@@ -5338,6 +5364,18 @@ bool ImGui::InvisibleButton(const char* str_id, const ImVec2& size_arg)
 	return pressed;
 }
 
+
+
+
+
+#ifdef CUSTOMISED_SHIT
+
+// this one does our traffic light thing.
+#include "imgui_close_button_impl.h"
+
+#else
+
+
 // Upper-right button to close a window.
 static bool CloseWindowButton(bool* p_opened)
 {
@@ -5367,6 +5405,33 @@ static bool CloseWindowButton(bool* p_opened)
 
 	return pressed;
 }
+
+void ImGui::Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
+{
+	ImGuiWindow* window = GetCurrentWindow();
+	if (window->SkipItems)
+		return;
+
+	ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
+	if (border_col.w > 0.0f)
+		bb.Max += ImVec2(2,2);
+	ItemSize(bb);
+	if (!ItemAdd(bb, NULL))
+		return;
+
+	if (border_col.w > 0.0f)
+	{
+		window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(border_col), 0.0f);
+		window->DrawList->AddImage(user_texture_id, bb.Min+ImVec2(1,1), bb.Max-ImVec2(1,1), uv0, uv1, GetColorU32(tint_col));
+	}
+	else
+	{
+		window->DrawList->AddImage(user_texture_id, bb.Min, bb.Max, uv0, uv1, GetColorU32(tint_col));
+	}
+}
+}
+#endif
+
 
 void ImGui::Image(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col)
 {

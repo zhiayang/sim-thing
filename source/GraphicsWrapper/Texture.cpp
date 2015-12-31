@@ -2,6 +2,7 @@
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
+#include "imgui.h"
 #include "glwrapper.h"
 #include "graphicswrapper.h"
 
@@ -41,12 +42,21 @@ namespace Rx
 			texmode = GL_RGB;
 		}
 
-		glTexImage2D(GL_TEXTURE_2D, 0, texmode, this->surf->sdlSurf->w, this->surf->sdlSurf->h, 0, texmode, GL_UNSIGNED_BYTE, this->surf->sdlSurf->pixels);
+		glTexImage2D(GL_TEXTURE_2D, 0, texmode, this->width, this->height, 0, texmode, GL_UNSIGNED_BYTE, this->surf->sdlSurf->pixels);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		GL::popTextureBinding();
+
+
+		// this is another one of those "retina" hacks.
+		if(ImGui::GetIO().DisplayFramebufferScale.x != 1.0 || ImGui::GetIO().DisplayFramebufferScale.y != 1.0)
+		{
+			// then we report our size as half our actual size.
+			this->width /= 2;
+			this->height /= 2;
+		}
 	}
 
 	Texture::~Texture()

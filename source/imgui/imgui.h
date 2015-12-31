@@ -578,9 +578,19 @@ enum ImGuiCol_
 	ImGuiCol_ResizeGrip,
 	ImGuiCol_ResizeGripHovered,
 	ImGuiCol_ResizeGripActive,
+
 	ImGuiCol_CloseButton,
 	ImGuiCol_CloseButtonHovered,
 	ImGuiCol_CloseButtonActive,
+
+	ImGuiCol_MinButton,
+	ImGuiCol_MinButtonHovered,
+	ImGuiCol_MinButtonActive,
+
+	ImGuiCol_MaxButton,
+	ImGuiCol_MaxButtonHovered,
+	ImGuiCol_MaxButtonActive,
+
 	ImGuiCol_PlotLines,
 	ImGuiCol_PlotLinesHovered,
 	ImGuiCol_PlotHistogram,

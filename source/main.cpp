@@ -6,10 +6,10 @@
 
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
-
 #include "graphicswrapper.h"
 
 #include "config.h"
+#include "format.h"
 
 #include <deque>
 
@@ -35,7 +35,50 @@ int main(int argc, char** argv)
 	// since our global scale is 0.50, this effectively gives us another *level* of oversampling.
 	// it doesn't seem to affect framerate too much, and produces **MUCH** crisper text.
 
-	ImGui::GetIO().FontGlobalScale = 0.50;
+	ImGuiIO& io = ImGui::GetIO();
+	{
+		// setup defaults
+		io.FontGlobalScale = 0.50;
+		// io.IniFilename = nullptr;
+
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		style.WindowRounding		= 4.0f;
+		style.ScrollbarRounding		= 4.0f;
+		style.ScrollbarSize			= 12.0f;
+		style.WindowTitleAlign		= ImGuiAlign_Center;
+
+		style.Colors[ImGuiCol_FrameBgHovered]		= ImVec4(0.25f, 0.75f, 0.50f, 0.50f);
+		style.Colors[ImGuiCol_FrameBgActive]		= ImVec4(0.90f, 0.65f, 0.31f, 0.75f);
+		style.Colors[ImGuiCol_TitleBg]				= ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+		style.Colors[ImGuiCol_TitleBgCollapsed]		= ImVec4(0.37f, 0.37f, 0.37f, 0.78f);
+		style.Colors[ImGuiCol_TitleBgActive]		= ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
+		style.Colors[ImGuiCol_MenuBarBg]			= ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+		style.Colors[ImGuiCol_ScrollbarBg]			= ImVec4(0.20f, 0.20f, 0.20f, 0.60f);
+		style.Colors[ImGuiCol_ScrollbarGrab]		= ImVec4(0.50f, 0.50f, 0.50f, 0.30f);
+		style.Colors[ImGuiCol_ScrollbarGrabHovered]	= ImVec4(0.59f, 0.59f, 0.59f, 0.40f);
+		style.Colors[ImGuiCol_ScrollbarGrabActive]	= ImVec4(0.25f, 0.50f, 0.98f, 0.78f);
+		style.Colors[ImGuiCol_CheckMark]			= ImVec4(0.50f, 0.86f, 0.13f, 0.75f);
+		style.Colors[ImGuiCol_Button]				= ImVec4(0.25f, 0.50f, 0.98f, 0.86f);
+		style.Colors[ImGuiCol_ButtonHovered]		= ImVec4(0.31f, 0.55f, 1.00f, 1.00f);
+		style.Colors[ImGuiCol_ButtonActive]			= ImVec4(0.13f, 0.25f, 0.50f, 1.00f);
+		style.Colors[ImGuiCol_Header]				= ImVec4(0.25f, 0.50f, 0.98f, 0.45f);
+		style.Colors[ImGuiCol_HeaderHovered]		= ImVec4(0.25f, 0.50f, 0.98f, 0.80f);
+		style.Colors[ImGuiCol_HeaderActive]			= ImVec4(0.13f, 0.25f, 0.50f, 1.00f);
+		style.Colors[ImGuiCol_TextSelectedBg]		= ImVec4(0.25f, 0.50f, 0.98f, 0.75f);
+
+		style.Colors[ImGuiCol_CloseButton]			= ImVec4(0.98f, 0.24f, 0.24f, 1.00f);
+		style.Colors[ImGuiCol_CloseButtonHovered]	= ImVec4(0.98f, 0.24f, 0.24f, 1.00f);
+		style.Colors[ImGuiCol_CloseButtonActive]	= ImVec4(0.71f, 0.10f, 0.10f, 1.00f);
+
+		style.Colors[ImGuiCol_MinButton]			= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
+		style.Colors[ImGuiCol_MinButtonHovered]		= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
+		style.Colors[ImGuiCol_MinButtonActive]		= ImVec4(0.75f, 0.56f, 0.14f, 1.00f);
+
+		style.Colors[ImGuiCol_MaxButton]			= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
+		style.Colors[ImGuiCol_MaxButtonHovered]		= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
+		style.Colors[ImGuiCol_MaxButtonActive]		= ImVec4(0.12f, 0.61f, 0.19f, 1.00f);
+	}
 
 
 	Rx::Font primaryFont = Rx::getFont("menlo", 14);
@@ -43,9 +86,9 @@ int main(int argc, char** argv)
 
 
 	double frameTime = S_TO_NS(0.01667);
+	double currentFps = 0.0;
 	std::deque<double> prevFps;
 
-	// Rx::Texture* pic = new Rx::Texture("test.png", renderer);
 
 	// Main loop
 	bool done = false;
@@ -59,11 +102,6 @@ int main(int argc, char** argv)
 			done = t.second;
 		}
 
-		Rx::PreFrame(renderer);
-		Rx::getFont("menlo", 32);
-		Rx::BeginFrame(renderer);
-
-		ImGui::PushFont(menlo);
 
 		// draw fps
 		double frameBegin = Util::Time::ns();
@@ -71,12 +109,12 @@ int main(int argc, char** argv)
 			if(Config::getShowFps())
 			{
 				// frames per second is (1sec to ns) / 'frametime' (in ns)
-				double fps = S_TO_NS(1.0) / frameTime;
+				currentFps = S_TO_NS(1.0) / frameTime;
 
 				// smooth fps
 				#if 1
 				{
-					prevFps.push_back(fps);
+					prevFps.push_back(currentFps);
 
 					if(prevFps.size() > 50)
 						prevFps.erase(prevFps.begin());
@@ -86,23 +124,35 @@ int main(int argc, char** argv)
 						totalfps += f;
 
 					totalfps /= prevFps.size();
-					fps = totalfps;
+					currentFps = totalfps;
 				}
 				#endif
-
-				renderer->SetColour(Util::Colour::white());
-				// renderer->RenderTex(pic, { 0, 0 });
-
-				// auto c = renderer->GetColour();
-				renderer->RenderString(std::string("FPS: ") + std::to_string((int) fps), primaryFont, 14, Math::Vector2(50, 50));
-				renderer->RenderRect(Math::Rectangle(100, 100, 400, 400));
+			}
+		}
 
 
+		Rx::PreFrame(renderer);
+		Rx::getFont("menlo", 32);
+		Rx::BeginFrame(renderer);
 
-				// renderer->SetColour(c);
+		ImGui::PushFont(menlo);
+		ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+
+
+		if(Config::getShowFps())
+		{
+			renderer->SetColour(Util::Colour::white());
+
+			static Rx::Texture* pic = new Rx::Texture("test.png", renderer);
+			renderer->RenderTex(pic, { 0, 0 });
+
+			{
+				std::string str;
+				str = fmt::sprintf("%.2f fps // %d windows // %d verts // %d allocations", currentFps,
+					io.MetricsActiveWindows, io.MetricsRenderVertices, io.MetricsAllocs);
 
 				ImGui::BeginMainMenuBar();
-				ImGui::Text("FPS: %.2lf", fps);
+				ImGui::Text("%s", str.c_str());
 				ImGui::EndMainMenuBar();
 			}
 		}
@@ -113,11 +163,30 @@ int main(int argc, char** argv)
 
 
 
-		ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(500, 300));
-		ImGui::Begin("Terminal", 0, { 500, 600 });
+
+		bool open;
+		ImGui::Begin("Terminal", &open, { 500, 600 });
 		{
 			static char text[1024 * 16] =
 				"/*\n"
@@ -137,14 +206,45 @@ int main(int argc, char** argv)
 		ImGui::PopStyleVar();
 		ImGui::PopStyleVar();
 
-		ImGui::ShowStyleEditor();
-
-
+		// ImGui::ShowStyleEditor();
 		ImGui::ShowTestWindow();
 
 
-		ImGui::PopFont();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		ImGui::PopFont();
 		Rx::EndFrame(renderer);
 
 		// more fps computation

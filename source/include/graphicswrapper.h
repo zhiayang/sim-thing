@@ -41,6 +41,8 @@ namespace Rx
 
 
 
+	void PushDefaultStyle();
+	void PopDefaultStyle();
 
 
 
