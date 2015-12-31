@@ -593,7 +593,11 @@ static void stb_textedit_move_to_last(STB_TEXTEDIT_STRING *str, STB_TexteditStat
 }
 
 #ifdef STB_TEXTEDIT_IS_SPACE
-static int is_word_boundary(STB_TEXTEDIT_STRING* _str, int _idx)
+
+// some changes here.
+
+// this tests for word boundaries when coming from the right, ie. left arrow.
+static int is_word_boundary_from_right(STB_TEXTEDIT_STRING* _str, int _idx)
 {
 	if(_idx > 0)
 	{
@@ -606,10 +610,28 @@ static int is_word_boundary(STB_TEXTEDIT_STRING* _str, int _idx)
 	}
 }
 
+
+// this tests the opposite, ie. right arrow.
+static int is_word_boundary_from_left(STB_TEXTEDIT_STRING* _str, int _idx)
+{
+	if(_idx > 0)
+	{
+		return (!STB_TEXTEDIT_IS_SPACE(STB_TEXTEDIT_GETCHAR(_str, _idx - 1))
+			&& STB_TEXTEDIT_IS_SPACE(STB_TEXTEDIT_GETCHAR(_str, _idx)));
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+
+
+
 static int stb_textedit_move_to_word_previous( STB_TEXTEDIT_STRING *_str, STB_TexteditState *_state )
 {
 	int c = _state->cursor - 1;
-	while( c >= 0 && !is_word_boundary( _str, c ) )
+	while( c >= 0 && !is_word_boundary_from_right( _str, c ) )
 		--c;
 
 	if( c < 0 )
@@ -622,7 +644,7 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *_str, STB_Texted
 {
 	const int len = STB_TEXTEDIT_STRINGLEN(_str);
 	int c = _state->cursor+1;
-	while( c < len && !is_word_boundary( _str, c ) )
+	while( c < len && !is_word_boundary_from_left( _str, c ) )
 		++c;
 
 	if( c > len )
