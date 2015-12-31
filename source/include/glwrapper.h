@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <OpenGL/gl.h>
 #include <GLUT/glut.h>
-namespace OpenGL
+
+namespace GL
 {
+	void pushTextureBinding(int id);
+	int popTextureBinding();
 }

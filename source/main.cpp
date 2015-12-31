@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 	ImFont* menlo = primaryFont.imgui;
 
 
-	double frameTime = 16.6667;
+	double frameTime = S_TO_NS(1);
 	std::deque<double> prevFps(50);
 
 	// Rx::Texture* pic = new Rx::Texture("test.png", renderer);
@@ -94,8 +94,9 @@ int main(int argc, char** argv)
 
 				// auto c = renderer->GetColour();
 				renderer->RenderString(std::string("FPS: ") + std::to_string((int) fps), primaryFont, 14, Math::Vector2(50, 50));
+				renderer->RenderRect(Math::Rectangle(100, 100, 400, 400));
 
-				// renderer->RenderRect(Math::Rectangle(0.25, 0.25, 0.5, 0.5));
+
 
 				// renderer->SetColour(c);
 

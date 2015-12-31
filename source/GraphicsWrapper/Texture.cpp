@@ -2,6 +2,7 @@
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
+#include "glwrapper.h"
 #include "graphicswrapper.h"
 
 namespace Rx
@@ -28,7 +29,8 @@ namespace Rx
 		// do opengl shit.
 
 		glGenTextures(1, &this->glTextureID);
-		glBindTexture(GL_TEXTURE_2D, this->glTextureID);
+		GL::pushTextureBinding(this->glTextureID);
+
 		int texmode = 0;
 		if(this->surf->sdlSurf->format->BytesPerPixel == 4)
 		{
@@ -43,6 +45,8 @@ namespace Rx
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		GL::popTextureBinding();
 	}
 
 	Texture::~Texture()

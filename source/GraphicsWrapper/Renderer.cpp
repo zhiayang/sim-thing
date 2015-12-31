@@ -102,10 +102,18 @@ namespace Rx
 		rc.colour = this->drawColour;
 		rc.type = RenderCommand::CommandType::RenderVerts;
 
-		rc.vertices.push_back({ rect.origin.x - 1.0, -1.0 * (rect.origin.y - 1.0) });
-		rc.vertices.push_back({ rect.origin.x - 1.0 + rect.width * 2.0, -1.0 * (rect.origin.y - 1.0) });
-		rc.vertices.push_back({ rect.origin.x - 1.0 + rect.width * 2.0, -1.0 * (rect.origin.y - 1.0 + rect.height * 2.0) });
-		rc.vertices.push_back({ rect.origin.x - 1.0, -1.0 * (rect.origin.y - 1.0 + rect.height * 2.0) });
+
+		double x1 = rect.origin.x;
+		double y1 = rect.origin.y;
+
+		double x2 = x1 + rect.width;
+		double y2 = y1 + rect.height;
+
+
+		rc.vertices.push_back({ x1, y1 });
+		rc.vertices.push_back({ x2, y1 });
+		rc.vertices.push_back({ x2, y2 });
+		rc.vertices.push_back({ x1, y2 });
 
 		this->renderList.push_back(rc);
 	}
@@ -117,8 +125,8 @@ namespace Rx
 		rc.colour = this->drawColour;
 		rc.type = RenderCommand::CommandType::RenderVerts;
 
-		rc.vertices.push_back({ start.x - 1.0, -1.0 * (start.y - 1.0) });
-		rc.vertices.push_back({ end.x - 1.0, -1.0 * (end.y - 1.0) });
+		rc.vertices.push_back({ start.x, start.y });
+		rc.vertices.push_back({ end.x, end.y });
 
 		this->renderList.push_back(rc);
 	}
@@ -204,7 +212,10 @@ namespace Rx
 		else if(this->type == CommandType::RenderQuads)
 		{
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, this->textureId);
+
+			GL::pushTextureBinding(this->textureId);
+
+			// glBindTexture(GL_TEXTURE_2D, this->textureId);
 			glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
 
 
@@ -231,6 +242,8 @@ namespace Rx
 				}
 				glEnd();
 			}
+
+			GL::popTextureBinding();
 		}
 	}
 
@@ -441,7 +454,7 @@ namespace Rx
 							float v2 = glyph->V1;
 
 							// CPU side clipping used to fit text in their frame when the frame is too small. Only does clipping for axis aligned quads.
-							if(false)
+							if((false))
 							{
 								if(x1 < cliprect.x)
 								{
@@ -654,11 +667,19 @@ namespace Rx
 				}
 				else
 				{
-					glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
+					// call into our own state handler
+					// so we can keep track of shit.
+
+					GL::pushTextureBinding((GLuint) (uintptr_t) pcmd->TextureId);
+
+
 					glScissor((int) pcmd->ClipRect.x, (int) (fb_height - pcmd->ClipRect.w),
 						(int) (pcmd->ClipRect.z - pcmd->ClipRect.x), (int) (pcmd->ClipRect.w - pcmd->ClipRect.y));
 
 					glDrawElements(GL_TRIANGLES, (GLsizei) pcmd->ElemCount, GL_UNSIGNED_SHORT, idx_buffer);
+
+
+					GL::popTextureBinding();
 				}
 				idx_buffer += pcmd->ElemCount;
 			}
@@ -674,7 +695,7 @@ namespace Rx
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		glBindTexture(GL_TEXTURE_2D, 0);
+		// glBindTexture(GL_TEXTURE_2D, 0);
 		glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 		glMatrixMode(GL_PROJECTION);
