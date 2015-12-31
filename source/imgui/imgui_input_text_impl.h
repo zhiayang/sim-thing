@@ -210,7 +210,6 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
 			// simulate a wordselect left, then a wordselect right with shift.
 			edit_state.OnKeyPressed(STB_TEXTEDIT_K_WORDLEFT);
 			edit_state.OnKeyPressed(STB_TEXTEDIT_K_WORDRIGHT | STB_TEXTEDIT_K_SHIFT);
-			edit_state.OnKeyPressed(STB_TEXTEDIT_K_LEFT | STB_TEXTEDIT_K_SHIFT); // one less, because wordselect is wonky
 		}
 		else if(io.MouseClicked[0] && !edit_state.SelectedAllMouseLock)
 		{
