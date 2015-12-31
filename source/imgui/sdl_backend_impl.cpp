@@ -36,14 +36,22 @@ namespace ImGuiBackend
 					cursors[type] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
 					break;
 
-				case CursorType::ResizeNSEW:
+				case CursorType::ResizeNWSE:
+					cursors[type] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENWSE);
+					break;
+
+				case CursorType::ResizeNESW:
+					cursors[type] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENESW);
+					break;
+
+				case CursorType::ResizeAll:
 					cursors[type] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEALL);
 					break;
 			}
 		}
 
-		if(SDL_GetCursor() != cursors[type])
-			SDL_SetCursor(cursors[type]);
+		// if(SDL_GetCursor() != cursors[type])
+		SDL_SetCursor(cursors[type]);
 	}
 }
 

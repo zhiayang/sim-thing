@@ -43,7 +43,7 @@
 
 #ifndef IMGUI_DISABLE_TEST_WINDOWS
 
-static void ShowExampleAppConsole(bool* opened);
+void ShowExampleAppConsole(bool* opened);
 static void ShowExampleAppLog(bool* opened);
 static void ShowExampleAppLayout(bool* opened);
 static void ShowExampleAppLongText(bool* opened);
@@ -2028,7 +2028,7 @@ struct ExampleAppConsole
     }
 };
 
-static void ShowExampleAppConsole(bool* opened)
+void ShowExampleAppConsole(bool* opened)
 {
     static ExampleAppConsole console;
     console.Draw("Example: Console", opened);

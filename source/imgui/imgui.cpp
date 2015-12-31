@@ -3899,7 +3899,9 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 		else
 		{
 			ImU32 resize_col = 0;
-			const float resize_corner_size = ImMax(g.FontSize * 1.35f, window_rounding + 1.0f + g.FontSize * 0.2f);
+			// changed resize handle factor here.
+
+			const float resize_corner_size = ImMax(g.FontSize * 0.75f, window_rounding + 1.0f + g.FontSize * 0.2f);
 			if(!(flags & ImGuiWindowFlags_AlwaysAutoResize) && window->AutoFitFramesX <= 0 && window->AutoFitFramesY <= 0 && !(flags & ImGuiWindowFlags_NoResize))
 			{
 				// Manual resize
@@ -3913,7 +3915,7 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 				if(hovered || held)
 				{
 					g.MouseCursor = ImGuiMouseCursor_ResizeNWSE;
-					ImGuiBackend::SetCursor(ImGuiBackend::CursorType::ResizeNSEW);
+					ImGuiBackend::SetCursor(ImGuiBackend::CursorType::ResizeNWSE);
 				}
 
 				if(g.HoveredWindow == window && held && g.IO.MouseDoubleClicked[0])

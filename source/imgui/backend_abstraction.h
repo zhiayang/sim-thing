@@ -15,7 +15,9 @@ namespace ImGuiBackend
 		Move,
 		ResizeEW,
 		ResizeNS,
-		ResizeNSEW,
+		ResizeNESW,	// northeast, southwest
+		ResizeNWSE,	// northwest, southeast
+		ResizeAll,
 	};
 
 	void SetCursor(CursorType type);
