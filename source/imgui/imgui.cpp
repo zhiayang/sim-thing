@@ -7265,11 +7265,20 @@ static bool InputTextFilterCharacter(unsigned int* p_char, ImGuiInputTextFlags f
 	return true;
 }
 
-#if ENABLE_OSX_TEXT_EDITING
+#ifdef CUSTOMISED_SHIT
 
 #include "imgui_input_text_impl.h"
 
 #else
+
+
+
+
+
+
+
+
+
 
 // Edit a string of text
 // FIXME: Rather messy function partly because we are doing UTF8 > u16 > UTF8 conversions on the go to more easily handle stb_textedit calls. Ideally we should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188
@@ -7822,6 +7831,7 @@ bool ImGui::InputTextEx(const char* label, char* buf, int buf_size, const ImVec2
 	else
 		return value_changed;
 }
+
 
 #endif	// enable osx text editing
 

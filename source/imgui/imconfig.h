@@ -6,14 +6,16 @@
 
 #pragma once
 
-// custom stuff.
-#if __APPLE__
-#define ENABLE_OSX_TEXT_EDITING 1
-#else
-#define ENABLE_OSX_TEXT_EDITING 0
-#endif
 
 #define CUSTOMISED_SHIT
+
+// custom stuff.
+#if __APPLE__ || defined(CUSTOMISED_SHIT)
+	#define ENABLE_OSX_TEXT_EDITING 1
+#else
+	#define ENABLE_OSX_TEXT_EDITING 0
+#endif
+
 
 
 
