@@ -7106,7 +7106,7 @@ static void    STB_TEXTEDIT_LAYOUTROW(StbTexteditRow* r, STB_TEXTEDIT_STRING* ob
 
 static bool is_separator(unsigned int c)
 {
-	return c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|';
+	return c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|' || c == '-';
 }
 
 #define STB_TEXTEDIT_IS_SPACE(CH)  (ImCharIsSpace((unsigned int) (CH)) || is_separator((unsigned int) (CH)))
