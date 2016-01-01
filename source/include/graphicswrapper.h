@@ -38,12 +38,7 @@ namespace Rx
 	void closeAllFonts();
 
 
-
-
-
-	void PushDefaultStyle();
-	void PopDefaultStyle();
-
+	void SetupDefaultStyle();
 
 
 

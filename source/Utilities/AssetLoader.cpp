@@ -21,8 +21,6 @@ namespace AssetLoader
 		binPath += "../assets/";
 		binPath += path;
 
-		LOG("Loading asset '%s'", binPath.c_str());
-
 		Asset* ass = new Asset();
 		ass->path = binPath;
 

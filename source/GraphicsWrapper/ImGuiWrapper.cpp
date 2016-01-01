@@ -10,15 +10,5 @@
 
 namespace Rx
 {
-	void PushDefaultStyle()
-	{
-		// ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4);
-		// ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 4, 4 });
 
-		// // ImGui::PushStyleVar(ImGuiStyle, 4);
-	}
-
-	void PopDefaultStyle()
-	{
-	}
 }

@@ -53,19 +53,46 @@ namespace Rx
 	}
 
 
-	std::pair<SDL_Event, bool> ProcessEvents()
+
+	void SetupDefaultStyle()
 	{
-		bool done = false;
+		ImGuiStyle& style = ImGui::GetStyle();
 
-		SDL_Event event;
-		while(SDL_PollEvent(&event))
-		{
-			ImGui_ImplSdl_ProcessEvent(&event);
-			if(event.type == SDL_QUIT)
-				done = true;
-		}
+		style.WindowRounding		= 4.0f;
+		style.ScrollbarRounding		= 4.0f;
+		style.ScrollbarSize			= 12.0f;
+		style.WindowTitleAlign		= ImGuiAlign_Center;
 
-		return { event, done };
+		style.Colors[ImGuiCol_FrameBgHovered]		= ImVec4(0.25f, 0.75f, 0.50f, 0.50f);
+		style.Colors[ImGuiCol_FrameBgActive]		= ImVec4(0.90f, 0.65f, 0.31f, 0.75f);
+		style.Colors[ImGuiCol_TitleBg]				= ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+		style.Colors[ImGuiCol_TitleBgCollapsed]		= ImVec4(0.37f, 0.37f, 0.37f, 0.78f);
+		style.Colors[ImGuiCol_TitleBgActive]		= ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
+		style.Colors[ImGuiCol_MenuBarBg]			= ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+		style.Colors[ImGuiCol_ScrollbarBg]			= ImVec4(0.20f, 0.20f, 0.20f, 0.60f);
+		style.Colors[ImGuiCol_ScrollbarGrab]		= ImVec4(0.50f, 0.50f, 0.50f, 0.30f);
+		style.Colors[ImGuiCol_ScrollbarGrabHovered]	= ImVec4(0.59f, 0.59f, 0.59f, 0.40f);
+		style.Colors[ImGuiCol_ScrollbarGrabActive]	= ImVec4(0.25f, 0.50f, 0.98f, 0.78f);
+		style.Colors[ImGuiCol_CheckMark]			= ImVec4(0.50f, 0.86f, 0.13f, 0.75f);
+		style.Colors[ImGuiCol_Button]				= ImVec4(0.25f, 0.50f, 0.98f, 0.86f);
+		style.Colors[ImGuiCol_ButtonHovered]		= ImVec4(0.31f, 0.55f, 1.00f, 1.00f);
+		style.Colors[ImGuiCol_ButtonActive]			= ImVec4(0.13f, 0.25f, 0.50f, 1.00f);
+		style.Colors[ImGuiCol_Header]				= ImVec4(0.25f, 0.50f, 0.98f, 0.45f);
+		style.Colors[ImGuiCol_HeaderHovered]		= ImVec4(0.25f, 0.50f, 0.98f, 0.80f);
+		style.Colors[ImGuiCol_HeaderActive]			= ImVec4(0.13f, 0.25f, 0.50f, 1.00f);
+		style.Colors[ImGuiCol_TextSelectedBg]		= ImVec4(0.25f, 0.50f, 0.98f, 0.75f);
+
+		style.Colors[ImGuiCol_CloseButton]			= ImVec4(0.98f, 0.24f, 0.24f, 1.00f);
+		style.Colors[ImGuiCol_CloseButtonHovered]	= ImVec4(0.98f, 0.24f, 0.24f, 1.00f);
+		style.Colors[ImGuiCol_CloseButtonActive]	= ImVec4(0.71f, 0.10f, 0.10f, 1.00f);
+
+		style.Colors[ImGuiCol_MinButton]			= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
+		style.Colors[ImGuiCol_MinButtonHovered]		= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
+		style.Colors[ImGuiCol_MinButtonActive]		= ImVec4(0.75f, 0.56f, 0.14f, 1.00f);
+
+		style.Colors[ImGuiCol_MaxButton]			= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
+		style.Colors[ImGuiCol_MaxButtonHovered]		= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
+		style.Colors[ImGuiCol_MaxButtonActive]		= ImVec4(0.12f, 0.61f, 0.19f, 1.00f);
 	}
 }
 

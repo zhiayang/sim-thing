@@ -11,11 +11,40 @@
 #include "config.h"
 #include "format.h"
 
+#include "connect/connect.h"
+
 #include <deque>
 
-// static const double fixedDeltaTimeNs	= 20.0 * 1000.0 * 1000.0;
-static const double targetFramerate		= 60.0;
+static const double fixedDeltaTimeNs	= 50.0 * 1000.0 * 1000.0;
+static const double targetFramerate		= 120.0;
 static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
+
+static Connect::GameState* gameState = 0;
+
+namespace Rx
+{
+	std::pair<SDL_Event, bool> ProcessEvents()
+	{
+		bool done = false;
+
+		SDL_Event event;
+		while(SDL_PollEvent(&event))
+		{
+			if(event.type == SDL_KEYUP || event.type == SDL_KEYDOWN)
+				Input::HandleInput(&gameState->inputState, &event);
+
+			ImGui_ImplSdl_ProcessEvent(&event);
+
+			if(event.type == SDL_QUIT)
+				done = true;
+		}
+
+		return { event, done };
+	}
+}
+
+
+
 
 
 int main(int argc, char** argv)
@@ -37,59 +66,27 @@ int main(int argc, char** argv)
 
 	ImGuiIO& io = ImGui::GetIO();
 	{
-		// setup defaults
 		io.FontGlobalScale = 0.50;
-		// io.IniFilename = nullptr;
 
-		ImGuiStyle& style = ImGui::GetStyle();
-
-		style.WindowRounding		= 4.0f;
-		style.ScrollbarRounding		= 4.0f;
-		style.ScrollbarSize			= 12.0f;
-		style.WindowTitleAlign		= ImGuiAlign_Center;
-
-		style.Colors[ImGuiCol_FrameBgHovered]		= ImVec4(0.25f, 0.75f, 0.50f, 0.50f);
-		style.Colors[ImGuiCol_FrameBgActive]		= ImVec4(0.90f, 0.65f, 0.31f, 0.75f);
-		style.Colors[ImGuiCol_TitleBg]				= ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
-		style.Colors[ImGuiCol_TitleBgCollapsed]		= ImVec4(0.37f, 0.37f, 0.37f, 0.78f);
-		style.Colors[ImGuiCol_TitleBgActive]		= ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
-		style.Colors[ImGuiCol_MenuBarBg]			= ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-		style.Colors[ImGuiCol_ScrollbarBg]			= ImVec4(0.20f, 0.20f, 0.20f, 0.60f);
-		style.Colors[ImGuiCol_ScrollbarGrab]		= ImVec4(0.50f, 0.50f, 0.50f, 0.30f);
-		style.Colors[ImGuiCol_ScrollbarGrabHovered]	= ImVec4(0.59f, 0.59f, 0.59f, 0.40f);
-		style.Colors[ImGuiCol_ScrollbarGrabActive]	= ImVec4(0.25f, 0.50f, 0.98f, 0.78f);
-		style.Colors[ImGuiCol_CheckMark]			= ImVec4(0.50f, 0.86f, 0.13f, 0.75f);
-		style.Colors[ImGuiCol_Button]				= ImVec4(0.25f, 0.50f, 0.98f, 0.86f);
-		style.Colors[ImGuiCol_ButtonHovered]		= ImVec4(0.31f, 0.55f, 1.00f, 1.00f);
-		style.Colors[ImGuiCol_ButtonActive]			= ImVec4(0.13f, 0.25f, 0.50f, 1.00f);
-		style.Colors[ImGuiCol_Header]				= ImVec4(0.25f, 0.50f, 0.98f, 0.45f);
-		style.Colors[ImGuiCol_HeaderHovered]		= ImVec4(0.25f, 0.50f, 0.98f, 0.80f);
-		style.Colors[ImGuiCol_HeaderActive]			= ImVec4(0.13f, 0.25f, 0.50f, 1.00f);
-		style.Colors[ImGuiCol_TextSelectedBg]		= ImVec4(0.25f, 0.50f, 0.98f, 0.75f);
-
-		style.Colors[ImGuiCol_CloseButton]			= ImVec4(0.98f, 0.24f, 0.24f, 1.00f);
-		style.Colors[ImGuiCol_CloseButtonHovered]	= ImVec4(0.98f, 0.24f, 0.24f, 1.00f);
-		style.Colors[ImGuiCol_CloseButtonActive]	= ImVec4(0.71f, 0.10f, 0.10f, 1.00f);
-
-		style.Colors[ImGuiCol_MinButton]			= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
-		style.Colors[ImGuiCol_MinButtonHovered]		= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
-		style.Colors[ImGuiCol_MinButtonActive]		= ImVec4(0.75f, 0.56f, 0.14f, 1.00f);
-
-		style.Colors[ImGuiCol_MaxButton]			= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
-		style.Colors[ImGuiCol_MaxButtonHovered]		= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
-		style.Colors[ImGuiCol_MaxButtonActive]		= ImVec4(0.12f, 0.61f, 0.19f, 1.00f);
+		// init.cpp
+		Rx::SetupDefaultStyle();
 	}
-
 
 
 	Rx::Font primaryFont = Rx::getFont("menlo", 14);
 	ImFont* menlo = primaryFont.imgui;
 
+	gameState = new Connect::GameState();
 
+
+	double accumulator = 0.0;
 	double frameTime = S_TO_NS(0.01667);
 	double currentFps = 0.0;
+
 	std::deque<double> prevFps;
 
+	double prevTimestamp = Util::Time::ns();
+	double renderDelta = 0;
 
 	// Main loop
 	bool done = false;
@@ -129,11 +126,30 @@ int main(int argc, char** argv)
 				}
 				#endif
 			}
+
+
+			renderDelta = frameBegin - prevTimestamp;
 		}
 
 
+		// do updates
+		{
+			accumulator += frameTime;
+
+			while(accumulator >= fixedDeltaTimeNs)
+			{
+				Connect::Update(*gameState, fixedDeltaTimeNs);
+				accumulator -= fixedDeltaTimeNs;
+			}
+		}
+
+
+
+
+
+
+
 		Rx::PreFrame(renderer);
-		Rx::getFont("menlo", 32);
 		Rx::BeginFrame(renderer);
 
 		ImGui::PushFont(menlo);
@@ -172,6 +188,7 @@ int main(int argc, char** argv)
 
 
 
+		Connect::Render(*gameState, renderDelta, renderer);
 
 
 
@@ -179,36 +196,13 @@ int main(int argc, char** argv)
 
 
 
-
-
-
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(500, 300));
-
-		bool open;
-		ImGui::Begin("Terminal", &open, { 500, 600 });
-		{
-			static char text[1024 * 16] =
-				"/*\n"
-				" The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
-				" the hexadecimal encoding of one offending instruction,\n"
-				" more formally, the invalid operand with locked CMPXCHG8B\n"
-				" instruction bug, is a design flaw in the majority of\n"
-				" Intel Pentium, Pentium MMX, and Pentium OverDrive\n"
-				" processors (all in the P5 microarchitecture).\n"
-				"*/\n\n"
-				"label:\n"
-				"\tlock cmpxchg8b eax\n";
-
-			ImGui::InputTextMultiline("##source", text, sizeof(text), ImVec2(-1, -1), ImGuiInputTextFlags_AllowTabInput);
-		}
-		ImGui::End();
-		ImGui::PopStyleVar();
-		ImGui::PopStyleVar();
 
 		// ImGui::ShowStyleEditor();
 		ImGui::ShowTestWindow();
+
+
+
+
 
 
 
@@ -256,7 +250,8 @@ int main(int argc, char** argv)
 			// don't kill the CPU
 			{
 				double toWait = targetFrameTimeNs - frameTime;
-				if(toWait >= 0)
+
+				if(toWait > 0)
 				{
 					usleep(NS_TO_US(toWait));
 				}
@@ -265,6 +260,8 @@ int main(int argc, char** argv)
 					// todo: we missed our framerate.
 				}
 			}
+
+			prevTimestamp = frameBegin;
 		}
 	}
 

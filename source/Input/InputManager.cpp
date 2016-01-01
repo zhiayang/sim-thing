@@ -16,8 +16,6 @@ namespace Input
 			inputState->keys[k] = (e->type == SDL_KEYDOWN);
 	}
 
-
-
 	Keys FromSDL(uint32_t sdlKeycode)
 	{
 		switch(sdlKeycode)

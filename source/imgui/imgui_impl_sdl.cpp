@@ -21,7 +21,10 @@
 // Data
 static double	g_Time = 0.0f;
 static bool		g_MousePressed[3] = { false, false, false };
-static float	g_MouseWheel = 0.0f;
+
+static float	g_MouseWheelV = 0.0f;
+static float	g_MouseWheelH = 0.0f;
+
 static GLuint	g_FontTexture = 0;
 
 
@@ -45,29 +48,38 @@ bool ImGui_ImplSdl_ProcessEvent(SDL_Event* event)
 	ImGuiIO& io = ImGui::GetIO();
 	switch (event->type)
 	{
-	case SDL_MOUSEWHEEL:
+		case SDL_MOUSEWHEEL:
 		{
 			if(event->wheel.y > 0)
-				g_MouseWheel = 1;
+				g_MouseWheelV = +1;
 			if(event->wheel.y < 0)
-				g_MouseWheel = -1;
+				g_MouseWheelV = -1;
+
+			if(event->wheel.x > 0)
+				g_MouseWheelH = +1;
+			if(event->wheel.x < 0)
+				g_MouseWheelH = -1;
+
 			return true;
 		}
-	case SDL_MOUSEBUTTONDOWN:
+
+		case SDL_MOUSEBUTTONDOWN:
 		{
 			if(event->button.button == SDL_BUTTON_LEFT) g_MousePressed[0] = true;
 			if(event->button.button == SDL_BUTTON_RIGHT) g_MousePressed[1] = true;
 			if(event->button.button == SDL_BUTTON_MIDDLE) g_MousePressed[2] = true;
 			return true;
 		}
-	case SDL_TEXTINPUT:
+
+		case SDL_TEXTINPUT:
 		{
 			ImGuiIO& io = ImGui::GetIO();
 			io.AddInputCharactersUTF8(event->text.text);
 			return true;
 		}
-	case SDL_KEYDOWN:
-	case SDL_KEYUP:
+
+		case SDL_KEYDOWN:
+		case SDL_KEYUP:
 		{
 			int key = event->key.keysym.sym & ~SDLK_SCANCODE_MASK;
 			io.KeysDown[key] = (event->type == SDL_KEYDOWN);
@@ -207,8 +219,10 @@ void ImGui_ImplSdl_NewFrame(SDL_Window *window)
 	io.MouseDown[2] = g_MousePressed[2] || (mouseMask & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
 	g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;
 
-	io.MouseWheel = g_MouseWheel;
-	g_MouseWheel = 0.0f;
+	io.MouseWheel = g_MouseWheelV;
+
+	g_MouseWheelV = 0.0f;
+	g_MouseWheelH = 0.0f;
 
 	// Hide OS mouse cursor if ImGui is drawing it
 	SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);

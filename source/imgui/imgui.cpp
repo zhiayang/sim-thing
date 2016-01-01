@@ -2008,12 +2008,12 @@ void ImGui::NewFrame()
 		g.HoveredWindow = g.HoveredRootWindow = NULL;
 
 	// Scale & Scrolling
-	if (g.HoveredWindow && g.IO.MouseWheel != 0.0f && !g.HoveredWindow->Collapsed)
+	if (g.HoveredWindow && /*g.IO.MouseWheel != 0.0f &&*/ !g.HoveredWindow->Collapsed)
 	{
 		ImGuiWindow* window = g.HoveredWindow;
-		if (g.IO.KeyCtrl)
+		if(g.IO.KeyCtrl && g.IO.MouseWheel != 0.0f)
 		{
-			if (g.IO.FontAllowUserScaling)
+			if(g.IO.FontAllowUserScaling)
 			{
 				// Zoom / Scale window
 				float new_font_scale = ImClamp(window->FontWindowScale + g.IO.MouseWheel * 0.10f, 0.50f, 2.50f);
@@ -2030,10 +2030,22 @@ void ImGui::NewFrame()
 		else
 		{
 			// Scroll
-			if (!(window->Flags & ImGuiWindowFlags_NoScrollWithMouse))
+			if(!(window->Flags & ImGuiWindowFlags_NoScrollWithMouse))
 			{
+				const float decel = 0.95f;
+				const float threshold = 0.001f;
+
+				static float netf = 0;
+
+				netf *= decel;
+				if(fabs(netf) < threshold)
+					netf = 0;
+
+				if(g.IO.MouseWheel != 0.0f)
+					netf = g.IO.MouseWheel;
+
 				const int scroll_lines = (window->Flags & ImGuiWindowFlags_ComboBox) ? 3 : 5;
-				SetWindowScrollY(window, window->Scroll.y - g.IO.MouseWheel * window->CalcFontSize() * scroll_lines);
+				SetWindowScrollY(window, window->Scroll.y - netf * window->CalcFontSize() * scroll_lines);
 			}
 		}
 	}
@@ -2681,31 +2693,31 @@ void ImGui::RenderCollapseTriangle(ImVec2 p_min, bool opened, float scale, bool 
 {
 	// edit: do nothing.
 
-	// ImGuiState& g = *GImGui;
-	// ImGuiWindow* window = GetCurrentWindow();
+	ImGuiState& g = *GImGui;
+	ImGuiWindow* window = GetCurrentWindow();
 
-	// const float h = g.FontSize * 1.00f;
-	// const float r = h * 0.40f * scale;
-	// ImVec2 center = p_min + ImVec2(h*0.50f, h*0.50f*scale);
+	const float h = g.FontSize * 1.00f;
+	const float r = h * 0.40f * scale;
+	ImVec2 center = p_min + ImVec2(h*0.50f, h*0.50f*scale);
 
-	// ImVec2 a, b, c;
-	// if (opened)
-	// {
-	// 	center.y -= r*0.25f;
-	// 	a = center + ImVec2(0,1)*r;
-	// 	b = center + ImVec2(-0.866f,-0.5f)*r;
-	// 	c = center + ImVec2(0.866f,-0.5f)*r;
-	// }
-	// else
-	// {
-	// 	a = center + ImVec2(1,0)*r;
-	// 	b = center + ImVec2(-0.500f,0.866f)*r;
-	// 	c = center + ImVec2(-0.500f,-0.866f)*r;
-	// }
+	ImVec2 a, b, c;
+	if (opened)
+	{
+		center.y -= r*0.25f;
+		a = center + ImVec2(0,1)*r;
+		b = center + ImVec2(-0.866f,-0.5f)*r;
+		c = center + ImVec2(0.866f,-0.5f)*r;
+	}
+	else
+	{
+		a = center + ImVec2(1,0)*r;
+		b = center + ImVec2(-0.500f,0.866f)*r;
+		c = center + ImVec2(-0.500f,-0.866f)*r;
+	}
 
-	// if (shadow && (window->Flags & ImGuiWindowFlags_ShowBorders) != 0)
-	// 	window->DrawList->AddTriangleFilled(a+ImVec2(2,2), b+ImVec2(2,2), c+ImVec2(2,2), GetColorU32(ImGuiCol_BorderShadow));
-	// window->DrawList->AddTriangleFilled(a, b, c, GetColorU32(ImGuiCol_Text));
+	if (shadow && (window->Flags & ImGuiWindowFlags_ShowBorders) != 0)
+		window->DrawList->AddTriangleFilled(a+ImVec2(2,2), b+ImVec2(2,2), c+ImVec2(2,2), GetColorU32(ImGuiCol_BorderShadow));
+	window->DrawList->AddTriangleFilled(a, b, c, GetColorU32(ImGuiCol_Text));
 }
 
 void ImGui::RenderCheckMark(ImVec2 pos, ImU32 col)
@@ -4059,8 +4071,12 @@ bool ImGui::Begin(const char* name, bool* p_opened, const ImVec2& size_on_first_
 			#endif
 
 			const ImVec2 text_size = CalcTextSize(name, NULL, true);
-			if (!(flags & ImGuiWindowFlags_NoCollapse))
-				RenderCollapseTriangle(window->Pos + style.FramePadding, !window->Collapsed, 1.0f, true);
+
+			if(!(flags & ImGuiWindowFlags_NoCollapse))
+			{
+				// edit: never draw the collapse triangle for top-level windows.
+				// RenderCollapseTriangle(window->Pos + style.FramePadding, !window->Collapsed, 1.0f, true);
+			}
 
 			ImVec2 text_min = window->Pos + style.FramePadding;
 			ImVec2 text_max = window->Pos + ImVec2(window->Size.x - style.FramePadding.x, style.FramePadding.y*2 + text_size.y);
