@@ -2011,12 +2011,12 @@ void ImGui::NewFrame()
 	if (g.HoveredWindow && /*g.IO.MouseWheel != 0.0f &&*/ !g.HoveredWindow->Collapsed)
 	{
 		ImGuiWindow* window = g.HoveredWindow;
-		if(g.IO.KeyCtrl && g.IO.MouseWheel != 0.0f)
+		if(g.IO.KeyCtrl && g.IO.MouseWheelY != 0.0f)
 		{
 			if(g.IO.FontAllowUserScaling)
 			{
 				// Zoom / Scale window
-				float new_font_scale = ImClamp(window->FontWindowScale + g.IO.MouseWheel * 0.10f, 0.50f, 2.50f);
+				float new_font_scale = ImClamp(window->FontWindowScale + g.IO.MouseWheelY * 0.10f, 0.50f, 2.50f);
 				float scale = new_font_scale / window->FontWindowScale;
 				window->FontWindowScale = new_font_scale;
 
@@ -2032,20 +2032,46 @@ void ImGui::NewFrame()
 			// Scroll
 			if(!(window->Flags & ImGuiWindowFlags_NoScrollWithMouse))
 			{
-				const float decel = 0.95f;
-				const float threshold = 0.001f;
+				static float netfx = 0;
+				static float netfy = 0;
 
-				static float netf = 0;
 
-				netf *= decel;
-				if(fabs(netf) < threshold)
-					netf = 0;
 
-				if(g.IO.MouseWheel != 0.0f)
-					netf = g.IO.MouseWheel;
 
-				const int scroll_lines = (window->Flags & ImGuiWindowFlags_ComboBox) ? 3 : 5;
-				SetWindowScrollY(window, window->Scroll.y - netf * window->CalcFontSize() * scroll_lines);
+				// const float decel = 0.95f;
+				// const float threshold = 0.001f;
+
+
+				// netfy *= decel;
+				// netfx *= decel;
+
+				// if(fabs(netfy) < threshold)
+				// 	netfy = 0;
+
+				// if(fabs(netfx) < threshold)
+				// 	netfx = 0;
+
+
+
+				if(g.IO.MouseWheelY != 0.0f)
+					netfy = g.IO.MouseWheelY;
+
+				if(g.IO.MouseWheelX != 0.0f)
+					netfx = g.IO.MouseWheelX;
+
+
+
+
+				if(g.IO.MouseWheelY != 0.0f)
+				{
+					const int scroll_lines = (window->Flags & ImGuiWindowFlags_ComboBox) ? 2 : 3;
+					// const float scroll_lines = 0.5f;
+					SetWindowScrollY(window, window->Scroll.y - netfy * window->CalcFontSize() * scroll_lines);
+				}
+				if(g.IO.MouseWheelX != 0.0f)
+				{
+					window->Scroll.x += netfx * window->CalcFontSize() * 5;
+				}
 			}
 		}
 	}
@@ -2414,7 +2440,9 @@ void ImGui::EndFrame()
 	g.Windows.swap(g.WindowsSortBuffer);
 
 	// Clear Input data for next frame
-	g.IO.MouseWheel = 0.0f;
+	g.IO.MouseWheelX = 0.0f;
+	g.IO.MouseWheelY = 0.0f;
+
 	memset(g.IO.InputCharacters, 0, sizeof(g.IO.InputCharacters));
 
 	g.FrameCountEnded = g.FrameCount;

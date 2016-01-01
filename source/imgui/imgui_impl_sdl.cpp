@@ -50,15 +50,60 @@ bool ImGui_ImplSdl_ProcessEvent(SDL_Event* event)
 	{
 		case SDL_MOUSEWHEEL:
 		{
+			// if(event->wheel.y > 20)
+			// 	g_MouseWheelV = +9;
+
+			// else if(event->wheel.y > 10)
+			// 	g_MouseWheelV = +4;
+
+			// else if(event->wheel.y > 0)
+			// 	g_MouseWheelV = +1;
+
+			// else if(event->wheel.y < 20)
+			// 	g_MouseWheelV = -9;
+
+			// else if(event->wheel.y < 10)
+			// 	g_MouseWheelV = -4;
+
+			// else if(event->wheel.y < 0)
+			// 	g_MouseWheelV = -1;
+
+
+
+
+
+			// if(event->wheel.x > 20)
+			// 	g_MouseWheelH = +9;
+
+			// else if(event->wheel.x > 10)
+			// 	g_MouseWheelH = +4;
+
+			// else if(event->wheel.x > 0)
+			// 	g_MouseWheelH = +1;
+
+			// else if(event->wheel.x < 20)
+			// 	g_MouseWheelH = -9;
+
+			// else if(event->wheel.x < 10)
+			// 	g_MouseWheelH = -4;
+
+			// else if(event->wheel.x < 0)
+			// 	g_MouseWheelH = -1;
+
+
 			if(event->wheel.y > 0)
 				g_MouseWheelV = +1;
-			if(event->wheel.y < 0)
+			else if(event->wheel.y < 0)
 				g_MouseWheelV = -1;
 
 			if(event->wheel.x > 0)
 				g_MouseWheelH = +1;
-			if(event->wheel.x < 0)
+			else if(event->wheel.x < 0)
 				g_MouseWheelH = -1;
+
+
+
+			printf("%f\n", g_MouseWheelH);
 
 			return true;
 		}
@@ -219,7 +264,8 @@ void ImGui_ImplSdl_NewFrame(SDL_Window *window)
 	io.MouseDown[2] = g_MousePressed[2] || (mouseMask & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
 	g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;
 
-	io.MouseWheel = g_MouseWheelV;
+	io.MouseWheelY = g_MouseWheelV;
+	io.MouseWheelX = g_MouseWheelH;
 
 	g_MouseWheelV = 0.0f;
 	g_MouseWheelH = 0.0f;
