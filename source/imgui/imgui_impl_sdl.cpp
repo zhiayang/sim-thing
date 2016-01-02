@@ -102,9 +102,6 @@ bool ImGui_ImplSdl_ProcessEvent(SDL_Event* event)
 				g_MouseWheelH = -1;
 
 
-
-			printf("%f\n", g_MouseWheelH);
-
 			return true;
 		}
 

@@ -6,14 +6,21 @@
 #include "graphicswrapper.h"
 
 #include "connect/connect.h"
+#include "connect/gui.h"
 
 namespace Connect
 {
-	void Render(GameState& s, float delta, Rx::Renderer* ren)
+	void Render(GameState& gs, float delta, Rx::Renderer* ren)
 	{
+		// render background stuff first
+		// TODO
+
+		// then windows
+		for(auto w : gs.windowList)
+			w->Render(gs, delta, ren);
 	}
 
-	void Update(GameState& s, float delta)
+	void Update(GameState& gs, float delta)
 	{
 	}
 }

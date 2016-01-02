@@ -2070,7 +2070,14 @@ void ImGui::NewFrame()
 				}
 				if(g.IO.MouseWheelX != 0.0f)
 				{
-					window->Scroll.x += netfx * window->CalcFontSize() * 5;
+					float newx = netfx * window->CalcFontSize() * 5;
+					float maxx = window->SizeContents.x - window->SizeFull.x - window->ScrollbarSizes.x;
+
+					if(window->Scroll.x + newx > maxx)
+						window->Scroll.x = maxx;
+
+					else
+						window->Scroll.x += newx;
 				}
 			}
 		}

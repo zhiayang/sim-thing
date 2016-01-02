@@ -17,9 +17,9 @@ namespace Logging
 	static const char* LevelStrings[]			= { "Info", "Warning", "Critical" };
 	static const int NUM_LEVELS					= sizeof(LevelStrings);
 	static const int EXIT_THRESHOLD				= 2;
-	static Rc<Logger> globalLogger(new Logger());
+	static std::shared_ptr<Logger> globalLogger(new Logger());
 
-	Rc<Logger> GetGlobalLoggerInstance()
+	std::shared_ptr<Logger> GetGlobalLoggerInstance()
 	{
 		return globalLogger;
 	}

@@ -6,6 +6,8 @@
 #include "utilities.h"
 #include <unordered_map>
 
+#include <SDL2/SDL.h>
+
 namespace Input
 {
 	enum class Keys

@@ -50,7 +50,11 @@ namespace Rx
 			fclose(f);
 		}
 
-		ImFont* imguif = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(ttfbuffer, (int) ttfSize, size);
+		// this is because imgui deletes the buffer
+		uint8_t* bufcopy = new uint8_t[ttfSize];
+		memcpy(bufcopy, ttfbuffer, ttfSize);
+
+		ImFont* imguif = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(bufcopy, (int) ttfSize, size);
 
 		Font fnt = Font(name);
 		fnt.imgui = imguif;

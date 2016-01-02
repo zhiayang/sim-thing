@@ -9,6 +9,8 @@
 #include "graphicswrapper.h"
 #include "imgui_impl_sdl.h"
 
+#include <SDL2/SDL_ttf.h>
+
 namespace Rx
 {
 	std::pair<SDL_GLContext, Rx::Renderer*> Initialise(int width, int height, Util::Colour clear)

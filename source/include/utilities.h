@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <algorithm>
 
-#include <SDL2/SDL_ttf.h>
-
 struct ImFont;
 
 namespace Util
@@ -134,9 +132,6 @@ namespace Util
 		static Colour random() { return Colour((uint8_t) Util::Random::get(0, 255), (uint8_t) Util::Random::get(0, 255), (uint8_t) Util::Random::get(0, 255)); }
 	};
 }
-
-template<class T>
-using Rc = std::shared_ptr<T>;
 
 namespace Logging
 {

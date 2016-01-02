@@ -12,6 +12,8 @@
 #include "format.h"
 
 #include "connect/connect.h"
+#include "connect/gui.h"
+
 
 #include <deque>
 
@@ -77,6 +79,7 @@ int main(int argc, char** argv)
 	ImFont* menlo = primaryFont.imgui;
 
 	gameState = new Connect::GameState();
+	gameState->windowList.push_back(new Connect::TerminalWindow());
 
 
 	double accumulator = 0.0;
