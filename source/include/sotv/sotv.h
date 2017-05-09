@@ -4,8 +4,12 @@
 
 #pragma once
 
+
+#include <assert.h>
 #include <stdint.h>
 #include "inputmanager.h"
+
+#include "sotv/station.h"
 
 namespace Rx
 {
@@ -14,14 +18,52 @@ namespace Rx
 
 namespace Sotv
 {
+	// mainly bookkeeping things
 	struct Window;
 
 	struct GameState
 	{
 		Input::State inputState;
 		std::vector<Window*> windowList;
+
+
+		Station* playerStation = 0;
 	};
 
 	void Render(GameState& s, float delta, Rx::Renderer* ren);
 	void Update(GameState& s, float delta);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// state of the game itself
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

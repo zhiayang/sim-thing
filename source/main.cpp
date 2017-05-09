@@ -47,12 +47,53 @@ namespace Rx
 
 
 
+static std::pair<double, double> determineCurrentFPS(double previous, double frameBegin, double frameTime)
+{
+	double currentFps = previous;
+	static std::deque<double> prevFps;
+
+	double renderDelta = 0;
+
+	// draw fps
+	{
+		if(Config::getShowFps())
+		{
+			// frames per second is (1sec to ns) / 'frametime' (in ns)
+			currentFps = S_TO_NS(1.0) / frameTime;
+
+			// smooth fps
+			#if 1
+			{
+				prevFps.push_back(currentFps);
+
+				if(prevFps.size() > 50)
+					prevFps.erase(prevFps.begin());
+
+				double totalfps = 0;
+				for(auto f : prevFps)
+					totalfps += f;
+
+				totalfps /= prevFps.size();
+				currentFps = totalfps;
+			}
+			#endif
+		}
+
+		renderDelta = frameBegin - previous;
+	}
+
+	return { currentFps, renderDelta };
+}
+
+
+
+
 
 
 int main(int argc, char** argv)
 {
 	// Setup SDL
-	auto r = Rx::Initialise(1024, 640, Util::Colour(114, 144, 154));
+	auto r = Rx::Initialise(1024, 640, Util::Colour(0xC, 0x12, 0x18));
 	SDL_GLContext glcontext = r.first;
 	Rx::Renderer* renderer = r.second;
 
@@ -78,8 +119,12 @@ int main(int argc, char** argv)
 	Rx::Font primaryFont = Rx::getFont("menlo", 14);
 	ImFont* menlo = primaryFont.imgui;
 
+
+	// initialise some things
+	// todo: this should go into some savefile-parsing system that does the necessary stuff
+	// also should probably be more automatic than this
 	gameState = new Sotv::GameState();
-	// gameState->windowList.push_back(new Sotv::TerminalWindow());
+	gameState->playerStation = Sotv::Station::makeDefaultSpaceStation("Pioneer XV");
 
 
 	double accumulator = 0.0;
@@ -103,36 +148,8 @@ int main(int argc, char** argv)
 			done = t.second;
 		}
 
-
-		// draw fps
 		double frameBegin = Util::Time::ns();
-		{
-			if(Config::getShowFps())
-			{
-				// frames per second is (1sec to ns) / 'frametime' (in ns)
-				currentFps = S_TO_NS(1.0) / frameTime;
-
-				// smooth fps
-				#if 1
-				{
-					prevFps.push_back(currentFps);
-
-					if(prevFps.size() > 50)
-						prevFps.erase(prevFps.begin());
-
-					double totalfps = 0;
-					for(auto f : prevFps)
-						totalfps += f;
-
-					totalfps /= prevFps.size();
-					currentFps = totalfps;
-				}
-				#endif
-			}
-
-
-			renderDelta = frameBegin - prevTimestamp;
-		}
+		std::tie(currentFps, renderDelta) = determineCurrentFPS(prevTimestamp, frameBegin, frameTime);
 
 
 		// do updates
@@ -163,33 +180,31 @@ int main(int argc, char** argv)
 		{
 			renderer->SetColour(Util::Colour::white());
 
-			static Rx::Texture* pic = new Rx::Texture("test.png", renderer);
-			renderer->RenderTex(pic, { 0, 0 });
+			// static Rx::Texture* pic = new Rx::Texture("test.png", renderer);
+			// renderer->RenderTex(pic, { 0, 0 });
 
+
+			// draw some stats
 			{
-				std::string str;
-				str = tfm::format("%.2f fps // %d windows // %d verts // %d allocations", currentFps,
-					io.MetricsActiveWindows, io.MetricsRenderVertices, io.MetricsAllocs);
+				std::string str = tfm::format("%.2f fps", currentFps);
 
-				ImGui::BeginMainMenuBar();
-				ImGui::Text("%s", str.c_str());
-				ImGui::EndMainMenuBar();
+				// ImGui::begin("%s", str.c_str());
+				renderer->RenderString(str, primaryFont, 12.0, Math::Vector2(5, 5));
+
+				size_t stor = gameState->playerStation->powerSystem->getTotalStorageInJoules();
+				size_t cap = gameState->playerStation->powerSystem->getTotalCapacityInJoules();
+				size_t prod = gameState->playerStation->powerSystem->getTotalProductionInWatts();
+				double percentage = ((double) stor / (double) cap) * 100.0;
+
+				// std::string stor =
+				renderer->RenderString(tfm::format("%zuJ / %zuJ (%.1f%% full, producing at %zuW)", stor, cap, percentage, prod),
+					primaryFont, 12.0, Math::Vector2(5, 20));
+
+
+				renderer->RenderString(tfm::format("%s", Util::formatWithUnits(1001241081, 2, "J")),
+					primaryFont, 12.0, Math::Vector2(5, 35));
 			}
 		}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 		Sotv::Render(*gameState, renderDelta, renderer);
 
@@ -200,8 +215,9 @@ int main(int argc, char** argv)
 
 
 
+
 		// ImGui::ShowStyleEditor();
-		ImGui::ShowTestWindow();
+		// ImGui::ShowTestWindow();
 
 
 

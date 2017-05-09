@@ -13,7 +13,7 @@ namespace Sotv
 	void Render(GameState& gs, float delta, Rx::Renderer* ren)
 	{
 		// render background stuff first
-		// TODO
+		gs.playerStation->Render(gs, delta, ren);
 
 		// then windows
 		for(auto w : gs.windowList)
@@ -22,5 +22,9 @@ namespace Sotv
 
 	void Update(GameState& gs, float delta)
 	{
+		gs.playerStation->Update(gs, delta);
+
+		for(auto w : gs.windowList)
+			w->Update(gs, delta);
 	}
 }
