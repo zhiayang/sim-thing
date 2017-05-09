@@ -7,7 +7,7 @@
 WARNINGS		:= -Wno-unused-parameter -Wno-sign-conversion -Wno-padded -Wno-old-style-cast -Wno-conversion -Wno-shadow -Wno-missing-noreturn -Wno-unused-macros -Wno-switch-enum -Wno-deprecated -Wno-format-nonliteral -Wno-trigraphs -Wno-unused-const-variable
 
 
-CLANGWARNINGS	:= -Wno-undefined-func-template -Wno-comma -Wno-nullability-completeness -Wno-redundant-move -Wno-nested-anon-types -Wno-gnu-anonymous-struct -Wno-reserved-id-macro -Wno-extra-semi -Wno-gnu-zero-variadic-macro-arguments -Wno-shift-sign-overflow -Wno-exit-time-destructors -Wno-global-constructors -Wno-c++98-compat-pedantic -Wno-documentation-unknown-command -Wno-weak-vtables -Wno-c++98-compat
+CLANGWARNINGS	:= -Wno-undefined-func-template -Wno-comma -Wno-nullability-completeness -Wno-redundant-move -Wno-nested-anon-types -Wno-gnu-anonymous-struct -Wno-reserved-id-macro -Wno-extra-semi -Wno-gnu-zero-variadic-macro-arguments -Wno-shift-sign-overflow -Wno-exit-time-destructors -Wno-global-constructors -Wno-c++98-compat-pedantic -Wno-documentation-unknown-command -Wno-weak-vtables -Wno-c++98-compat -Wno-float-equal -Wno-double-promotion -Wno-format-pedantic -Wno-missing-variable-declarations -Wno-implicit-fallthrough
 
 
 SYSROOT			:= .
@@ -19,8 +19,8 @@ OUTPUT			:= $(SYSROOT)/$(PREFIX)/bin/$(OUTPUTBIN)
 CC				?= "clang"
 CXX				?= "clang++"
 
-CXXSRC			:= $(shell find source -iname "*.cpp")
-CSRC			:= $(shell find source -iname "*.c")
+CXXSRC			:= $(shell find source -iname "*.cpp" -not -path "**/imgui_old/*")
+CSRC			:= $(shell find source -iname "*.c" -not -path "**/imgui_old/*")
 
 CXXOBJ			:= $(CXXSRC:.cpp=.cpp.o)
 COBJ			:= $(CSRC:.c=.c.o)
@@ -51,8 +51,8 @@ prep:
 	@mkdir -p $(dir $(OUTPUT))
 
 osxflags:
-	$(eval CXXFLAGS += -march=native -fmodules -Weverything -Xclang -fcolor-diagnostics $(SANITISE) $(CLANGWARNINGS) $(FRAMEWORKS))
-	$(eval CFLAGS += -fmodules -Xclang -fcolor-diagnostics $(SANITISE) $(CLANGWARNINGS) $(FRAMEWORKS))
+	$(eval CXXFLAGS += -march=native -fmodules -Weverything -Xclang -fcolor-diagnostics $(SANITISE) $(CLANGWARNINGS))
+	$(eval CFLAGS += -fmodules -Xclang -fcolor-diagnostics $(SANITISE) $(CLANGWARNINGS))
 	$(eval LDFLAGS += $(FRAMEWORKS))
 
 osx: prep osxflags build run
@@ -78,13 +78,13 @@ $(OUTPUT): $(CXXOBJ) $(COBJ)
 %.cpp.o: %.cpp
 	@$(eval DONEFILES += "CPP")
 	@printf "# compiling [$(words $(DONEFILES))/$(NUMFILES)] $<\n"
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -MF $<.m -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -MF $<.d -o $@ $<
 
 
 %.c.o: %.c
 	@$(eval DONEFILES += "C")
 	@printf "# compiling [$(words $(DONEFILES))/$(NUMFILES)] $<\n"
-	@$(CC) $(CFLAGS) $(WARNINGS) $(INCLUDES) -Isource/utf8rewind/include/utf8rewind -MMD -MP -MF $<.m -o $@ $<
+	@$(CC) $(CFLAGS) $(WARNINGS) $(INCLUDES) -Isource/utf8rewind/include/utf8rewind -MMD -MP -MF $<.d -o $@ $<
 
 
 

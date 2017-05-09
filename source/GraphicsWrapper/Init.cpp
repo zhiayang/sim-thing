@@ -88,13 +88,13 @@ namespace Rx
 		style.Colors[ImGuiCol_CloseButtonHovered]	= ImVec4(0.98f, 0.24f, 0.24f, 1.00f);
 		style.Colors[ImGuiCol_CloseButtonActive]	= ImVec4(0.71f, 0.10f, 0.10f, 1.00f);
 
-		style.Colors[ImGuiCol_MinButton]			= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
-		style.Colors[ImGuiCol_MinButtonHovered]		= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
-		style.Colors[ImGuiCol_MinButtonActive]		= ImVec4(0.75f, 0.56f, 0.14f, 1.00f);
+		// style.Colors[ImGuiCol_MinButton]			= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
+		// style.Colors[ImGuiCol_MinButtonHovered]		= ImVec4(1.00f, 0.77f, 0.19f, 1.00f);
+		// style.Colors[ImGuiCol_MinButtonActive]		= ImVec4(0.75f, 0.56f, 0.14f, 1.00f);
 
-		style.Colors[ImGuiCol_MaxButton]			= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
-		style.Colors[ImGuiCol_MaxButtonHovered]		= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
-		style.Colors[ImGuiCol_MaxButtonActive]		= ImVec4(0.12f, 0.61f, 0.19f, 1.00f);
+		// style.Colors[ImGuiCol_MaxButton]			= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
+		// style.Colors[ImGuiCol_MaxButtonHovered]		= ImVec4(0.16f, 0.80f, 0.26f, 1.00f);
+		// style.Colors[ImGuiCol_MaxButtonActive]		= ImVec4(0.12f, 0.61f, 0.19f, 1.00f);
 	}
 }
 

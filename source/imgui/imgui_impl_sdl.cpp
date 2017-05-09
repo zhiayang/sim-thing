@@ -9,8 +9,10 @@
 #include <SDL2/SDL_opengl.h>
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_impl_sdl.h"
 
+#include "backend_abstraction.h"
 
 // custom stuff.
 #include "graphicswrapper.h"
@@ -128,7 +130,7 @@ bool ImGui_ImplSdl_ProcessEvent(SDL_Event* event)
 			io.KeyShift = ((SDL_GetModState() & KMOD_SHIFT) != 0);
 			io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
 			io.KeyAlt = ((SDL_GetModState() & KMOD_ALT) != 0);
-			io.KeyCmd = ((SDL_GetModState() & KMOD_GUI) != 0);
+			io.KeySuper = ((SDL_GetModState() & KMOD_GUI) != 0);
 			return true;
 		}
 	}
@@ -193,10 +195,6 @@ bool ImGui_ImplSdl_Init(SDL_Window *window)
 	io.KeyMap[ImGuiKey_Y] = SDLK_y;
 	io.KeyMap[ImGuiKey_Z] = SDLK_z;
 
-	#if ENABLE_OSX_TEXT_EDITING
-	io.KeyMap[ImGuiKey_LeftCmd] = SDLK_LGUI;
-	io.KeyMap[ImGuiKey_RightCmd] = SDLK_RGUI;
-	#endif
 
 	// io.RenderDrawListsFn = ImGui_ImplSdl_RenderDrawLists;	// Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
 
@@ -261,11 +259,45 @@ void ImGui_ImplSdl_NewFrame(SDL_Window *window)
 	io.MouseDown[2] = g_MousePressed[2] || (mouseMask & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
 	g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;
 
-	io.MouseWheelY = g_MouseWheelV;
-	io.MouseWheelX = g_MouseWheelH;
+	io.MouseWheel = g_MouseWheelV;
+	// io.MouseWheelX = g_MouseWheelH;
 
 	g_MouseWheelV = 0.0f;
 	g_MouseWheelH = 0.0f;
+
+	// change the thing accordingly, because imgui does weird stupid shit
+	switch(ImGui::GetCurrentContext()->MouseCursor)
+	{
+		case ImGuiMouseCursor_Arrow:
+			ImGuiBackend::SetCursor(ImGuiBackend::CursorType::Arrow);
+			break;
+
+		case ImGuiMouseCursor_TextInput:
+			ImGuiBackend::SetCursor(ImGuiBackend::CursorType::IBeam);
+			break;
+
+		case ImGuiMouseCursor_Move:
+			ImGuiBackend::SetCursor(ImGuiBackend::CursorType::Move);
+			break;
+
+		case ImGuiMouseCursor_ResizeNS:
+			ImGuiBackend::SetCursor(ImGuiBackend::CursorType::ResizeNS);
+			break;
+
+		case ImGuiMouseCursor_ResizeEW:
+			ImGuiBackend::SetCursor(ImGuiBackend::CursorType::ResizeEW);
+			break;
+
+		case ImGuiMouseCursor_ResizeNESW:
+			ImGuiBackend::SetCursor(ImGuiBackend::CursorType::ResizeNESW);
+			break;
+
+		case ImGuiMouseCursor_ResizeNWSE:
+			ImGuiBackend::SetCursor(ImGuiBackend::CursorType::ResizeNWSE);
+			break;
+
+	}
+
 
 	// Hide OS mouse cursor if ImGui is drawing it
 	SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);

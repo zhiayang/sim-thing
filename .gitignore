@@ -41,10 +41,12 @@ build/test
 
 *.ir
 *.o.m
-shakefile.hi
-shakefile
-.shake.database
-checker-276
+*.o.d
+*.cpp.d
+*.c.d
 countloc
 imgui.ini
 build/bin
+
+
+imgui_old
