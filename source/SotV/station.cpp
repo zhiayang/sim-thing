@@ -28,7 +28,7 @@ namespace Sotv
 		}
 
 		LOG("Adding 1x 50MJ battery");
-		stn->powerSystem->addStorage(new LithiumBatteryModule(0, (size_t) 50000 * 1000 * 1000));
+		stn->powerSystem->addStorage(new LithiumBatteryModule(0, 50 * 1000 * 1000ULL));
 
 		return stn;
 	}

@@ -197,12 +197,9 @@ int main(int argc, char** argv)
 				double percentage = ((double) stor / (double) cap) * 100.0;
 
 				// std::string stor =
-				renderer->RenderString(tfm::format("%zuJ / %zuJ (%.1f%% full, producing at %zuW)", stor, cap, percentage, prod),
+				renderer->RenderString(tfm::format("%s / %s (%.1f%% full, producing at %s)", Util::formatWithUnits(stor, 2, "J"),
+					Util::formatWithUnits(cap, 2, "J"), percentage, Util::formatWithUnits(prod, 2, "W")),
 					primaryFont, 12.0, Math::Vector2(5, 20));
-
-
-				renderer->RenderString(tfm::format("%s", Util::formatWithUnits(1001241081, 2, "J")),
-					primaryFont, 12.0, Math::Vector2(5, 35));
 			}
 		}
 
