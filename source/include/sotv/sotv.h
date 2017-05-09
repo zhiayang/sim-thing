@@ -5,14 +5,14 @@
 #pragma once
 
 #include <stdint.h>
-
 #include "inputmanager.h"
+
 namespace Rx
 {
 	struct Renderer;
 }
 
-namespace Connect
+namespace Sotv
 {
 	struct Window;
 

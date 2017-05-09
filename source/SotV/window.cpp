@@ -4,10 +4,10 @@
 
 #include <assert.h>
 
-#include "connect/connect.h"
-#include "connect/gui.h"
+#include "sotv/sotv.h"
+#include "sotv/gui.h"
 
-namespace Connect
+namespace Sotv
 {
 	static size_t curId = 1;
 

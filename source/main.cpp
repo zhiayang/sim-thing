@@ -9,19 +9,19 @@
 #include "graphicswrapper.h"
 
 #include "config.h"
-#include "format.h"
+#include "tinyformat.h"
 
-#include "connect/connect.h"
-#include "connect/gui.h"
+#include "sotv/sotv.h"
+#include "sotv/gui.h"
 
-
+#include <unistd.h>
 #include <deque>
 
 static const double fixedDeltaTimeNs	= 50.0 * 1000.0 * 1000.0;
 static const double targetFramerate		= 120.0;
 static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
-static Connect::GameState* gameState = 0;
+static Sotv::GameState* gameState = 0;
 
 namespace Rx
 {
@@ -78,8 +78,8 @@ int main(int argc, char** argv)
 	Rx::Font primaryFont = Rx::getFont("menlo", 14);
 	ImFont* menlo = primaryFont.imgui;
 
-	gameState = new Connect::GameState();
-	gameState->windowList.push_back(new Connect::TerminalWindow());
+	gameState = new Sotv::GameState();
+	// gameState->windowList.push_back(new Sotv::TerminalWindow());
 
 
 	double accumulator = 0.0;
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 
 			while(accumulator >= fixedDeltaTimeNs)
 			{
-				Connect::Update(*gameState, fixedDeltaTimeNs);
+				Sotv::Update(*gameState, fixedDeltaTimeNs);
 				accumulator -= fixedDeltaTimeNs;
 			}
 		}
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 
 			{
 				std::string str;
-				str = fmt::sprintf("%.2f fps // %d windows // %d verts // %d allocations", currentFps,
+				str = tfm::format("%.2f fps // %d windows // %d verts // %d allocations", currentFps,
 					io.MetricsActiveWindows, io.MetricsRenderVertices, io.MetricsAllocs);
 
 				ImGui::BeginMainMenuBar();
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 
 
 
-		Connect::Render(*gameState, renderDelta, renderer);
+		Sotv::Render(*gameState, renderDelta, renderer);
 
 
 

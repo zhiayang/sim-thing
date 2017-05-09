@@ -49,7 +49,7 @@ main = shakeArgs shakeOptions { shakeFiles = "build" } $ do
 		need os
 
 
-		let linkerFlags' = "-lSDL2 -lSDL2_image -lSDL2_ttf -lglfw3 -framework OpenGL -framework GLUT -framework CoreVideo -framework Cocoa "
+		let linkerFlags' = "-lSDL2 -lSDL2_image -lSDL2_ttf -lglfw -framework OpenGL -framework GLUT -framework CoreVideo -framework Cocoa "
 		let linkerFlags = linkerFlags' ++ "-g -O2 -Wall -stdlib=libc++ -std=gnu++1y -I{src}/include"
 
 		cmd Shell "clang++ -o" [out] [linkerFlags] os

@@ -5,10 +5,10 @@
 #include "imgui.h"
 #include "graphicswrapper.h"
 
-#include "connect/connect.h"
-#include "connect/gui.h"
+#include "sotv/sotv.h"
+#include "sotv/gui.h"
 
-namespace Connect
+namespace Sotv
 {
 	void Render(GameState& gs, float delta, Rx::Renderer* ren)
 	{

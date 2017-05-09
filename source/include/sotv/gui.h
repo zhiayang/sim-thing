@@ -10,15 +10,16 @@
 #include <string>
 #include <vector>
 
+#include "sotv/widgets.h"
+
 namespace Rx
 {
 	struct Renderer;
 };
 
-namespace Connect
+namespace Sotv
 {
 	struct GameState;
-	struct TerminalState;
 
 	struct Window
 	{
@@ -34,18 +35,6 @@ namespace Connect
 		bool isWindowOpen = 0;
 		std::string name;
 		size_t id = 0;
-	};
-
-	struct TerminalWindow : Window
-	{
-		TerminalWindow();
-		TerminalWindow(TerminalState* ts);
-
-		virtual ~TerminalWindow();
-		virtual void Render(GameState& gs, float delta, Rx::Renderer* r) override;
-		virtual void Update(GameState& gs, float delta) override;
-
-		TerminalState* tstate = 0;
 	};
 }
 
