@@ -23,7 +23,7 @@ namespace Sotv
 		LOG("Adding 4x 600W solar panels");
 		for(int i = 0; i < 4; i++)
 		{
-			auto panel = new SolarGenModule(600);
+			auto panel = new SolarGenModule(60000);
 			stn->powerSystem->addGenerator(panel);
 		}
 

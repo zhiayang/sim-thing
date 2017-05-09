@@ -62,7 +62,7 @@ static std::pair<double, double> determineCurrentFPS(double previous, double fra
 			currentFps = S_TO_NS(1.0) / frameTime;
 
 			// smooth fps
-			#if 1
+			#if 0
 			{
 				prevFps.push_back(currentFps);
 
@@ -93,7 +93,7 @@ static std::pair<double, double> determineCurrentFPS(double previous, double fra
 int main(int argc, char** argv)
 {
 	// Setup SDL
-	auto r = Rx::Initialise(1024, 640, Util::Colour(0xC, 0x12, 0x18));
+	auto r = Rx::Initialise(Config::getResX(), Config::getResY(), Util::Colour(0xC, 0x12, 0x18));
 	SDL_GLContext glcontext = r.first;
 	Rx::Renderer* renderer = r.second;
 
@@ -109,14 +109,14 @@ int main(int argc, char** argv)
 
 	ImGuiIO& io = ImGui::GetIO();
 	{
-		io.FontGlobalScale = 0.50;
+		io.FontGlobalScale = 0.25;
 
 		// init.cpp
 		Rx::SetupDefaultStyle();
 	}
 
 
-	Rx::Font primaryFont = Rx::getFont("menlo", 14);
+	Rx::Font primaryFont = Rx::getFont("menlo", 32);
 	ImFont* menlo = primaryFont.imgui;
 
 
@@ -186,20 +186,21 @@ int main(int argc, char** argv)
 
 			// draw some stats
 			{
-				std::string str = tfm::format("%.2f fps", currentFps);
+				std::string fpsstr = tfm::format("%.2f fps", currentFps);
 
-				// ImGui::begin("%s", str.c_str());
-				renderer->RenderString(str, primaryFont, 12.0, Math::Vector2(5, 5));
+				renderer->RenderString(fpsstr, primaryFont, 12.0, Math::Vector2(5, 5));
 
 				size_t stor = gameState->playerStation->powerSystem->getTotalStorageInJoules();
 				size_t cap = gameState->playerStation->powerSystem->getTotalCapacityInJoules();
 				size_t prod = gameState->playerStation->powerSystem->getTotalProductionInWatts();
 				double percentage = ((double) stor / (double) cap) * 100.0;
 
-				// std::string stor =
-				renderer->RenderString(tfm::format("%s / %s (%.1f%% full, producing at %s)", Util::formatWithUnits(stor, 2, "J"),
-					Util::formatWithUnits(cap, 2, "J"), percentage, Util::formatWithUnits(prod, 2, "W")),
-					primaryFont, 12.0, Math::Vector2(5, 20));
+
+				auto str = tfm::format("%s / %s at %s (%.1f%%)", Util::formatWithUnits(stor, 2, "J"),
+					Util::formatWithUnits(cap, 2, "J"), Util::formatWithUnits(prod, 2, "W"), percentage);
+
+				size_t strwidth = renderer->getStringWidthInPixels(str, primaryFont, 24);
+				renderer->RenderString(str, primaryFont, 24, Math::Vector2(Config::getResX() - strwidth - 5, 5));
 			}
 		}
 

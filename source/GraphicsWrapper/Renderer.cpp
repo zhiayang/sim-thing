@@ -164,6 +164,15 @@ namespace Rx
 		this->renderList.push_back(RenderCommand::createRenderString(txt, font, size, this->drawColour, pt));
 	}
 
+	size_t Renderer::getStringWidthInPixels(std::string txt, Rx::Font font, float size)
+	{
+		if(txt.empty()) return 0;
+
+		// note: this is basically going through each glyph twice, so only use when necessary.
+		auto cmd = RenderCommand::createRenderString(txt, font, size, this->drawColour, Math::Vector2(0, 0));
+		return (size_t) fabs(cmd.bounds.second.x - cmd.bounds.first.x);
+	}
+
 	void Renderer::SetColour(Util::Colour c)
 	{
 		this->drawColour = c;

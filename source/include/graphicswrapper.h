@@ -110,6 +110,8 @@ namespace Rx
 		std::vector<Math::Vector2> vertices;
 		CommandType type = CommandType::Invalid;
 
+		std::pair<Math::Vector2, Math::Vector2> bounds;
+
 		GLenum mode;
 	};
 
@@ -153,7 +155,7 @@ namespace Rx
 
 
 		void RenderString(std::string txt, Rx::Font font, float size, Math::Vector2 pt);
-
+		size_t getStringWidthInPixels(std::string txt, Rx::Font font, float size);
 
 
 		std::vector<RenderCommand> renderList;

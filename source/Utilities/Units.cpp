@@ -16,7 +16,7 @@ namespace Util
 	std::string formatWithUnits(double number, int prec, std::string unit)
 	{
 		if(number == 0)
-			return "0" + unit;
+			return tfm::format("%.*f %s", prec, number, unit);
 
 		double lg = log10(number);
 		auto si = 3 * ((ssize_t) lg / 3);

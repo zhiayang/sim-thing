@@ -202,6 +202,7 @@ namespace Rx
 
 		rc.textureId = (int) (uintptr_t) font.imgui->ContainerAtlas->TexID;
 
+		rc.bounds.first = pos;
 
 		{
 			ImVec4 cliprect;
@@ -384,6 +385,8 @@ namespace Rx
 
 				x += char_width;
 			}
+
+			rc.bounds.second = { x, y };
 		}
 
 		return rc;
