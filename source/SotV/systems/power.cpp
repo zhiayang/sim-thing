@@ -19,16 +19,25 @@ namespace Sotv
 			total += g->getProductionInWatts();
 
 		// scale by the delta
-		total *= (delta / 1000.0 / 1000.0 / 1000.0);
+		total *= (delta / (1000.0 * 1000.0 * 1000.0));
+		total += this->previousExcess;
 
 		// todo: priority system of some kind. right now, fill cells in series.
 		assert(!this->storage.empty());
 
+		double startedWith = total;
 		for(auto s : this->storage)
 			total -= s->storeEnergy(total);
 
-		if(total != 0)
-			LOG("Wasted %f joules this tick", total);
+		// add it back, to be tried again next tick
+		// but once it's full we just give up. dump it.
+		if(total < startedWith)
+			this->previousExcess += total;
+
+		else
+			this->previousExcess = 0;
+
+		// fprintf(stderr, "\r                    \r%.2f", this->previousExcess);
 	}
 
 

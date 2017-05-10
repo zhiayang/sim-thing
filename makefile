@@ -25,7 +25,7 @@ CSRC			:= $(shell find source -iname "*.c" -not -path "**/imgui_old/*")
 CXXOBJ			:= $(CXXSRC:.cpp=.cpp.o)
 COBJ			:= $(CSRC:.c=.c.o)
 
-CXXDEPS			:= $(CXXSRC:.cpp=.cpp.m)
+CXXDEPS			:= $(CXXSRC:.cpp=.cpp.d)
 
 NUMFILES		:= $$(($(words $(CXXSRC)) + $(words $(CSRC))))
 

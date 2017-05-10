@@ -164,6 +164,30 @@ namespace Rx
 		this->renderList.push_back(RenderCommand::createRenderString(txt, font, size, this->drawColour, pt));
 	}
 
+	void Renderer::RenderStringRightAligned(std::string txt, Rx::Font font, float size, Math::Vector2 pt)
+	{
+		auto cmd = RenderCommand::createRenderString(txt, font, size, this->drawColour, Math::Vector2(0, pt.y));
+
+		// the starting position (top-left)
+		double sx = this->window->width - fabs(cmd.bounds.second.x - cmd.bounds.first.x) - pt.x;
+
+		// offset all vertices to the right by that amount.
+		for(size_t i = 0; i < cmd.vertices.size(); i += 4)
+		{
+			// 4 verts per character; first 2 are x and y, second 2 are u and v
+			auto& x = cmd.vertices[i + 0];
+			auto& y = cmd.vertices[i + 1];
+
+			x.x += sx;
+			y.x += sx;
+		}
+
+		cmd.bounds.first.x += sx;
+		cmd.bounds.second.x += sx;
+
+		this->renderList.push_back(cmd);
+	}
+
 	size_t Renderer::getStringWidthInPixels(std::string txt, Rx::Font font, float size)
 	{
 		if(txt.empty()) return 0;

@@ -155,6 +155,10 @@ namespace Rx
 
 
 		void RenderString(std::string txt, Rx::Font font, float size, Math::Vector2 pt);
+
+		// `pt` would be the position of the top-right of the whole text.
+		void RenderStringRightAligned(std::string txt, Rx::Font font, float size, Math::Vector2 pt);
+
 		size_t getStringWidthInPixels(std::string txt, Rx::Font font, float size);
 
 

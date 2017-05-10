@@ -20,15 +20,16 @@ namespace Sotv
 		stn->powerSystem = new PowerSystem();
 		stn->addSystem(stn->powerSystem);
 
-		LOG("Adding 4x 600W solar panels");
-		for(int i = 0; i < 4; i++)
+		LOG("Adding 4x 600 W solar panels");
+		for(int i = 0; i < 8; i++)
 		{
-			auto panel = new SolarGenModule(60000);
+			auto panel = new SolarGenModule(600);
 			stn->powerSystem->addGenerator(panel);
 		}
 
-		LOG("Adding 1x 50MJ battery");
-		stn->powerSystem->addStorage(new LithiumBatteryModule(0, 50 * 1000 * 1000ULL));
+		LOG("Adding 3x 5 MJ battery");
+		for(int i = 0; i < 3; i++)
+			stn->powerSystem->addStorage(new LithiumBatteryModule(0, 5000 * 1000ULL));
 
 		return stn;
 	}

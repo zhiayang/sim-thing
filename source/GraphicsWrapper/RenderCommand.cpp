@@ -183,10 +183,6 @@ namespace Rx
 
 
 
-
-
-
-
 	RenderCommand RenderCommand::createRenderString(std::string str, Rx::Font font, float size, Util::Colour col, Math::Vector2 pos)
 	{
 		RenderCommand rc;

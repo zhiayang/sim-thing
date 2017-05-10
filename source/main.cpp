@@ -17,8 +17,8 @@
 #include <unistd.h>
 #include <deque>
 
-static const double fixedDeltaTimeNs	= 50.0 * 1000.0 * 1000.0;
-static const double targetFramerate		= 120.0;
+static const double fixedDeltaTimeNs	= 10.0 * 1000.0 * 1000.0;
+static const double targetFramerate		= 60.0;
 static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
 static Sotv::GameState* gameState = 0;
@@ -199,8 +199,19 @@ int main(int argc, char** argv)
 				auto str = tfm::format("%s / %s at %s (%.1f%%)", Util::formatWithUnits(stor, 2, "J"),
 					Util::formatWithUnits(cap, 2, "J"), Util::formatWithUnits(prod, 2, "W"), percentage);
 
-				size_t strwidth = renderer->getStringWidthInPixels(str, primaryFont, 24);
-				renderer->RenderString(str, primaryFont, 24, Math::Vector2(Config::getResX() - strwidth - 5, 5));
+				// size_t strwidth = renderer->getStringWidthInPixels(str, primaryFont, 24);
+				// renderer->RenderString(str, primaryFont, 24, Math::Vector2(Config::getResX() - strwidth - 5, 5));
+
+				renderer->RenderStringRightAligned(str, primaryFont, 16, Math::Vector2(5, 5));
+
+				size_t ofs = 5;
+				for(auto batt : gameState->playerStation->powerSystem->storage)
+				{
+					auto str = tfm::format("%s / %s (%.1f%%)", Util::formatWithUnits(batt->current, 2, "J"),
+						Util::formatWithUnits(batt->capacity, 2, "J"), 100.0 * ((double) batt->current / (double) batt->capacity));
+
+					renderer->RenderStringRightAligned(str, primaryFont, 16, Math::Vector2(5, ofs += 15));
+				}
 			}
 		}
 
@@ -268,9 +279,9 @@ int main(int argc, char** argv)
 			{
 				double toWait = targetFrameTimeNs - frameTime;
 
-				if(toWait > 0)
+				if(toWait > 1000 * 1000)
 				{
-					usleep(NS_TO_US(toWait));
+					// usleep(NS_TO_US(toWait));
 				}
 				else
 				{

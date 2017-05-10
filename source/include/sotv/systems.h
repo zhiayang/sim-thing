@@ -39,6 +39,7 @@ namespace Sotv
 		// the parent handles the generic update/render of each module,
 		// while we handle the intricacies of moving information between each module during the update.
 
+		double previousExcess = 0;
 		std::vector<PowerGenModule*> generators;
 		std::vector<PowerStorageModule*> storage;
 

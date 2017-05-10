@@ -29,7 +29,6 @@ namespace Sotv
 		this->current = initialStorage;
 		this->capacity = cap;
 
-		LOG("%zu / %zu", this->current, this->capacity);
 		assert(this->current <= this->capacity);
 	};
 
