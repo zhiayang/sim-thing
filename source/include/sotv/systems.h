@@ -53,8 +53,6 @@ namespace Sotv
 
 		const size_t systemVoltage;
 
-		double previousExcess = 0;
-
 		std::vector<PowerGenModule*> generators;
 		std::vector<PowerStorageModule*> storage;
 		std::vector<PowerConsumerModule*> consumers;
@@ -63,12 +61,20 @@ namespace Sotv
 		void addStorage(PowerStorageModule* stor);
 		void addConsumer(PowerConsumerModule* cons);
 
+		double consumeEnergy(double watts, double delta);
+
+		double getTotalConsumptionInWatts();
 		double getTotalProductionInWatts();
+
 		double getTotalStorageInJoules();
 		double getTotalCapacityInJoules();
 
 		virtual void Render(GameState& gs, double delta, Rx::Renderer* ren) override;
 		virtual void Update(GameState& gs, double delta) override;
+
+		protected:
+		double previousExcess = 0;
+		double totalConsumed = 0;
 	};
 
 
@@ -76,6 +82,45 @@ namespace Sotv
 
 	struct LifeSupportSystem : System
 	{
+		struct AtmosphereGenerator
+		{
+			AtmosphereGenerator(double joules, double amps)
+			{
+				this->joulesPerGramOfOxygen = joules;
+				this->powerConsumer = new PowerConsumerModule(amps);
+			}
+
+			void updateAtmosphere(Station* stn, LifeSupportSystem* lss, double delta);
+
+			PowerConsumerModule* powerConsumer;
+			double joulesPerGramOfOxygen;
+		};
+
+		struct ThermalControl
+		{
+			ThermalControl(double heateramps, double cooleramps, double coolerEfficiency)
+			{
+				this->maxCoolingAmps = cooleramps;
+				this->maxHeatingAmps = heateramps;
+				this->coolingEfficiency = coolerEfficiency;
+
+				this->heatingConsumer = new PowerConsumerModule(this->maxHeatingAmps);
+				this->coolingConsumer = new PowerConsumerModule(this->maxCoolingAmps);
+			}
+
+			void updateThermalControl(Station* stn, LifeSupportSystem* lss, double delta);
+
+			PowerConsumerModule* heatingConsumer;
+			PowerConsumerModule* coolingConsumer;
+
+			double maxCoolingAmps;
+			double maxHeatingAmps;
+			double coolingEfficiency;
+		};
+
+		friend struct AtmosphereGenerator;
+		friend struct ThermalControl;
+
 		LifeSupportSystem(Station* stn, double targetPressure, double targetTemperature);
 
 		virtual void Render(GameState& gs, double delta, Rx::Renderer* ren) override;
@@ -86,25 +131,23 @@ namespace Sotv
 		double getAtmosphereTemperature();
 		double getAtmospherePressure();
 
+		void addWasteHeatToSystem(double watts, double delta);
+
 		protected:
 		double massOfOxygenInKilograms;
 		double massOfNitrogenInKilograms;
 		double internalTemperatureInKelvin;
 
-		// oxgygen stuff
-		double joulesPerGramOfOxygen;
-
 		// separate consumers for each process the LSS is responsible for
-		PowerConsumerModule* atmosphereConsumer;
-		PowerConsumerModule* heatingConsumer;
+		AtmosphereGenerator* atmosGenerator;
+		ThermalControl* thermalController;
+
 		PowerConsumerModule* waterConsumer;
 
 		const double targetPressureInPascals;
 		const double targetTemperatureInKelvin;
 
-		void generateOxygen(GameState& gs, double delta);
 		void generateWater(GameState& gs, double delta);
-		void generateHeat(GameState& gs, double delta);
 	};
 }
 

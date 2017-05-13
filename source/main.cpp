@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <array>
 
+static const double timeSpeedupFactor	= 20.0;
 static const double fixedDeltaTimeNs	= 1.0 * 1000.0 * 1000.0;
 static const double targetFramerate		= 60.0;
 static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
@@ -158,7 +159,9 @@ int main(int argc, char** argv)
 
 			while(accumulator >= fixedDeltaTimeNs)
 			{
-				Sotv::Update(*gameState, fixedDeltaTimeNs);
+				// we tell them that 50 ms has passed, when in actual fact only 1 ms has passed.
+				// we still do the same number of updates per second.
+				Sotv::Update(*gameState, fixedDeltaTimeNs * timeSpeedupFactor);
 				accumulator -= fixedDeltaTimeNs;
 			}
 		}
@@ -193,8 +196,8 @@ int main(int argc, char** argv)
 				auto psys = gameState->playerStation->powerSystem;
 				auto lss = gameState->playerStation->lifeSupportSystem;
 
-				double stor = Units::convertJoulesToAmpHours(psys->getTotalStorageInJoules(), psys->systemVoltage);
-				double cap = Units::convertJoulesToAmpHours(psys->getTotalCapacityInJoules(), psys->systemVoltage);
+				double stor = Units::convertJoulesToWattHours(psys->getTotalStorageInJoules());
+				double cap = Units::convertJoulesToWattHours(psys->getTotalCapacityInJoules());
 				double prod = psys->getTotalProductionInWatts();
 
 				double percentage = (stor / cap) * 100.0;
@@ -202,30 +205,32 @@ int main(int argc, char** argv)
 				// divide stor and cap by system voltage to get a number in amp-hours.
 				// we divide by 3600 to convert from amp-seconds to amp-hours
 
-				auto str = tfm::format("%s / %s at %s (%.1f%%)", Units::formatWithUnits(stor, 2, "Ah"),
-					Units::formatWithUnits(cap, 2, "Ah"), Units::formatWithUnits(prod, 2, "W"), percentage);
+				auto str = tfm::format("%s / %s (%.1f%%)  |  +%s / -%s", Units::formatWithUnits(stor, 2, "Wh"),
+					Units::formatWithUnits(cap, 2, "Wh"), percentage,
+					Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
 
-				renderer->RenderStringRightAligned(str, primaryFont, 16, Math::Vector2(5, 5));
+				renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, 5));
 
 
-				#if 0
+				size_t ofs = 5;
+
+				#if 1
 				for(auto batt : psys->storage)
 				{
-					double cur = Units::convertJoulesToAmpHours(batt->getEnergyInJoules(), psys->systemVoltage);
-					double cap = Units::convertJoulesToAmpHours(batt->getCapacityInJoules(), psys->systemVoltage);
+					double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
+					double cap = Units::convertJoulesToWattHours(batt->getCapacityInJoules());
 
-					auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Ah"),
-						Units::formatWithUnits(cap, 2, "Ah"), 100.0 * ((double) cur / (double) cap));
+					auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
+						Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
 
-					renderer->RenderStringRightAligned(str, primaryFont, 16, Math::Vector2(5, ofs += 15));
+					renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, ofs += 15));
 				}
 				#endif
 
-				size_t ofs = 5;
-				str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 1, "Pa"),
+				str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
 					Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
 
-				renderer->RenderStringRightAligned(str, primaryFont, 16, Math::Vector2(5, ofs += 15));
+				renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, ofs += 15));
 			}
 		}
 

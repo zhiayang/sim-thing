@@ -10,14 +10,20 @@ namespace Sotv
 	PowerStorageModule::PowerStorageModule() { }
 
 
-	SolarGenModule::SolarGenModule(double watts)
+	SolarGenModule::SolarGenModule(double area, double eff)
 	{
-		this->productionInWatts = watts;
+		this->solarPanelArea = area;
+		this->solarCellEfficiency = eff;
 	}
 
+	// this is the wattage per square metre near earth.
+	#define TOTAL_AVAILABLE_SOLAR_POWER		1350
 	double SolarGenModule::getProductionInWatts()
 	{
-		return this->productionInWatts;
+		// assume we are at europa (jupiter) - 5.2^2 = 27 times weaker.
+		double totalSolarPower = TOTAL_AVAILABLE_SOLAR_POWER / 27.0;
+
+		return this->solarPanelArea * this->solarCellEfficiency * totalSolarPower;
 	}
 
 
@@ -73,6 +79,21 @@ namespace Sotv
 	{
 		this->current = consumingCurrent;
 		this->maximumCurrent = this->current;
+
+		// note: to make math easier,
+		// waste heat is treated as an 'extra' on top of whatever useful energy consumed.
+		this->wasteHeatFraction = 0.13;
+	}
+
+	void PowerConsumerModule::Update(GameState& gs, double delta)
+	{
+		if(this->isActivated())
+		{
+			auto stn = gs.playerStation;
+
+			stn->lifeSupportSystem->addWasteHeatToSystem(this->getCurrentInAmps()
+				* stn->powerSystem->systemVoltage * this->wasteHeatFraction, delta);
+		}
 	}
 
 	double PowerConsumerModule::getCurrentInAmps()

@@ -17,6 +17,9 @@ namespace Sotv
 
 	void PowerSystem::Update(GameState& gs, double delta)
 	{
+		// reset for this tick.
+		this->totalConsumed = 0;
+
 		// get the total generated in this update (make it double, because we're doing bad scaling stuff)
 		double total = 0;
 		for(auto g : this->generators)
@@ -61,25 +64,34 @@ namespace Sotv
 				// P = IV -- get power by multiplying with system_voltage,
 				// then get energy by multiplying by the delta time.
 
-
 				double watts = cons->getCurrentInAmps() * this->systemVoltage;
-				double needed = watts * NS_TO_S(delta);
-				double consumed = 0;
-
-				// consume from cells in series
-				for(auto st : this->storage)
-				{
-					consumed += st->drainEnergy(needed - consumed);
-					if(consumed >= needed)
-						break;
-				}
-
-				if(consumed < needed)
-					LOG("Short of %.2f joules this tick", needed - consumed);
+				this->consumeEnergy(watts, delta);
 			}
 		}
 	}
 
+	double PowerSystem::consumeEnergy(double watts, double delta)
+	{
+		double needed = watts* NS_TO_S(delta);
+		double consumed = 0;
+
+		// consume from cells in series
+		for(auto st : this->storage)
+		{
+			consumed += st->drainEnergy(needed - consumed);
+
+			if(consumed >= needed)
+				break;
+		}
+
+		if(consumed < needed)
+			LOG("Short of %.2f joules this tick", needed - consumed);
+
+		// totalConsumed works on watts, not joules per delta.
+		// so, we divide by delta when we add.
+		this->totalConsumed += (consumed / NS_TO_S(delta));
+		return consumed;
+	}
 
 
 	double PowerSystem::getTotalProductionInWatts()
@@ -89,6 +101,11 @@ namespace Sotv
 			total += g->getProductionInWatts();
 
 		return total;
+	}
+
+	double PowerSystem::getTotalConsumptionInWatts()
+	{
+		return this->totalConsumed;
 	}
 
 	double PowerSystem::getTotalStorageInJoules()

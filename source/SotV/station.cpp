@@ -23,16 +23,21 @@ namespace Sotv
 		stn->powerSystem = new PowerSystem(stn);
 		stn->addSystem(stn->powerSystem);
 
-		LOG("Adding 4x 600 W solar panels");
-		for(int i = 0; i < 4; i++)
+		LOG("Adding 8x 7 kW solar panels");
+		for(int i = 0; i < 8; i++)
 		{
-			auto panel = new SolarGenModule(6000000000);
+			auto panel = new SolarGenModule(34 * 12, 0.29);
 			stn->powerSystem->addGenerator(panel);
 		}
 
-		LOG("Adding 3x 72 Ah batteries");
+		LOG("Adding 3x 14.5 kWh batteries");
 		for(int i = 0; i < 3; i++)
-			stn->powerSystem->addStorage(new LithiumBatteryModule(0, Units::convertAmpHoursJoules(72, stn->powerSystem->systemVoltage)));
+		{
+			auto joules = Units::convertWattHoursToJoules(14.5 * 1000.0);
+
+			double fill = Util::Random::get(0.001, 0.3);
+			stn->powerSystem->addStorage(new LithiumBatteryModule(fill * joules, joules));
+		}
 
 		LOG("Adding Life Support system");
 		{

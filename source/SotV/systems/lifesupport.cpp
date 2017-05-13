@@ -7,14 +7,15 @@
 
 
 // physics constants first
-#define GAS_CONSTANT					8.31445
+#define GAS_CONSTANT					8.3144
+#define STEFAN_BOLTZMANN_CONSTANT		0.000000057
 #define MOLAR_MASS_OF_OXYGEN			32
 #define MOLAR_MASS_OF_NITROGEN			28
 #define SPECIFIC_HEAT_CAPACITY_OF_AIR	1012
 
 // how off can we be.
-#define HEATER_THRESHOLD				0.8
-#define ATMOS_THRESHOLD					80
+#define TEMP_THRESHOLD					0.6
+#define ATMOS_THRESHOLD					140
 
 namespace Sotv
 {
@@ -49,27 +50,38 @@ namespace Sotv
 			this gives us +.424g O2 per second, max.
 		*/
 
-		// subject to 'balans'.
-		this->joulesPerGramOfOxygen = 9062.5;						// as above
-		this->atmosphereConsumer = new PowerConsumerModule(16);		// as above
-		this->heatingConsumer = new PowerConsumerModule(400000);
-		this->waterConsumer = new PowerConsumerModule(6);
+		/*
+			70 kW of cooling on the ISS external thermal control system
+		*/
 
-		this->addModule(this->atmosphereConsumer);
-		this->addModule(this->heatingConsumer);
+		// subject to 'balans'.
+		this->atmosGenerator = new AtmosphereGenerator(9062.5, 40);		// as above
+		this->thermalController = new ThermalControl(600, 340, 0.91);	// heating, cooling, cooler efficiency (ratio of input/output)
+
+		this->waterConsumer = new PowerConsumerModule(6);
 		this->addModule(this->waterConsumer);
 
-		stn->powerSystem->addConsumer(this->atmosphereConsumer);
-		stn->powerSystem->addConsumer(this->heatingConsumer);
 		stn->powerSystem->addConsumer(this->waterConsumer);
+
+		// dig in and add these
+		{
+			this->addModule(this->atmosGenerator->powerConsumer);
+			this->addModule(this->thermalController->heatingConsumer);
+			this->addModule(this->thermalController->coolingConsumer);
+		}
+
+
+
+
+
 
 		// for the sake of testing, let's set the mass of nitrogen to be where it needs to be, at the target temperature.
 		// use a 79/21 N2/O2 atmosphere.
 
 
 		// it's coooold (-94 celsius)
-		// this->internalTemperatureInKelvin = 179;
-		this->internalTemperatureInKelvin = 297;
+		this->internalTemperatureInKelvin = 179;
+		// this->internalTemperatureInKelvin = 400;
 
 		{
 			// by partial pressure, and that mole ratio == volume ratio,
@@ -84,9 +96,6 @@ namespace Sotv
 			this->massOfNitrogenInKilograms = (moles * MOLAR_MASS_OF_NITROGEN) / 1000.0;
 		}
 
-		this->massOfOxygenInKilograms = 0;
-
-
 		{
 			// by partial pressure, and that mole ratio == volume ratio,
 			// get the partial pressure of O2.
@@ -99,6 +108,9 @@ namespace Sotv
 
 			this->massOfOxygenInKilograms = (moles * MOLAR_MASS_OF_OXYGEN) / 1000.0;
 		}
+
+
+		this->massOfOxygenInKilograms *= 4.7;
 	}
 
 	void LifeSupportSystem::Render(GameState& gs, double delta, Rx::Renderer* ren)
@@ -107,7 +119,14 @@ namespace Sotv
 			m->Render(gs, delta, ren);
 	}
 
+	void LifeSupportSystem::addWasteHeatToSystem(double watts, double delta)
+	{
+		double joules = watts * NS_TO_S(delta);
+		double totalGaseousMass = this->massOfNitrogenInKilograms + this->massOfOxygenInKilograms;
 
+		double tempChange = joules / (SPECIFIC_HEAT_CAPACITY_OF_AIR * totalGaseousMass);
+		this->internalTemperatureInKelvin += tempChange;
+	}
 
 
 	void LifeSupportSystem::generateWater(GameState& gs, double delta)
@@ -115,37 +134,23 @@ namespace Sotv
 		// nothing
 	}
 
-	void LifeSupportSystem::generateOxygen(GameState& gs, double delta)
+	void LifeSupportSystem::AtmosphereGenerator::updateAtmosphere(Station* stn, LifeSupportSystem* lss, double delta)
 	{
-		// in the previous tick, the oxygen generator was possibly on.
-		if(this->atmosphereConsumer->isActivated())
-		{
-			// it was on. calculate the changes.
-			// assumes the previous delta was the same as this delta, which is always true based on how we do updates.
-			double energy = this->atmosphereConsumer->getCurrentInAmps() * this->station->powerSystem->systemVoltage * NS_TO_S(delta);
-			double massGenerated = energy / this->joulesPerGramOfOxygen;
-
-			this->massOfOxygenInKilograms += (massGenerated / 1000.0);
-
-			// LOG("generated %fg of O2 / %f", massGenerated, energy);
-		}
-
-
 		// calculate the change in pressure needed
-		double pressureDelta = this->targetPressureInPascals - this->getAtmospherePressure();
+		double pressureDelta = lss->targetPressureInPascals - lss->getAtmospherePressure();
 
 		// if we're overpressure, cry.
 		if(fabs(pressureDelta) >= ATMOS_THRESHOLD || true)
 		{
-			this->atmosphereConsumer->activate();
 			if(pressureDelta > 0)
 			{
+				this->powerConsumer->activate();
 				// LOG("pressure %f", pressureDelta);
 
 				// ok. PV = nRT -- calculate the change in number of moles. n = PV/RT
-				double volume = this->station->getInternalVolume();
+				double volume = stn->getInternalVolume();
 
-				double moles = (pressureDelta * volume) / (GAS_CONSTANT * this->internalTemperatureInKelvin);
+				double moles = (pressureDelta * volume) / (GAS_CONSTANT * lss->internalTemperatureInKelvin);
 				double mass = moles * MOLAR_MASS_OF_OXYGEN;
 
 				// mass is the number of grams of oxygen we need, in grams.
@@ -154,62 +159,100 @@ namespace Sotv
 
 				// same shit as the heater from here.
 				double power = energyNeeded / NS_TO_S(delta);
-				double currentNeeded = power / this->station->powerSystem->systemVoltage;
-				this->atmosphereConsumer->rampCurrentTo(currentNeeded);
+				double currentNeeded = power / stn->powerSystem->systemVoltage;
+
+				this->powerConsumer->rampCurrentTo(currentNeeded);
+				{
+					auto ps = stn->powerSystem;
+
+					// consume the energy manually.
+					double energy = ps->consumeEnergy(this->powerConsumer->getCurrentInAmps() * ps->systemVoltage, delta);
+
+					double massGenerated = energy / this->joulesPerGramOfOxygen;
+					lss->massOfOxygenInKilograms += (massGenerated / 1000.0);
+				}
+			}
+			else
+			{
+				this->powerConsumer->deactivate();
+
+				// just vent.
+				lss->massOfOxygenInKilograms -= 0.30;
 			}
 		}
 		else
 		{
-			this->atmosphereConsumer->deactivate();
+			this->powerConsumer->deactivate();
 		}
 	}
 
-	void LifeSupportSystem::generateHeat(GameState& gs, double delta)
+	void LifeSupportSystem::ThermalControl::updateThermalControl(Station* stn, LifeSupportSystem* lss, double delta)
 	{
 		// the specific heat capacity of air is 1012 joules / kg / K
 		// so, first calculate the total amount of atmosphere in the system
 
-		double totalGaseousMass = this->massOfNitrogenInKilograms + this->massOfOxygenInKilograms;
-
-		// in the previous tick, the heater was possibly on.
-		if(this->heatingConsumer->isActivated())
-		{
-			// it was on. calculate the changes.
-			// assumes the previous delta was the same as this delta, which is always true based on how we do updates.
-			double energy = this->heatingConsumer->getCurrentInAmps() * this->station->powerSystem->systemVoltage * NS_TO_S(delta);
-
-			// SHC is 1012 J kg-1 K-1
-			// so the change in temperature is energy / (1012 * mass)
-			double tempChange = energy / (SPECIFIC_HEAT_CAPACITY_OF_AIR * totalGaseousMass);
-			this->internalTemperatureInKelvin += tempChange;
-		}
-
+		double totalGaseousMass = lss->massOfNitrogenInKilograms + lss->massOfOxygenInKilograms;
 
 
 		// then, calculate the difference in temperature
-		double tempDiff = this->targetTemperatureInKelvin - this->internalTemperatureInKelvin;
+		double tempDiff = lss->targetTemperatureInKelvin - lss->internalTemperatureInKelvin;
 
-		if(fabs(tempDiff) >= HEATER_THRESHOLD)
+		if(fabs(tempDiff) >= TEMP_THRESHOLD)
 		{
-			this->heatingConsumer->activate();
+			// calculate how many joules we need.
+			double energyNeeded = SPECIFIC_HEAT_CAPACITY_OF_AIR * totalGaseousMass * tempDiff;
 
-			// if we're hotter, err... cry?
 			if(tempDiff > 0)
 			{
-				// calculate how many joules we need.
-				double energyNeeded = SPECIFIC_HEAT_CAPACITY_OF_AIR * totalGaseousMass * tempDiff;
+				this->coolingConsumer->deactivate();
 
 				// this is the instantaneous power (in this tick) we need from the heater.
 				double power = energyNeeded / NS_TO_S(delta);
 
 				// ramp the heater to the required current
-				double currentNeeded = power / this->station->powerSystem->systemVoltage;
+				double currentNeeded = power / stn->powerSystem->systemVoltage;
+
 				this->heatingConsumer->rampCurrentTo(currentNeeded);
+				this->heatingConsumer->activate();
+				{
+					double energy = stn->powerSystem->consumeEnergy(this->heatingConsumer->getCurrentInAmps()
+						* stn->powerSystem->systemVoltage, delta);
+
+					// SHC is 1012 J kg-1 K-1
+					// so the change in temperature is energy / (1012 * mass)
+					double tempChange = energy / (SPECIFIC_HEAT_CAPACITY_OF_AIR * totalGaseousMass);
+					lss->internalTemperatureInKelvin += tempChange;
+				}
+			}
+			else
+			{
+				tempDiff *= -1;
+
+				this->heatingConsumer->deactivate();
+
+				// we have the energy needed, so... divide by the efficiency to get the input energy needed
+				energyNeeded /= this->coolingEfficiency;
+				energyNeeded = fabs(energyNeeded);
+
+				double power = energyNeeded / NS_TO_S(delta);
+				double currentNeeded = power / stn->powerSystem->systemVoltage;
+
+				this->coolingConsumer->rampCurrentTo(currentNeeded);
+				this->coolingConsumer->activate();
+				{
+					double energy = stn->powerSystem->consumeEnergy(this->coolingConsumer->getCurrentInAmps()
+						* stn->powerSystem->systemVoltage, delta);
+
+					double tempChange = energy / (SPECIFIC_HEAT_CAPACITY_OF_AIR * totalGaseousMass);
+					lss->internalTemperatureInKelvin -= tempChange;
+					// LOG("removed %f", tempChange);
+				}
 			}
 		}
 		else
 		{
 			this->heatingConsumer->deactivate();
+			this->coolingConsumer->deactivate();
 		}
 	}
 
@@ -223,16 +266,25 @@ namespace Sotv
 		// for now, let's assume N2 never leaks, and only O2 leaks.
 		// that loses us 0.005092608g per second
 
-		// const double oxygenLeakRateInGrams = 50.92608;
+		// const double oxygenLeakRateInGrams = 0.4237;
 		// const double oxygenLeakRateInGrams = 0.005092608;
 
-		// double oxygenLeakRateInGrams = 0.222222336 + 0.00509;
-		double oxygenLeakRateInGrams = 0.4237;
+		const double oxygenLeakRateInGrams = 0.222222336 + 0.00509;
 		this->massOfOxygenInKilograms -= ((oxygenLeakRateInGrams * NS_TO_S(delta)) / 1000.0);
 
 		// clamp
 		this->massOfOxygenInKilograms = std::max(0.0, this->massOfOxygenInKilograms);
-		// LOG("mass O2 = %f", this->massOfOxygenInKilograms);
+
+
+		// radiate some heat. emi
+		const double emissivity = 0.89;
+		const double surfaceArea = 60 * 8;
+
+		const double powerLoss = emissivity * STEFAN_BOLTZMANN_CONSTANT * surfaceArea * pow(this->internalTemperatureInKelvin, 4);
+		const double jouleLoss = powerLoss * NS_TO_S(delta);
+
+		double totalGaseousMass = this->massOfOxygenInKilograms + this->massOfNitrogenInKilograms;
+		this->internalTemperatureInKelvin -= jouleLoss / (SPECIFIC_HEAT_CAPACITY_OF_AIR * totalGaseousMass);
 
 		for(auto m : this->modules)
 			m->Update(gs, delta);
@@ -241,8 +293,8 @@ namespace Sotv
 		// here, we need to smartly activate and deactivate each component of the LSS depending on the environment.
 		if(this->isActivated())
 		{
-			this->generateHeat(gs, delta);
-			this->generateOxygen(gs, delta);
+			this->atmosGenerator->updateAtmosphere(this->station, this, delta);
+			this->thermalController->updateThermalControl(this->station, this, delta);
 		}
 	}
 

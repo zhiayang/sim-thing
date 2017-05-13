@@ -21,7 +21,6 @@ namespace Sotv
 		virtual void activate() { this->activated = true; }
 		virtual bool toggle() { return (this->activated = !this->activated); }
 
-
 		virtual void Render(GameState& gs, double delta, Rx::Renderer* ren);
 		virtual void Update(GameState& gs, double delta);
 
@@ -41,11 +40,12 @@ namespace Sotv
 
 	struct SolarGenModule : PowerGenModule
 	{
-		SolarGenModule(double watts);
+		SolarGenModule(double area, double efficiency);
 		virtual double getProductionInWatts() override;
 
 		protected:
-		double productionInWatts = 0;
+		double solarPanelArea;
+		double solarCellEfficiency;
 	};
 
 
@@ -93,9 +93,13 @@ namespace Sotv
 		virtual double rampCurrentTo(double c);
 		virtual double resetCurrent();
 
+		// exists so we can add waste automatically.
+		virtual void Update(GameState& gs, double delta) override;
+
 		protected:
 		double current;
 		double maximumCurrent;
+		double wasteHeatFraction;
 	};
 
 

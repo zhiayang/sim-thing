@@ -65,10 +65,20 @@ namespace Units
 		return (joules / (voltage * SECONDS_PER_HOUR));
 	}
 
-	double convertAmpHoursJoules(double ahs, double voltage)
+	double convertAmpHoursToJoules(double ahs, double voltage)
 	{
 		// do the reverse
 		return ahs * voltage * SECONDS_PER_HOUR;
+	}
+
+	double convertJoulesToWattHours(double joules)
+	{
+		return joules / SECONDS_PER_HOUR;
+	}
+
+	double convertWattHoursToJoules(double whs)
+	{
+		return whs * SECONDS_PER_HOUR;
 	}
 
 	double convertKelvinToCelsius(double kelvin)

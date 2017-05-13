@@ -11,8 +11,11 @@ namespace Units
 {
 	std::string formatWithUnits(double number, int prec, std::string unit);
 
-	double convertJoulesToAmpHours(double joules, double voltage);
-	double convertAmpHoursJoules(double ahs, double voltage);
+	double convertJoulesToAmpHours(double joules, double ahs);
+	double convertAmpHoursToJoules(double ahs, double joules);
+
+	double convertJoulesToWattHours(double joules);
+	double convertWattHoursToJoules(double whs);
 
 	double convertKelvinToCelsius(double kelvin);
 	double convertCelsiusToKelvin(double celsius);
