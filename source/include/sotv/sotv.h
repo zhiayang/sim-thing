@@ -30,8 +30,8 @@ namespace Sotv
 		Station* playerStation = 0;
 	};
 
-	void Render(GameState& s, float delta, Rx::Renderer* ren);
-	void Update(GameState& s, float delta);
+	void Render(GameState& s, double delta, Rx::Renderer* ren);
+	void Update(GameState& s, double delta);
 
 
 

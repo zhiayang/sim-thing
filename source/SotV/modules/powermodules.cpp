@@ -10,12 +10,12 @@ namespace Sotv
 	PowerStorageModule::PowerStorageModule() { }
 
 
-	SolarGenModule::SolarGenModule(size_t watts)
+	SolarGenModule::SolarGenModule(double watts)
 	{
 		this->productionInWatts = watts;
 	}
 
-	size_t SolarGenModule::getProductionInWatts()
+	double SolarGenModule::getProductionInWatts()
 	{
 		return this->productionInWatts;
 	}
@@ -24,7 +24,7 @@ namespace Sotv
 
 
 
-	LithiumBatteryModule::LithiumBatteryModule(size_t initialStorage, size_t cap)
+	LithiumBatteryModule::LithiumBatteryModule(double initialStorage, double cap)
 	{
 		this->current = initialStorage;
 		this->capacity = cap;
@@ -32,25 +32,25 @@ namespace Sotv
 		assert(this->current <= this->capacity);
 	};
 
-	size_t PowerStorageModule::getEnergyInJoules()
+	double PowerStorageModule::getEnergyInJoules()
 	{
 		return this->current;
 	}
 
-	size_t PowerStorageModule::getCapacityInJoules()
+	double PowerStorageModule::getCapacityInJoules()
 	{
 		return this->capacity;
 	}
 
-	size_t PowerStorageModule::storeEnergy(size_t joules)
+	double PowerStorageModule::storeEnergy(double joules)
 	{
-		size_t left = this->capacity - this->current;
+		double left = this->capacity - this->current;
 		this->current = std::min(this->capacity, this->current + joules);
 
 		return std::min(joules, left);
 	}
 
-	size_t PowerStorageModule::drainEnergy(size_t joules)
+	double PowerStorageModule::drainEnergy(double joules)
 	{
 		if(this->current >= joules)
 		{
@@ -59,11 +59,47 @@ namespace Sotv
 		}
 		else
 		{
-			size_t ret = this->current;
+			double ret = this->current;
 			this->current = 0;
 
 			return ret;
 		}
+	}
+
+
+
+
+	PowerConsumerModule::PowerConsumerModule(double consumingCurrent)
+	{
+		this->current = consumingCurrent;
+		this->maximumCurrent = this->current;
+	}
+
+	double PowerConsumerModule::getCurrentInAmps()
+	{
+		return this->current;
+	}
+
+	double PowerConsumerModule::getMaximumCurrentInAmps()
+	{
+		return this->maximumCurrent;
+	}
+
+	void PowerConsumerModule::setMaximumCurrentInAmps(double cur)
+	{
+		this->current = cur;
+		this->maximumCurrent = this->current;
+	}
+
+
+	double PowerConsumerModule::rampCurrentTo(double cur)
+	{
+		return (this->current = std::min(cur, this->getMaximumCurrentInAmps()));
+	}
+
+	double PowerConsumerModule::resetCurrent()
+	{
+		return (this->current = this->maximumCurrent);
 	}
 }
 

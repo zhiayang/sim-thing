@@ -15,9 +15,9 @@
 #include "sotv/gui.h"
 
 #include <unistd.h>
-#include <deque>
+#include <array>
 
-static const double fixedDeltaTimeNs	= 10.0 * 1000.0 * 1000.0;
+static const double fixedDeltaTimeNs	= 1.0 * 1000.0 * 1000.0;
 static const double targetFramerate		= 60.0;
 static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
@@ -50,7 +50,9 @@ namespace Rx
 static std::pair<double, double> determineCurrentFPS(double previous, double frameBegin, double frameTime)
 {
 	double currentFps = previous;
-	static std::deque<double> prevFps;
+
+	static size_t prevIndex = 0;
+	static std::array<double, 50> prevFps;
 
 	double renderDelta = 0;
 
@@ -62,19 +64,10 @@ static std::pair<double, double> determineCurrentFPS(double previous, double fra
 			currentFps = S_TO_NS(1.0) / frameTime;
 
 			// smooth fps
-			#if 0
+			#if 1
 			{
-				prevFps.push_back(currentFps);
-
-				if(prevFps.size() > 50)
-					prevFps.erase(prevFps.begin());
-
-				double totalfps = 0;
-				for(auto f : prevFps)
-					totalfps += f;
-
-				totalfps /= prevFps.size();
-				currentFps = totalfps;
+				prevFps[prevIndex++ % 50] = currentFps;
+				currentFps = std::accumulate(prevFps.begin(), prevFps.end(), 0) / prevFps.size();
 			}
 			#endif
 		}
@@ -124,17 +117,24 @@ int main(int argc, char** argv)
 	// todo: this should go into some savefile-parsing system that does the necessary stuff
 	// also should probably be more automatic than this
 	gameState = new Sotv::GameState();
-	gameState->playerStation = Sotv::Station::makeDefaultSpaceStation("Pioneer XV");
+	gameState->playerStation = Sotv::Station::makeDefaultSpaceStation("");
 
 
 	double accumulator = 0.0;
 	double frameTime = S_TO_NS(0.01667);
 	double currentFps = 0.0;
 
-	std::deque<double> prevFps;
-
 	double prevTimestamp = Util::Time::ns();
 	double renderDelta = 0;
+
+
+	Input::addHandler(&gameState->inputState, Input::Keys::Space, 0, [](Input::State* s, Input::Keys k) -> bool {
+
+		LOG("Life Support: %s", gameState->playerStation->lifeSupportSystem->toggle() ? "on" : "off");
+		return true;
+
+	}, Input::HandlerKind::PressDown);
+
 
 	// Main loop
 	bool done = false;
@@ -190,28 +190,42 @@ int main(int argc, char** argv)
 
 				renderer->RenderString(fpsstr, primaryFont, 12.0, Math::Vector2(5, 5));
 
-				size_t stor = gameState->playerStation->powerSystem->getTotalStorageInJoules();
-				size_t cap = gameState->playerStation->powerSystem->getTotalCapacityInJoules();
-				size_t prod = gameState->playerStation->powerSystem->getTotalProductionInWatts();
-				double percentage = ((double) stor / (double) cap) * 100.0;
+				auto psys = gameState->playerStation->powerSystem;
+				auto lss = gameState->playerStation->lifeSupportSystem;
 
+				double stor = Units::convertJoulesToAmpHours(psys->getTotalStorageInJoules(), psys->systemVoltage);
+				double cap = Units::convertJoulesToAmpHours(psys->getTotalCapacityInJoules(), psys->systemVoltage);
+				double prod = psys->getTotalProductionInWatts();
 
-				auto str = tfm::format("%s / %s at %s (%.1f%%)", Util::formatWithUnits(stor, 2, "J"),
-					Util::formatWithUnits(cap, 2, "J"), Util::formatWithUnits(prod, 2, "W"), percentage);
+				double percentage = (stor / cap) * 100.0;
 
-				// size_t strwidth = renderer->getStringWidthInPixels(str, primaryFont, 24);
-				// renderer->RenderString(str, primaryFont, 24, Math::Vector2(Config::getResX() - strwidth - 5, 5));
+				// divide stor and cap by system voltage to get a number in amp-hours.
+				// we divide by 3600 to convert from amp-seconds to amp-hours
+
+				auto str = tfm::format("%s / %s at %s (%.1f%%)", Units::formatWithUnits(stor, 2, "Ah"),
+					Units::formatWithUnits(cap, 2, "Ah"), Units::formatWithUnits(prod, 2, "W"), percentage);
 
 				renderer->RenderStringRightAligned(str, primaryFont, 16, Math::Vector2(5, 5));
 
-				size_t ofs = 5;
-				for(auto batt : gameState->playerStation->powerSystem->storage)
+
+				#if 0
+				for(auto batt : psys->storage)
 				{
-					auto str = tfm::format("%s / %s (%.1f%%)", Util::formatWithUnits(batt->current, 2, "J"),
-						Util::formatWithUnits(batt->capacity, 2, "J"), 100.0 * ((double) batt->current / (double) batt->capacity));
+					double cur = Units::convertJoulesToAmpHours(batt->getEnergyInJoules(), psys->systemVoltage);
+					double cap = Units::convertJoulesToAmpHours(batt->getCapacityInJoules(), psys->systemVoltage);
+
+					auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Ah"),
+						Units::formatWithUnits(cap, 2, "Ah"), 100.0 * ((double) cur / (double) cap));
 
 					renderer->RenderStringRightAligned(str, primaryFont, 16, Math::Vector2(5, ofs += 15));
 				}
+				#endif
+
+				size_t ofs = 5;
+				str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 1, "Pa"),
+					Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
+
+				renderer->RenderStringRightAligned(str, primaryFont, 16, Math::Vector2(5, ofs += 15));
 			}
 		}
 
@@ -279,9 +293,12 @@ int main(int argc, char** argv)
 			{
 				double toWait = targetFrameTimeNs - frameTime;
 
-				if(toWait > 1000 * 1000)
+				if(toWait >= 500)
 				{
-					// usleep(NS_TO_US(toWait));
+					struct timespec ts;
+					ts.tv_nsec = toWait;
+
+					nanosleep(&ts, 0);
 				}
 				else
 				{

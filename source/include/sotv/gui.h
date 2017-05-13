@@ -29,8 +29,8 @@ namespace Sotv
 		virtual void Close(GameState& gs) final;
 		virtual bool isOpen() final;
 
-		virtual void Render(GameState& gs, float delta, Rx::Renderer* r);
-		virtual void Update(GameState& gs, float delta);
+		virtual void Render(GameState& gs, double delta, Rx::Renderer* r);
+		virtual void Update(GameState& gs, double delta);
 
 		bool isWindowOpen = 0;
 		std::string name;

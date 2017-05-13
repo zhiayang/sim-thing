@@ -5,6 +5,9 @@
 #include <assert.h>
 #include "inputmanager.h"
 
+#include <bitset>
+#include <algorithm>
+
 namespace Input
 {
 	void HandleInput(State* inputState, SDL_Event* e)
@@ -12,8 +15,42 @@ namespace Input
 		assert(e->type == SDL_KEYDOWN || e->type == SDL_KEYUP);
 		Keys k = FromSDL(e->key.keysym.sym);
 
-		if(k != Keys::Unknown)
-			inputState->keys[k] = (e->type == SDL_KEYDOWN);
+		assert(k < Keys::NUM_KEYS);
+
+		bool prev = inputState->keys.test((size_t) k);
+		if(k != Keys::INVALID)
+		{
+			if(e->type == SDL_KEYDOWN)
+				inputState->keys.set((size_t) k);
+
+			else if(e->type == SDL_KEYUP)
+				inputState->keys.reset((size_t) k);
+		}
+
+		bool down = inputState->keys.test((size_t) k);
+
+		// ok, fire all the handlers
+		// it's already sorted by priority.
+		for(auto handler : inputState->handlers[k])
+		{
+			bool result = false;
+
+			// do the while things
+			if(std::get<1>(handler) == HandlerKind::WhileDown && down)
+				result = std::get<3>(handler)(inputState, k);
+
+			else if(std::get<1>(handler) == HandlerKind::WhileUp && !down)
+				result = std::get<3>(handler)(inputState, k);
+
+			// do the press things
+			else if(std::get<1>(handler) == HandlerKind::PressDown && !prev && down)
+				result = std::get<3>(handler)(inputState, k);
+
+			else if(std::get<1>(handler) == HandlerKind::PressUp && prev && !down)
+				result = std::get<3>(handler)(inputState, k);
+
+			if(result) break;
+		}
 	}
 
 	Keys FromSDL(uint32_t sdlKeycode)
@@ -70,7 +107,7 @@ namespace Input
 
 			default:
 				LOG("Fed invalid SDL keycode into %s", __PRETTY_FUNCTION__);
-				return Keys::Unknown;
+				return Keys::INVALID;
 		}
 	}
 
@@ -78,5 +115,69 @@ namespace Input
 	{
 		return (uint32_t) key;
 	}
+
+
+
+
+	bool testKey(State* state, Keys k)
+	{
+		return state->keys.test((size_t) k);
+	}
+
+
+	using HF_t = std::function<bool(State*, Keys)>;
+	id_t addHandler(State* state, Keys key, int priority, HF_t handler, HandlerKind kind)
+	{
+		static id_t uniqueID = 0;
+		id_t id = uniqueID++;
+
+		state->handlers[key].push_back({ id, kind, priority, handler });
+
+		// sort reverse -- so highest priority is in front
+		std::sort(state->handlers[key].begin(), state->handlers[key].end(), [](const std::tuple<id_t, HandlerKind, int, HF_t>& a,
+			const std::tuple<id_t, HandlerKind, int, HF_t>& b) -> bool
+		{
+			return std::get<2>(a) > std::get<2>(b);
+		});
+
+		return id;
+	}
+
+	void removeHandler(State* state, Keys k, id_t id)
+	{
+		if(state->handlers.find(k) != state->handlers.end())
+		{
+			for(auto it = state->handlers[k].begin(); it != state->handlers[k].end(); it++)
+			{
+				if(std::get<0>(*it) == id)
+				{
+					state->handlers[k].erase(it);
+					return;
+				}
+			}
+		}
+
+		ERROR("Handler with id '%zu' was not found", id);
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

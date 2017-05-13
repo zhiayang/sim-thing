@@ -12,17 +12,28 @@ namespace Rx { struct Renderer; }
 namespace Sotv
 {
 	struct GameState;
+	struct PowerSystem;
+
 	struct Module
 	{
-		virtual void Render(GameState& gs, float delta, Rx::Renderer* ren);
-		virtual void Update(GameState& gs, float delta);
+		virtual bool isActivated() { return this->activated; }
+		virtual void deactivate() { this->activated = false; }
+		virtual void activate() { this->activated = true; }
+		virtual bool toggle() { return (this->activated = !this->activated); }
+
+
+		virtual void Render(GameState& gs, double delta, Rx::Renderer* ren);
+		virtual void Update(GameState& gs, double delta);
 
 		virtual ~Module() { }
+
+		protected:
+		bool activated = false;
 	};
 
 	struct PowerGenModule : Module
 	{
-		virtual size_t getProductionInWatts() = 0;
+		virtual double getProductionInWatts() = 0;
 
 		protected:
 		PowerGenModule();
@@ -30,11 +41,11 @@ namespace Sotv
 
 	struct SolarGenModule : PowerGenModule
 	{
-		size_t productionInWatts = 0;
+		SolarGenModule(double watts);
+		virtual double getProductionInWatts() override;
 
-
-		SolarGenModule(size_t watts);
-		virtual size_t getProductionInWatts() override;
+		protected:
+		double productionInWatts = 0;
 	};
 
 
@@ -45,26 +56,49 @@ namespace Sotv
 
 	struct PowerStorageModule : Module
 	{
-		size_t current;
-		size_t capacity;
-
-		virtual size_t getEnergyInJoules();
-		virtual size_t getCapacityInJoules();
+		virtual double getEnergyInJoules();
+		virtual double getCapacityInJoules();
 
 		// returns the actual amount stored (because capacity was reached)
-		virtual size_t storeEnergy(size_t joules);
+		virtual double storeEnergy(double joules);
 
 		// returns the actual amount drained (because there wasn't enough stored)
-		virtual size_t drainEnergy(size_t joules);
+		virtual double drainEnergy(double joules);
 
 		protected:
+
+		double current;
+		double capacity;
+
 		PowerStorageModule();
 	};
 
 	struct LithiumBatteryModule : PowerStorageModule
 	{
-		LithiumBatteryModule(size_t initialStorage, size_t cap);
+		LithiumBatteryModule(double initialStorage, double cap);
 	};
+
+
+
+
+
+	struct PowerConsumerModule : Module
+	{
+		PowerConsumerModule(double consumingCurrent);
+		virtual double getCurrentInAmps();
+		virtual double getMaximumCurrentInAmps();
+
+		virtual void setMaximumCurrentInAmps(double current);
+
+		virtual double rampCurrentTo(double c);
+		virtual double resetCurrent();
+
+		protected:
+		double current;
+		double maximumCurrent;
+	};
+
+
 }
 
 

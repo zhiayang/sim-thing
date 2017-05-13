@@ -13,23 +13,40 @@ namespace Sotv
 	{
 		auto stn = new Station();
 
+		// 800 cubic metres.
+		stn->setInternalVolume(350);
+
 		stn->stationName = name;
 		LOG("Creating new (default) station with name '%s'", name.c_str());
 
 		LOG("Creating power system");
-		stn->powerSystem = new PowerSystem();
+		stn->powerSystem = new PowerSystem(stn);
 		stn->addSystem(stn->powerSystem);
 
 		LOG("Adding 4x 600 W solar panels");
-		for(int i = 0; i < 8; i++)
+		for(int i = 0; i < 4; i++)
 		{
-			auto panel = new SolarGenModule(600);
+			auto panel = new SolarGenModule(6000000000);
 			stn->powerSystem->addGenerator(panel);
 		}
 
-		LOG("Adding 3x 5 MJ battery");
+		LOG("Adding 3x 72 Ah batteries");
 		for(int i = 0; i < 3; i++)
-			stn->powerSystem->addStorage(new LithiumBatteryModule(0, 5000 * 1000ULL));
+			stn->powerSystem->addStorage(new LithiumBatteryModule(0, Units::convertAmpHoursJoules(72, stn->powerSystem->systemVoltage)));
+
+		LOG("Adding Life Support system");
+		{
+			// specs stolen from ISS oxygen-generating-system
+			// 10-55A, ~3500W
+			// say 40A, 2400W, gives operating 60V
+
+			auto lss = new LifeSupportSystem(stn, 101400, Units::convertCelsiusToKelvin(24));
+			stn->lifeSupportSystem = lss;
+
+			stn->addSystem(lss);
+		}
+
+
 
 		return stn;
 	}
@@ -46,13 +63,13 @@ namespace Sotv
 			this->systems.push_back(sys);
 	}
 
-	void Station::Render(GameState& gs, float delta, Rx::Renderer* ren)
+	void Station::Render(GameState& gs, double delta, Rx::Renderer* ren)
 	{
 		for(auto s : this->systems)
 			s->Render(gs, delta, ren);
 	}
 
-	void Station::Update(GameState& gs, float delta)
+	void Station::Update(GameState& gs, double delta)
 	{
 		for(auto s : this->systems)
 			s->Update(gs, delta);

@@ -10,7 +10,7 @@
 
 namespace Sotv
 {
-	void Render(GameState& gs, float delta, Rx::Renderer* ren)
+	void Render(GameState& gs, double delta, Rx::Renderer* ren)
 	{
 		// render background stuff first
 		gs.playerStation->Render(gs, delta, ren);
@@ -20,7 +20,7 @@ namespace Sotv
 			w->Render(gs, delta, ren);
 	}
 
-	void Update(GameState& gs, float delta)
+	void Update(GameState& gs, double delta)
 	{
 		gs.playerStation->Update(gs, delta);
 

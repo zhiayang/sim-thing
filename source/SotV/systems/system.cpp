@@ -8,13 +8,13 @@
 
 namespace Sotv
 {
-	void System::Render(GameState& gs, float delta, Rx::Renderer* ren)
+	void System::Render(GameState& gs, double delta, Rx::Renderer* ren)
 	{
 		for(auto m : this->modules)
 			m->Render(gs, delta, ren);
 	}
 
-	void System::Update(GameState& gs, float delta)
+	void System::Update(GameState& gs, double delta)
 	{
 		for(auto m : this->modules)
 			m->Update(gs, delta);
@@ -29,4 +29,39 @@ namespace Sotv
 		else
 			this->modules.push_back(mod);
 	}
+
+	void System::activate()
+	{
+		// a bit more complex, since we should activate/decativate our constituent modules as well
+		this->activated = true;
+
+		for(auto mod : this->modules)
+			mod->activate();
+	}
+
+	void System::deactivate()
+	{
+		this->activated = false;
+
+		for(auto mod : this->modules)
+			mod->deactivate();
+	}
+
+	bool System::toggle()
+	{
+		this->activated = !this->activated;
+
+		for(auto mod : this->modules)
+			mod->toggle();
+
+		return this->activated;
+	}
 }
+
+
+
+
+
+
+
+

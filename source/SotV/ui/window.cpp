@@ -41,11 +41,11 @@ namespace Sotv
 		return this->isWindowOpen;
 	}
 
-	void Window::Render(GameState& gs, float delta, Rx::Renderer* r)
+	void Window::Render(GameState& gs, double delta, Rx::Renderer* r)
 	{
 	}
 
-	void Window::Update(GameState& gs, float delta)
+	void Window::Update(GameState& gs, double delta)
 	{
 	}
 }

@@ -7,11 +7,11 @@
 
 namespace Sotv
 {
-	void Module::Render(GameState& gs, float delta, Rx::Renderer* ren)
+	void Module::Render(GameState& gs, double delta, Rx::Renderer* ren)
 	{
 	}
 
-	void Module::Update(GameState& gs, float delta)
+	void Module::Update(GameState& gs, double delta)
 	{
 	}
 }

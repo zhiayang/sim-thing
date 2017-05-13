@@ -5,13 +5,17 @@
 #include "sotv/sotv.h"
 #include "sotv/systems.h"
 
+#define SYSTEM_VOLTAGE	240
+
 namespace Sotv
 {
-	void PowerSystem::Render(GameState& gs, float delta, Rx::Renderer* ren)
+	PowerSystem::PowerSystem(Station* stn) : System(stn), systemVoltage(SYSTEM_VOLTAGE) { }
+
+	void PowerSystem::Render(GameState& gs, double delta, Rx::Renderer* ren)
 	{
 	}
 
-	void PowerSystem::Update(GameState& gs, float delta)
+	void PowerSystem::Update(GameState& gs, double delta)
 	{
 		// get the total generated in this update (make it double, because we're doing bad scaling stuff)
 		double total = 0;
@@ -19,15 +23,25 @@ namespace Sotv
 			total += g->getProductionInWatts();
 
 		// scale by the delta
-		total *= (delta / (1000.0 * 1000.0 * 1000.0));
+		total *= NS_TO_S(delta);
 		total += this->previousExcess;
 
-		// todo: priority system of some kind. right now, fill cells in series.
+		// todo: priority system of some kind. right now, fill cells in parallel.
 		assert(!this->storage.empty());
 
 		double startedWith = total;
+
+		#if 0
+			double avgFill = total / (double) this->storage.size();
+		#else
+			double avgFill = total;
+		#endif
+
 		for(auto s : this->storage)
-			total -= s->storeEnergy(total);
+		{
+			total -= s->storeEnergy(avgFill);
+			if(total <= 0) break;
+		}
 
 		// add it back, to be tried again next tick
 		// but once it's full we just give up. dump it.
@@ -37,32 +51,58 @@ namespace Sotv
 		else
 			this->previousExcess = 0;
 
-		// fprintf(stderr, "\r                    \r%.2f", this->previousExcess);
+
+
+		// ok, consume power now
+		for(auto cons : this->consumers)
+		{
+			if(cons->isActivated())
+			{
+				// P = IV -- get power by multiplying with system_voltage,
+				// then get energy by multiplying by the delta time.
+
+
+				double watts = cons->getCurrentInAmps() * this->systemVoltage;
+				double needed = watts * NS_TO_S(delta);
+				double consumed = 0;
+
+				// consume from cells in series
+				for(auto st : this->storage)
+				{
+					consumed += st->drainEnergy(needed - consumed);
+					if(consumed >= needed)
+						break;
+				}
+
+				if(consumed < needed)
+					LOG("Short of %.2f joules this tick", needed - consumed);
+			}
+		}
 	}
 
 
 
-	size_t PowerSystem::getTotalProductionInWatts()
+	double PowerSystem::getTotalProductionInWatts()
 	{
-		size_t total = 0;
+		double total = 0;
 		for(auto g : this->generators)
 			total += g->getProductionInWatts();
 
 		return total;
 	}
 
-	size_t PowerSystem::getTotalStorageInJoules()
+	double PowerSystem::getTotalStorageInJoules()
 	{
-		size_t total = 0;
+		double total = 0;
 		for(auto s : this->storage)
 			total += s->getEnergyInJoules();
 
 		return total;
 	}
 
-	size_t PowerSystem::getTotalCapacityInJoules()
+	double PowerSystem::getTotalCapacityInJoules()
 	{
-		size_t total = 0;
+		double total = 0;
 		for(auto s : this->storage)
 			total += s->getCapacityInJoules();
 
@@ -91,4 +131,25 @@ namespace Sotv
 		else
 			this->storage.push_back(stor), this->addModule(stor);
 	}
+
+	void PowerSystem::addConsumer(PowerConsumerModule* cons)
+	{
+		assert(cons);
+		if(std::find(this->consumers.begin(), this->consumers.end(), cons) != this->consumers.end())
+			ERROR("Consumer (ptr '%p') already exists in the system, skipping", cons);
+
+		else
+			this->consumers.push_back(cons), this->addModule(cons);
+	}
 }
+
+
+
+
+
+
+
+
+
+
+

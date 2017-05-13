@@ -28,17 +28,26 @@ namespace Sotv
 
 		// 'special' systems, in a sense; they're still in the list above, it's just here to be easier to reference
 		PowerSystem* powerSystem = 0;
-
+		LifeSupportSystem* lifeSupportSystem = 0;
 
 		void addSystem(System* sys);
 
-		void Render(GameState& s, float delta, Rx::Renderer* ren);
-		void Update(GameState& s, float delta);
+
+		double getInternalVolume() { return this->internalVolume; }
+		void setInternalVolume(double newVolume) { this->internalVolume = newVolume; }
+
+		// use delta < 0 to decrease.
+		double increaseInternalVolume(double delta) { return (this->internalVolume += delta); }
+
+		void Render(GameState& s, double delta, Rx::Renderer* ren);
+		void Update(GameState& s, double delta);
 
 		static Station* makeDefaultSpaceStation(std::string name);
 
 		private:
 		Station() { }
+
+		double internalVolume = 0;
 	};
 }
 

@@ -8,14 +8,12 @@
 #include <stdlib.h>
 #include <algorithm>
 
+#include "units.h"
+
 struct ImFont;
 
 namespace Util
 {
-	// std::string formatWithUnits(size_t number, std::string unit);
-	std::string formatWithUnits(double number, int prec, std::string unit);
-
-
 	namespace Random
 	{
 		double get(double scale = 1);

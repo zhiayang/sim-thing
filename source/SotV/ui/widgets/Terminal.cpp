@@ -36,7 +36,7 @@ namespace Sotv
 		delete this->tstate;
 	}
 
-	void TerminalWindow::Render(Connect::GameState& gs, float delta, Rx::Renderer* r)
+	void TerminalWindow::Render(Connect::GameState& gs, double delta, Rx::Renderer* r)
 	{
 		if(this->isWindowOpen)
 		{
@@ -99,7 +99,7 @@ namespace Sotv
 		}
 	}
 
-	void TerminalWindow::Update(Connect::GameState& gs, float delta)
+	void TerminalWindow::Update(Connect::GameState& gs, double delta)
 	{
 	}
 
