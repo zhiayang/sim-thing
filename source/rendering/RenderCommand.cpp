@@ -7,6 +7,8 @@
 
 #include "imgui.h"
 
+#include <glbinding/gl/gl.h>
+
 // copied from imgui.cpp
 
 // Convert UTF-8 to 32-bits character, process single character input.
@@ -14,21 +16,28 @@
 // We handle UTF-8 decoding error by skipping forward.
 static int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const char* in_text_end)
 {
-	unsigned int c = (unsigned int)-1;
-	const unsigned char* str = (const unsigned char*)in_text;
+	unsigned int c = (unsigned int) -1;
+	const unsigned char* str = (const unsigned char*) in_text;
+
 	if(!(*str & 0x80))
 	{
-		c = (unsigned int)(*str++);
+		c = (unsigned int) (*str++);
 		*out_char = c;
 		return 1;
 	}
 	if((*str & 0xe0) == 0xc0)
 	{
 		*out_char = 0xFFFD; // will be invalid but not end of string
-		if(in_text_end && in_text_end - (const char*)str < 2) return 1;
-		if(*str < 0xc2) return 2;
-		c = (unsigned int)((*str++ & 0x1f) << 6);
-		if((*str & 0xc0) != 0x80) return 2;
+		if(in_text_end && in_text_end - (const char*) str < 2)
+			return 1;
+
+		if(*str < 0xc2)
+			return 2;
+
+		c = (unsigned int) ((*str++ & 0x1f) << 6);
+		if((*str & 0xc0) != 0x80)
+			return 2;
+
 		c += (*str++ & 0x3f);
 		*out_char = c;
 		return 2;
@@ -36,13 +45,23 @@ static int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const
 	if((*str & 0xf0) == 0xe0)
 	{
 		*out_char = 0xFFFD; // will be invalid but not end of string
-		if(in_text_end && in_text_end - (const char*)str < 3) return 1;
-		if(*str == 0xe0 && (str[1] < 0xa0 || str[1] > 0xbf)) return 3;
-		if(*str == 0xed && str[1] > 0x9f) return 3; // str[1] < 0x80 is checked below
-		c = (unsigned int)((*str++ & 0x0f) << 12);
-		if((*str & 0xc0) != 0x80) return 3;
-		c += (unsigned int)((*str++ & 0x3f) << 6);
-		if((*str & 0xc0) != 0x80) return 3;
+		if(in_text_end && in_text_end - (const char*) str < 3)
+			return 1;
+
+		if(*str == 0xe0 && (str[1] < 0xa0 || str[1] > 0xbf))
+			return 3;
+
+		if(*str == 0xed && str[1] > 0x9f)
+			return 3; // str[1] < 0x80 is checked below
+
+		c = (unsigned int) ((*str++ & 0x0f) << 12);
+		if((*str & 0xc0) != 0x80)
+			return 3;
+
+		c += (unsigned int) ((*str++ & 0x3f) << 6);
+		if((*str & 0xc0) != 0x80)
+			return 3;
+
 		c += (*str++ & 0x3f);
 		*out_char = c;
 		return 3;
@@ -50,19 +69,35 @@ static int ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const
 	if((*str & 0xf8) == 0xf0)
 	{
 		*out_char = 0xFFFD; // will be invalid but not end of string
-		if(in_text_end && in_text_end - (const char*)str < 4) return 1;
-		if(*str > 0xf4) return 4;
-		if(*str == 0xf0 && (str[1] < 0x90 || str[1] > 0xbf)) return 4;
-		if(*str == 0xf4 && str[1] > 0x8f) return 4; // str[1] < 0x80 is checked below
-		c = (unsigned int)((*str++ & 0x07) << 18);
-		if((*str & 0xc0) != 0x80) return 4;
-		c += (unsigned int)((*str++ & 0x3f) << 12);
-		if((*str & 0xc0) != 0x80) return 4;
-		c += (unsigned int)((*str++ & 0x3f) << 6);
-		if((*str & 0xc0) != 0x80) return 4;
+		if(in_text_end && in_text_end - (const char*) str < 4)
+			return 1;
+
+		if(*str > 0xf4)
+			return 4;
+
+		if(*str == 0xf0 && (str[1] < 0x90 || str[1] > 0xbf))
+			return 4;
+
+		if(*str == 0xf4 && str[1] > 0x8f)
+			return 4; // str[1] < 0x80 is checked below
+
+		c = (unsigned int) ((*str++ & 0x07) << 18);
+		if((*str & 0xc0) != 0x80)
+			return 4;
+
+		c += (unsigned int) ((*str++ & 0x3f) << 12);
+		if((*str & 0xc0) != 0x80)
+			return 4;
+
+		c += (unsigned int) ((*str++ & 0x3f) << 6);
+		if((*str & 0xc0) != 0x80)
+			return 4;
+
 		c += (*str++ & 0x3f);
 		// utf-8 encodings of values used in surrogate pairs are invalid
-		if((c & 0xFFFFF800) == 0xD800) return 4;
+		if((c & 0xFFFFF800) == 0xD800)
+			return 4;
+
 		*out_char = c;
 		return 4;
 	}
@@ -75,56 +110,70 @@ namespace Rx
 {
 	void RenderCommand::doRender()
 	{
-		if(this->type == CommandType::Clear)
+		using namespace gl;
+		switch(this->type)
 		{
-			glClearColor(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
-		else if(this->type == CommandType::RenderVerts)
-		{
-			glBegin(this->mode);
-			glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
+			case CommandType::Clear: {
 
-			for(auto v : this->vertices)
-				glVertex2d(v.x, v.y);
+				glClearColor(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
+			break;
 
-			glEnd();
-		}
-		else if(this->type == CommandType::RenderQuads)
-		{
-			glEnable(GL_TEXTURE_2D);
+			case CommandType::RenderVerts: {
 
-			GL::pushTextureBinding(this->textureId);
+				glBegin(this->mode);
+				glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
 
-			// glBindTexture(GL_TEXTURE_2D, this->textureId);
-			glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
+				for(auto v : this->vertices)
+					glVertex2d(v.x, v.y);
 
-
-			for(size_t i = 0; i < this->vertices.size(); i += 4)
-			{
-				float x1 = this->vertices[i + 0].x;
-				float y1 = this->vertices[i + 0].y;
-
-				float x2 = this->vertices[i + 1].x;
-				float y2 = this->vertices[i + 1].y;
-
-				float u1 = this->vertices[i + 2].x;
-				float v1 = this->vertices[i + 2].y;
-
-				float u2 = this->vertices[i + 3].x;
-				float v2 = this->vertices[i + 3].y;
-
-				glBegin(GL_QUADS);
-				{
-					glTexCoord2f(u1, v1);		glVertex3f(x1, y1, 0);
-					glTexCoord2f(u2, v1);		glVertex3f(x2, y1, 0);
-					glTexCoord2f(u2, v2);		glVertex3f(x2, y2, 0);
-					glTexCoord2f(u1, v2);		glVertex3f(x1, y2, 0);
-				}
 				glEnd();
 			}
+			break;
 
-			GL::popTextureBinding();
+			case CommandType::RenderQuads: {
+
+				glEnable(GL_TEXTURE_2D);
+
+				GL::pushTextureBinding(this->textureId);
+
+				// glBindTexture(GL_TEXTURE_2D, this->textureId);
+				glColor4f(this->colour.fr, this->colour.fg, this->colour.fb, this->colour.fa);
+
+
+				for(size_t i = 0; i < this->vertices.size(); i += 4)
+				{
+					float x1 = this->vertices[i + 0].x;
+					float y1 = this->vertices[i + 0].y;
+
+					float x2 = this->vertices[i + 1].x;
+					float y2 = this->vertices[i + 1].y;
+
+					float u1 = this->vertices[i + 2].x;
+					float v1 = this->vertices[i + 2].y;
+
+					float u2 = this->vertices[i + 3].x;
+					float v2 = this->vertices[i + 3].y;
+
+					glBegin(GL_QUADS);
+					{
+						glTexCoord2f(u1, v1);		glVertex3f(x1, y1, 0);
+						glTexCoord2f(u2, v1);		glVertex3f(x2, y1, 0);
+						glTexCoord2f(u2, v2);		glVertex3f(x2, y2, 0);
+						glTexCoord2f(u1, v2);		glVertex3f(x1, y2, 0);
+					}
+					glEnd();
+				}
+
+				GL::popTextureBinding();
+			}
+			break;
+
+			case CommandType::Invalid: {
+				ERROR("Invalid render command");
+			}
+			break;
 		}
 	}
 
@@ -163,7 +212,7 @@ namespace Rx
 		return rc;
 	}
 
-	RenderCommand RenderCommand::createRenderVertices(std::vector<Math::Vector2> vertices, GLenum mode, Util::Colour col, bool fill)
+	RenderCommand RenderCommand::createRenderVertices(std::vector<Math::Vector2> vertices, gl::GLenum mode, Util::Colour col, bool fill)
 	{
 		RenderCommand rc;
 		rc.type = CommandType::RenderVerts;

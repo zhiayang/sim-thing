@@ -7,6 +7,7 @@
 #include "SDL2/SDL_shape.h"
 #include <stdint.h>
 
+
 // Converts degrees to radians.
 #define degreesToRadians(angleDegrees) (angleDegrees * M_PI / 180.0)
 

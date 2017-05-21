@@ -9,7 +9,9 @@
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
-#include "SDL2/SDL_opengl.h"
+// #include "SDL2/SDL_opengl.h"
+
+#include <glbinding/gl/enum.h>
 
 #include "utilities.h"
 #include "assetloader.h"
@@ -102,7 +104,7 @@ namespace Rx
 
 		static RenderCommand createRenderString(std::string s, Rx::Font font, float size, Util::Colour col, Math::Vector2 pos);
 		static RenderCommand createRenderTexture(Texture* tex, Math::Rectangle src, Math::Rectangle dest);
-		static RenderCommand createRenderVertices(std::vector<Math::Vector2> vertices, GLenum mode, Util::Colour col, bool fill);
+		static RenderCommand createRenderVertices(std::vector<Math::Vector2> vertices, gl::GLenum mode, Util::Colour col, bool fill);
 
 		bool fill = 0;
 		int textureId = 0;
@@ -112,7 +114,7 @@ namespace Rx
 
 		std::pair<Math::Vector2, Math::Vector2> bounds;
 
-		GLenum mode;
+		gl::GLenum mode;
 	};
 
 	struct Renderer
@@ -223,13 +225,13 @@ namespace Rx
 
 
 	// internal stuff, mostly
-	void SetupOpenGL(ImDrawData* draw_data, int* fb_width, int* fb_height);
+	void SetupOpenGL2D(ImDrawData* draw_data, int* fb_width, int* fb_height);
 	void RenderImGui(ImDrawData* draw_data, int fb_height);
-	void FinishOpenGL();
+	void FinishOpenGL2D();
 
 
-
-
+	void SetupOpenGL3D();
+	void FinishOpenGL3D();
 
 
 

@@ -29,8 +29,8 @@ CXXDEPS			:= $(CXXSRC:.cpp=.cpp.d)
 
 NUMFILES		:= $$(($(words $(CXXSRC)) + $(words $(CSRC))))
 
-LIBS			:= -lgl -lsdl2 -lsdl2_ttf -lsdl2_image
-FRAMEWORKS		:= -framework GLUT -framework OpenGL -framework CoreVideo -framework Cocoa -framework CoreFoundation -lsdl2 -lsdl2_image -lsdl2_ttf
+LIBS			:= -lgl -lsdl2 -lsdl2_ttf -lsdl2_image -lglbinding
+FRAMEWORKS		:= -framework GLUT -framework OpenGL -framework CoreVideo -framework Cocoa -framework CoreFoundation -lsdl2 -lsdl2_image -lsdl2_ttf -lglbinding
 
 SANITISE		:=
 

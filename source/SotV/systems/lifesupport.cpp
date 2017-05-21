@@ -14,7 +14,7 @@
 #define SPECIFIC_HEAT_CAPACITY_OF_AIR	1012
 
 // how off can we be.
-#define TEMP_THRESHOLD					0.6
+#define TEMP_THRESHOLD					1.7
 #define ATMOS_THRESHOLD					140
 
 namespace Sotv
@@ -56,7 +56,7 @@ namespace Sotv
 
 		// subject to 'balans'.
 		this->atmosGenerator = new AtmosphereGenerator(9062.5, 40);		// as above
-		this->thermalController = new ThermalControl(600, 340, 0.91);	// heating, cooling, cooler efficiency (ratio of input/output)
+		this->thermalController = new ThermalControl(5600, 4500, 0.91);	// heating, cooling, cooler efficiency (ratio of input/output)
 
 		this->waterConsumer = new PowerConsumerModule(6);
 		this->addModule(this->waterConsumer);

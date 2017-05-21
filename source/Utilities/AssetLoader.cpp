@@ -27,12 +27,13 @@ namespace AssetLoader
 		// read the file.
 		FILE* file = fopen(ass->path.c_str(), "r");
 		if(file == nullptr)
-			ERROR("Failed to read asset '%s' (fopen returned null)", ass->path.c_str());
+			ERROR("Failed to read asset '%s' (fopen returned null, errno = %d)", ass->path.c_str(), errno);
 
 		struct stat s;
 		fstat(fileno(file), &s);
 
 		ass->raw = new uint8_t[s.st_size];
+		ass->length = s.st_size;
 		off_t read = fread(ass->raw, 1, s.st_size, file);
 
 		if(read != s.st_size)
@@ -50,8 +51,12 @@ namespace AssetLoader
 
 
 		// check.
-		if(ext == "png")	ass->type = AssetType::ImagePNG;
-		else				ass->type = AssetType::Unknown;
+		if(ext == "png")		ass->type = AssetType::ImagePNG;
+		else if(ext == "dds")	ass->type = AssetType::ImageDDS;
+		else if(ext == "vert")	ass->type = AssetType::ShaderVert;
+		else if(ext == "frag")	ass->type = AssetType::ShaderFrag;
+		else if(ext == "obj")	ass->type = AssetType::ModelOBJ;
+		else					ass->type = AssetType::Unknown;
 
 		LOG("Loaded asset '%s'", ass->path.c_str());
 		return ass;

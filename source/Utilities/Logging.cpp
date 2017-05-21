@@ -48,8 +48,8 @@ namespace Logging
 
 		// handle sdl error shit
 		std::string sdlerr;
-		if(level >= 1)
-			sdlerr = std::string(" (SDL Error: ") + SDL_GetError() + ")";
+		// if(level >= 1)
+		// 	sdlerr = std::string(" (SDL Error: ") + SDL_GetError() + ")";
 
 
 		fprintf(outfile, "%s: %s%s\n", head.c_str(), fmtted, sdlerr.empty() ? "" : sdlerr.c_str());

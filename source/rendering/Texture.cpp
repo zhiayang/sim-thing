@@ -6,6 +6,8 @@
 #include "glwrapper.h"
 #include "graphicswrapper.h"
 
+#include <glbinding/gl/gl.h>
+
 namespace Rx
 {
 	Texture::Texture(std::string path, Renderer* r) : Texture(AssetLoader::Load(path.c_str()), r)
@@ -20,6 +22,7 @@ namespace Rx
 
 	Texture::Texture(Surface* surf, Renderer*)
 	{
+		using namespace gl;
 		assert(surf);
 
 		this->surf = surf;
@@ -32,7 +35,7 @@ namespace Rx
 		glGenTextures(1, &this->glTextureID);
 		GL::pushTextureBinding(this->glTextureID);
 
-		int texmode = 0;
+		GLenum texmode;
 		if(this->surf->sdlSurf->format->BytesPerPixel == 4)
 		{
 			texmode = GL_RGBA;
@@ -61,7 +64,7 @@ namespace Rx
 
 	Texture::~Texture()
 	{
-		glDeleteTextures(1, &this->glTextureID);
+		gl::glDeleteTextures(1, &this->glTextureID);
 		delete this->surf;
 	}
 }

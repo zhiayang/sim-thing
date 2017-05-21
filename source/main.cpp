@@ -3,10 +3,18 @@
 // Licensed under the Apache License Version 2.0.
 
 #include <stdio.h>
+#include <glbinding/gl/gl.h>
+
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/matrix.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "graphicswrapper.h"
+
+#include "model.h"
 
 #include "config.h"
 #include "tinyformat.h"
@@ -137,6 +145,73 @@ int main(int argc, char** argv)
 	}, Input::HandlerKind::PressDown);
 
 
+	Rx::Model* model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"));
+
+
+
+	double vertices[] = {	0.0, -0.525731, 0.850651,
+						0.850651, 0.0, 0.525731,
+						0.850651, 0.0, -0.525731,
+						-0.850651, 0.0, -0.525731,
+						-0.850651, 0.0, 0.525731,
+						-0.525731, 0.850651, 0.0,
+						0.525731, 0.850651, 0.0,
+						0.525731, -0.850651, 0.0,
+						-0.525731, -0.850651, 0.0,
+						0.0, -0.525731, -0.850651,
+						0.0, 0.525731, -0.850651,
+						0.0, 0.525731, 0.850651
+					};
+
+	auto colours = new double[48];
+	for(int i = 0; i < 48; i += 4)
+	{
+		colours[i + 0] = Util::Random::get(0.3, 0.9);
+		colours[i + 1] = Util::Random::get(0.3, 0.9);
+		colours[i + 2] = Util::Random::get(0.3, 0.9);
+		colours[i + 3] = 1.0;
+	}
+
+	double indices[] = {
+							1,  2,  6,
+							1,  7,  2,
+							3,  4,  5,
+							4,  3,  8,
+							6,  5,  11,
+							5,  6,  10,
+							9,  10, 2,
+							10, 9,  3,
+							7,  8,  9,
+							8,  7,  0,
+							11, 0,  1,
+							0,  11, 4,
+							6,  2,  10,
+							1,  6,  11,
+							3,  5,  10,
+							5,  4,  11,
+							2,  7,  9,
+							7,  1,  0,
+							3,  9,  8,
+							4,  8,  0
+						};
+
+
+	double normals[] = {
+						0.000000, -0.417775, 0.675974,
+						0.675973, 0.000000, 0.417775,
+						0.675973, -0.000000, -0.417775,
+						-0.675973, 0.000000, -0.417775,
+						-0.675973, -0.000000, 0.417775,
+						-0.417775, 0.675974, 0.000000,
+						0.417775, 0.675973, -0.000000,
+						0.417775, -0.675974, 0.000000,
+						-0.417775, -0.675974, 0.000000,
+						0.000000, -0.417775, -0.675973,
+						0.000000, 0.417775, -0.675974,
+						0.000000, 0.417775, 0.675973
+					};
+
+
 	// Main loop
 	bool done = false;
 	while(!done)
@@ -179,67 +254,71 @@ int main(int argc, char** argv)
 		ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 
 
+
+
+
 		if(Config::getShowFps())
 		{
 			renderer->SetColour(Util::Colour::white());
-
-			// static Rx::Texture* pic = new Rx::Texture("test.png", renderer);
-			// renderer->RenderTex(pic, { 0, 0 });
-
-
-			// draw some stats
-			{
-				std::string fpsstr = tfm::format("%.2f fps", currentFps);
-
-				renderer->RenderString(fpsstr, primaryFont, 12.0, Math::Vector2(5, 5));
-
-				auto psys = gameState->playerStation->powerSystem;
-				auto lss = gameState->playerStation->lifeSupportSystem;
-
-				double stor = Units::convertJoulesToWattHours(psys->getTotalStorageInJoules());
-				double cap = Units::convertJoulesToWattHours(psys->getTotalCapacityInJoules());
-				double prod = psys->getTotalProductionInWatts();
-
-				double percentage = (stor / cap) * 100.0;
-
-				// divide stor and cap by system voltage to get a number in amp-hours.
-				// we divide by 3600 to convert from amp-seconds to amp-hours
-
-				auto str = tfm::format("%s / %s (%.1f%%)  |  +%s / -%s", Units::formatWithUnits(stor, 2, "Wh"),
-					Units::formatWithUnits(cap, 2, "Wh"), percentage,
-					Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
-
-				renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, 5));
-
-
-				size_t ofs = 5;
-
-				#if 1
-				for(auto batt : psys->storage)
-				{
-					double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
-					double cap = Units::convertJoulesToWattHours(batt->getCapacityInJoules());
-
-					auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
-						Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
-
-					renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, ofs += 15));
-				}
-				#endif
-
-				str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
-					Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
-
-				renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, ofs += 15));
-			}
 		}
 
 		Sotv::Render(*gameState, renderDelta, renderer);
+		if((true))
+		{
+			std::string fpsstr = tfm::format("%.2f fps", currentFps);
+
+			renderer->RenderString(fpsstr, primaryFont, 12.0, Math::Vector2(5, 5));
+
+			auto psys = gameState->playerStation->powerSystem;
+			auto lss = gameState->playerStation->lifeSupportSystem;
+
+			double stor = Units::convertJoulesToWattHours(psys->getTotalStorageInJoules());
+			double cap = Units::convertJoulesToWattHours(psys->getTotalCapacityInJoules());
+			double prod = psys->getTotalProductionInWatts();
+
+			double percentage = (stor / cap) * 100.0;
+
+			// divide stor and cap by system voltage to get a number in amp-hours.
+			// we divide by 3600 to convert from amp-seconds to amp-hours
+
+			auto str = tfm::format("%s / %s (%.1f%%)  |  +%s / -%s", Units::formatWithUnits(stor, 2, "Wh"),
+				Units::formatWithUnits(cap, 2, "Wh"), percentage,
+				Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
+
+			renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, 5));
+
+
+			size_t ofs = 5;
+
+			#if 1
+			for(auto batt : psys->storage)
+			{
+				double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
+				double cap = Units::convertJoulesToWattHours(batt->getCapacityInJoules());
+
+				auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
+					Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
+
+				renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, ofs += 15));
+			}
+			#endif
+
+			str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
+				Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
+
+			renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, ofs += 15));
+		}
 
 
 
+		{
+			// gl::glVertexPointer(3, gl::GL_DOUBLE, 0, vertices);
+			// gl::glColorPointer(4, gl::GL_DOUBLE, 0, colours);
+			// gl::glNormalPointer(gl::GL_DOUBLE, 0, normals);
 
-
+			// gl::glDrawElements(gl::GL_TRIANGLES, 60, gl::GL_UNSIGNED_BYTE, (void*) indices);
+			// gl::glLoadIdentity();
+		}
 
 
 
@@ -250,44 +329,13 @@ int main(int argc, char** argv)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 		ImGui::PopFont();
 		Rx::EndFrame(renderer);
+
+
+
+
+
 
 		// more fps computation
 		{

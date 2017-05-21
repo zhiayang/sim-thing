@@ -11,6 +11,9 @@
 
 #include <SDL2/SDL_ttf.h>
 
+#include <glbinding/gl/gl.h>
+#include <glbinding/Binding.h>
+
 namespace Rx
 {
 	std::pair<SDL_GLContext, Rx::Renderer*> Initialise(int width, int height, Util::Colour clear)
@@ -45,6 +48,10 @@ namespace Rx
 
 		Rx::Window* window = new Rx::Window("connect", io.DisplaySize.x, io.DisplaySize.y, true);
 		SDL_GLContext glcontext = SDL_GL_CreateContext(window->sdlWin);
+		if(glcontext == 0)
+			ERROR("Failed to create OpenGL context. SDL Error: '%s'", SDL_GetError());
+
+		glbinding::Binding::initialize();
 
 		// Setup ImGui binding
 		ImGui_ImplSdl_Init(window->sdlWin);

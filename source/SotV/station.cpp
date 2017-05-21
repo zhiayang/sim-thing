@@ -41,10 +41,6 @@ namespace Sotv
 
 		LOG("Adding Life Support system");
 		{
-			// specs stolen from ISS oxygen-generating-system
-			// 10-55A, ~3500W
-			// say 40A, 2400W, gives operating 60V
-
 			auto lss = new LifeSupportSystem(stn, 101400, Units::convertCelsiusToKelvin(24));
 			stn->lifeSupportSystem = lss;
 

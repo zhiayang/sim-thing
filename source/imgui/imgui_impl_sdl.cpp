@@ -6,7 +6,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
-#include <SDL2/SDL_opengl.h>
+
+#include <glbinding/gl/gl.h>
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -17,7 +18,7 @@
 // custom stuff.
 #include "graphicswrapper.h"
 
-
+using namespace gl;
 
 
 // Data

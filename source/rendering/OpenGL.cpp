@@ -10,6 +10,8 @@
 #include "glwrapper.h"
 #include "graphicswrapper.h"
 
+#include <glbinding/gl/gl.h>
+
 namespace GL
 {
 	static std::deque<int> glTextureStack;
@@ -24,7 +26,7 @@ namespace GL
 		glTextureStack.push_back(id);
 
 		if(cur == -1 || cur != id)
-			glBindTexture(GL_TEXTURE_2D, id);
+			gl::glBindTexture(gl::GL_TEXTURE_2D, id);
 	}
 
 	int popTextureBinding()
@@ -35,10 +37,10 @@ namespace GL
 		glTextureStack.pop_back();
 
 		if(glTextureStack.size() > 0 && cur != glTextureStack.back())
-			glBindTexture(GL_TEXTURE_2D, glTextureStack.back());
+			gl::glBindTexture(gl::GL_TEXTURE_2D, glTextureStack.back());
 
 		else
-			glBindTexture(GL_TEXTURE_2D, 0);
+			gl::glBindTexture(gl::GL_TEXTURE_2D, 0);
 
 		return cur;
 	}

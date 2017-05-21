@@ -8,6 +8,10 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 
+#include <glbinding/gl/gl.h>
+#include <glm/glm.hpp>
+
+using namespace gl;
 using namespace Math;
 
 
@@ -285,7 +289,7 @@ namespace Rx
 			int fb_w = 0;
 			int fb_h = 0;
 
-			SetupOpenGL(dd, &fb_w, &fb_h);
+			SetupOpenGL2D(dd, &fb_w, &fb_h);
 
 			// idk if we need to change the order of drawing.
 			// the way this is set up we can't interweave.
@@ -301,7 +305,7 @@ namespace Rx
 
 
 			// finish
-			FinishOpenGL();
+			FinishOpenGL2D();
 		}
 
 		SDL_GL_SwapWindow(renderer->window->sdlWin);
@@ -321,8 +325,10 @@ namespace Rx
 	// part 3 renders *OUR* things
 	// part 4 finishes the opengl stuff
 
-	void SetupOpenGL(ImDrawData* draw_data, int* fb_width, int* fb_height)
+	void SetupOpenGL2D(ImDrawData* draw_data, int* fb_width, int* fb_height)
 	{
+		using namespace gl;
+
 		// We are using the OpenGL fixed pipeline to make the example code simpler to read!
 		// A probable faster way to render would be to collate all vertices from all cmd_lists into a single vertex buffer.
 		// Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, vertex/texcoord/color pointers.
@@ -330,19 +336,23 @@ namespace Rx
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
+		// glDisable(GL_DEPTH_TEST);
 		glEnable(GL_SCISSOR_TEST);
+
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glEnableClientState(GL_COLOR_ARRAY);
+		glEnableClientState(GL_NORMAL_ARRAY);
+
+
 		glEnable(GL_TEXTURE_2D);
 		// glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context
 
 
 		// Handle cases of screen coordinates != from framebuffer coordinates (e.g. retina displays)
 		ImGuiIO& io = ImGui::GetIO();
-		*fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
-		*fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
+		*fb_width = (int) (io.DisplaySize.x * io.DisplayFramebufferScale.x);
+		*fb_height = (int) (io.DisplaySize.y * io.DisplayFramebufferScale.y);
 
 
 		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
@@ -355,7 +365,22 @@ namespace Rx
 		glPushMatrix();
 		glLoadIdentity();
 
-		glOrtho(0.0f, io.DisplaySize.x, io.DisplaySize.y, 0.0f, -1.0f, +1.0f);
+		// glOrtho(0.0f, io.DisplaySize.x, io.DisplaySize.y, 0.0f, -1.0f, +1.0f);
+
+		double fov = glm::radians(70.0);
+		double near = -1000;
+
+		double top = tan(0.5 * fov) * near;
+		double bottom = -1 * top;
+
+		double aspect = (double) io.DisplaySize.x / (double) io.DisplaySize.y;
+
+		double left = aspect * bottom;
+		double right = aspect * top;
+
+		glFrustum(left, right, bottom, top, -1000.0, 1000);
+		// gluPerspective(60.0, (float) io.DisplaySize.x / (float) io.DisplaySize.y, 1.0, 50000000000.0);
+
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
@@ -407,7 +432,7 @@ namespace Rx
 	}
 
 
-	void FinishOpenGL()
+	void FinishOpenGL2D()
 	{
 		// Restore modified state
 		glDisableClientState(GL_COLOR_ARRAY);
@@ -419,6 +444,25 @@ namespace Rx
 		glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
 		glPopAttrib();
+	}
+
+
+
+	void SetupOpenGL3D()
+	{
+		glEnable(GL_DEPTH_TEST);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Accept fragment if it closer to the camera than the former one
+		glDepthFunc(GL_LESS);
+
+		// Cull triangles which normal is not towards the camera
+		glEnable(GL_CULL_FACE);
+	}
+
+	void FinishOpenGL3D()
+	{
 	}
 }
 
