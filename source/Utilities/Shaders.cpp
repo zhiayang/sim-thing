@@ -37,11 +37,10 @@ namespace AssetLoader
 
 			if(loglen > 0)
 			{
-				LOG("Error compiling vertex shader:");
-
 				char* errmsg = new char[loglen + 1];
 				glGetShaderInfoLog(vShaderID, loglen, NULL, errmsg);
-				ERROR("%s\n", errmsg);
+
+				ERROR("Error compiling vertex shader: '%s'", errmsg);
 			}
 		}
 
@@ -62,11 +61,10 @@ namespace AssetLoader
 
 			if(loglen > 0)
 			{
-				LOG("Error compiling fragment shader:");
-
 				char* errmsg = new char[loglen + 1];
 				glGetShaderInfoLog(fShaderID, loglen, NULL, errmsg);
-				ERROR("%s\n", errmsg);
+
+				ERROR("Error compiling fragment shader: '%s'", errmsg);
 			}
 		}
 
@@ -87,11 +85,10 @@ namespace AssetLoader
 
 			if(loglen > 0)
 			{
-				LOG("Error linking program:");
-
 				char* errmsg = new char[loglen + 1];
-				glGetShaderInfoLog(fShaderID, loglen, NULL, errmsg);
-				ERROR("%s\n", errmsg);
+				glGetProgramInfoLog(progID, loglen, NULL, errmsg);
+
+				ERROR("Error linking program: '%s'", errmsg);
 			}
 		}
 

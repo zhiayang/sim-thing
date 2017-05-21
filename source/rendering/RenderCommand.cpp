@@ -239,6 +239,7 @@ namespace Rx
 		rc.colour = col;
 
 
+		#if 0
 		// todo:
 		// because imgui is poorly designed, if the font hasn't been loaded, we can't switch to it.
 		// we can't load fonts in the middle of a frame, because its font atlas is stupid.
@@ -433,6 +434,8 @@ namespace Rx
 
 			rc.bounds.second = { x, y };
 		}
+
+		#endif
 
 		return rc;
 	}

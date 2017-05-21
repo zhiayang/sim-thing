@@ -32,13 +32,15 @@ namespace AssetLoader
 		struct stat s;
 		fstat(fileno(file), &s);
 
-		ass->raw = new uint8_t[s.st_size];
+		ass->raw = new uint8_t[s.st_size + 1];
 		ass->length = s.st_size;
 		off_t read = fread(ass->raw, 1, s.st_size, file);
 
 		if(read != s.st_size)
 			ERROR("Failed to read whole asset from file '%s'", ass->path.c_str());
 
+		// set null
+		ass->raw[ass->length] = 0;
 		ass->sdlrw = SDL_RWFromConstMem(ass->raw, read);
 
 		fclose(file);
@@ -58,7 +60,7 @@ namespace AssetLoader
 		else if(ext == "obj")	ass->type = AssetType::ModelOBJ;
 		else					ass->type = AssetType::Unknown;
 
-		LOG("Loaded asset '%s'", ass->path.c_str());
+		LOG("Loaded asset '%s'", path);
 		return ass;
 	}
 

@@ -296,7 +296,8 @@ namespace Rx
 
 			// do ours first, as I get the feeling we want windows to be on top
 			glDisable(GL_SCISSOR_TEST);
-			renderer->RenderAll();
+
+			// renderer->RenderAll();
 
 
 			// then render imgui
