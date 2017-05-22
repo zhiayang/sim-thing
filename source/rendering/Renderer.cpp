@@ -9,7 +9,10 @@
 #include "imgui_impl_sdl.h"
 
 #include <glbinding/gl/gl.h>
+
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 
 using namespace gl;
 using namespace Math;
@@ -17,29 +20,68 @@ using namespace Math;
 
 namespace Rx
 {
-	void Renderer::Clear()
+	Renderer::Renderer(Window* win, SDL_GLContext glc, util::colour clearCol, glm::mat4 camera, gl::GLuint mainShaderProg,
+			gl::GLuint textShaderProg, double fov, double width, double height, double near, double far)
+	{
+		assert(win);
+		this->window = win;
+		this->glContext = glc;
+
+		// identity matrix.
+		this->cameraMatrix = camera;
+		this->projectionMatrix = glm::perspective(fov, width / height, near, far);
+
+		this->clearColour = clearCol;
+
+		this->_fov		= fov;
+		this->_width	= width;
+		this->_height	= height;
+		this->_near		= near;
+		this->_far		= far;
+
+		this->mainShaderProgram = mainShaderProg;
+		this->textShaderProgram = textShaderProg;
+
+		this->mvpMatrixId = glGetUniformLocation(this->mainShaderProgram, "modelViewProjectionMatrix");
+
+		// bind permanently...?
+		gl::GLuint vertexArrayID;
+		gl::glGenVertexArrays(1, &vertexArrayID);
+		gl::glBindVertexArray(vertexArrayID);
+
+		glViewport(0, /*(int) height*/ 0, (int) width, (int) height);
+	}
+
+	void Renderer::clearRenderList()
+	{
+		this->renderList.clear();
+	}
+
+	void Renderer::clearScreen(util::colour colour)
 	{
 		RenderCommand rc;
 		rc.type = RenderCommand::CommandType::Clear;
-		rc.colour = this->clearColour;
+		rc.colours.push_back(colour.toVec4());
 
 		this->renderList.push_back(rc);
 	}
 
-	void Renderer::RenderPoint(Math::Vector2 pt)
+	void Renderer::updateWindowSize(double width, double height)
 	{
-		RenderCommand rc;
-		rc.mode = GL_POINTS;
-		rc.colour = this->drawColour;
-		rc.type = RenderCommand::CommandType::RenderVerts;
+		this->_width = width;
+		this->_height = height;
 
-		// need to convert to opengl coords
-		// a rect where 0,0 is the centre, -1 and 1 are the sides.
+		this->window->width = width;
+		this->window->height = height;
 
-		rc.vertices.push_back({ pt.x - 1.0, -1.0 * (pt.y - 1.0) });
-		this->renderList.push_back(rc);
+		// redo the projection matrix
+		this->projectionMatrix = glm::perspective(this->_fov, this->_width / this->_height, this->_near, this->_far);
 	}
 
+
+
+
+	#if 0
 	void Renderer::RenderCircle(Math::Circle circ, bool fill)
 	{
 		int32_t x = circ.radius;
@@ -94,128 +136,330 @@ namespace Rx
 			}
 		}
 	}
+	#endif
 
-	void Renderer::RenderRect(Math::Rectangle rect, bool fill)
+
+
+
+
+
+
+
+
+
+
+
+
+	#if 0
+	void Renderer::renderStringRightAligned(std::string txt, Rx::Font font, float size, Math::Vector2 pt)
 	{
-		RenderCommand rc;
-		rc.mode = (fill ? GL_POLYGON : GL_LINE_LOOP);
-		rc.colour = this->drawColour;
-		rc.type = RenderCommand::CommandType::RenderVerts;
+		// auto cmd = RenderCommand::createRenderString(txt, font, size, this->drawColour, Math::Vector2(0, pt.y));
 
+		// // the starting position (top-left)
+		// double sx = this->window->width - fabs(cmd.bounds.second.x - cmd.bounds.first.x) - pt.x;
 
-		double x1 = rect.origin.x;
-		double y1 = rect.origin.y;
+		// // offset all vertices to the right by that amount.
+		// for(size_t i = 0; i < cmd.vertices.size(); i += 4)
+		// {
+		// 	// 4 verts per character; first 2 are x and y, second 2 are u and v
+		// 	auto& x = cmd.vertices[i + 0];
+		// 	auto& y = cmd.vertices[i + 1];
 
-		double x2 = x1 + rect.width;
-		double y2 = y1 + rect.height;
+		// 	x.x += sx;
+		// 	y.x += sx;
+		// }
 
+		// cmd.bounds.first.x += sx;
+		// cmd.bounds.second.x += sx;
 
-		rc.vertices.push_back({ x1, y1 });
-		rc.vertices.push_back({ x2, y1 });
-		rc.vertices.push_back({ x2, y2 });
-		rc.vertices.push_back({ x1, y2 });
-
-		this->renderList.push_back(rc);
-	}
-
-	void Renderer::RenderLine(Math::Vector2 start, Math::Vector2 end)
-	{
-		RenderCommand rc;
-		rc.mode = GL_LINES;
-		rc.colour = this->drawColour;
-		rc.type = RenderCommand::CommandType::RenderVerts;
-
-		rc.vertices.push_back({ start.x, start.y });
-		rc.vertices.push_back({ end.x, end.y });
-
-		this->renderList.push_back(rc);
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-	void Renderer::RenderTex(Texture* tex, Math::Vector2 pt)
-	{
-		this->RenderTex(tex, pt.x, pt.y);
-	}
-
-	void Renderer::RenderTex(Texture* tex, uint32_t x, uint32_t y)
-	{
-		this->RenderTex(tex, Math::Rectangle(0, 0, tex->width, tex->height), Math::Rectangle(x, y, tex->width, tex->height));
-	}
-
-	void Renderer::RenderTex(Texture* tex, Math::Rectangle dest)
-	{
-		this->RenderTex(tex, dest.origin.x, dest.origin.y);
-	}
-
-	void Renderer::RenderTex(Texture* tex, Math::Rectangle src, Math::Rectangle dest)
-	{
-		this->renderList.push_back(RenderCommand::createRenderTexture(tex, src, dest));
-	}
-
-	void Renderer::RenderString(std::string txt, Rx::Font font, float size, Math::Vector2 pt)
-	{
-		this->renderList.push_back(RenderCommand::createRenderString(txt, font, size, this->drawColour, pt));
-	}
-
-	void Renderer::RenderStringRightAligned(std::string txt, Rx::Font font, float size, Math::Vector2 pt)
-	{
-		auto cmd = RenderCommand::createRenderString(txt, font, size, this->drawColour, Math::Vector2(0, pt.y));
-
-		// the starting position (top-left)
-		double sx = this->window->width - fabs(cmd.bounds.second.x - cmd.bounds.first.x) - pt.x;
-
-		// offset all vertices to the right by that amount.
-		for(size_t i = 0; i < cmd.vertices.size(); i += 4)
-		{
-			// 4 verts per character; first 2 are x and y, second 2 are u and v
-			auto& x = cmd.vertices[i + 0];
-			auto& y = cmd.vertices[i + 1];
-
-			x.x += sx;
-			y.x += sx;
-		}
-
-		cmd.bounds.first.x += sx;
-		cmd.bounds.second.x += sx;
-
-		this->renderList.push_back(cmd);
+		// this->renderList.push_back(cmd);
 	}
 
 	size_t Renderer::getStringWidthInPixels(std::string txt, Rx::Font font, float size)
 	{
+		#if 0
 		if(txt.empty()) return 0;
 
 		// note: this is basically going through each glyph twice, so only use when necessary.
 		auto cmd = RenderCommand::createRenderString(txt, font, size, this->drawColour, Math::Vector2(0, 0));
 		return (size_t) fabs(cmd.bounds.second.x - cmd.bounds.first.x);
+		#endif
+
+		return 0;
+	}
+	#endif
+
+	void Renderer::renderVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals,
+		std::vector<glm::vec2> uvs)
+	{
+		RenderCommand rc;
+		rc.type		= RenderCommand::CommandType::RenderVerticesFilled;
+		rc.vertices	= verts;
+		rc.colours	= colours;
+		rc.normals	= normals;
+		rc.uvs		= uvs;
+
+		rc.dimensions = 3;
+		rc.isInScreenSpace = false;
+
+		this->renderList.push_back(rc);
 	}
 
-	void Renderer::SetColour(Util::Colour c)
+	void Renderer::renderStringInScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos)
 	{
-		this->drawColour = c;
+		auto gpos = getGlyphPosition(font, 'F');
+		RenderCommand rc;
+
+		glm::vec2 divisor = glm::vec2(this->_width, this->_height);
+
+		// convert to clipspace
+		glm::vec2 clipspace = pos / divisor;
+		printf("clipspace = (%f, %f)\n", clipspace.x, clipspace.y);
+
+		for(auto& v : gpos.vertices)
+		{
+			printf("(%f, %f)", v.x, v.y);
+			v /= divisor;
+			printf("[%f, %f]\n", v.x, v.y);
+		}
+
+		rc.type = RenderCommand::CommandType::RenderText;
+
+		rc.dimensions = 2;
+		rc.isInScreenSpace = true;
+
+		// glm::vec4 view = glm::vec4(0, 0, this->_width, this->_height);
+
+		auto invMVP = glm::inverse(this->projectionMatrix * this->cameraMatrix);
+
+		glm::vec2 x0y0 = clipspace + (gpos.vertices[0] / divisor);
+		glm::vec2 x1y0 = clipspace + (gpos.vertices[1] / divisor);
+		glm::vec2 x1y1 = clipspace + (gpos.vertices[2] / divisor);
+		glm::vec2 x0y1 = clipspace + (gpos.vertices[3] / divisor);
+
+
+		rc.vertices.push_back(glm::vec4(x0y0, 0, 1) * invMVP);
+		rc.vertices.push_back(glm::vec4(x0y1, 0, 1) * invMVP);
+		rc.vertices.push_back(glm::vec4(x1y0, 0, 1) * invMVP);
+		rc.vertices.push_back(glm::vec3(glm::vec4(x1y1, 0, 1) * invMVP));
+		rc.vertices.push_back(glm::vec3(glm::vec4(x1y0, 0, 1) * invMVP));
+		rc.vertices.push_back(glm::vec3(glm::vec4(x0y1, 0, 1) * invMVP));
+
+		rc.uvs = {
+					gpos.uvs[0],
+					gpos.uvs[3],
+					gpos.uvs[1],
+					gpos.uvs[2],
+					gpos.uvs[1],
+					gpos.uvs[3]
+				};
+
+		// setup the vertices
+/*
+		rc.vertices.push_back(glm::vec4(-1, -1, 0, 1) * invMVP);
+		rc.vertices.push_back(glm::vec4(-1, 1, 0, 1) * invMVP);
+		rc.vertices.push_back(glm::vec4(1, 1, 0, 1) * invMVP);
+		rc.vertices.push_back(glm::vec4(-1, -1, 0, 1) * invMVP);
+		rc.vertices.push_back(glm::vec4(1, 1, 0, 1) * invMVP);
+		rc.vertices.push_back(glm::vec4(1, -1, 0, 1) * invMVP);
+*/
+		rc.textureToBind = font->glTextureID;
+		this->renderList.push_back(rc);
 	}
 
 
-	void Renderer::RenderAll()
+
+
+
+
+
+
+
+
+
+
+	void Renderer::renderAll()
 	{
+		gl::glEnable(gl::GL_DEPTH_TEST);
+		gl::glDepthFunc(gl::GL_LESS);
+
+		glClearColor(this->clearColour.fr, this->clearColour.fg, this->clearColour.fb, this->clearColour.fa);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+		glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
+		glUniformMatrix4fv(this->mvpMatrixId, 1, GL_FALSE, &mvp[0][0]);
+
 		for(auto rc : this->renderList)
-			rc.doRender();
+		{
+			using CType = RenderCommand::CommandType;
+			switch(rc.type)
+			{
+				case CType::Clear: {
 
-		this->renderList.clear();
+					assert(rc.colours.size() == 1);
+					auto col = rc.colours[0];
+
+					glClearColor(col.r, col.g, col.b, col.a);
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				}
+				break;
+
+				case CType::RenderVerticesFilled:	// fallthrough
+				case CType::RenderVerticesWireframe: {
+
+					glUseProgram(this->mainShaderProgram);
+
+					GLuint uvBuffer = -1;
+					GLuint vertBuffer = -1;
+					GLuint colourBuffer = -1;
+
+					glEnableVertexAttribArray(0);
+					{
+						// we always have vertices
+						glGenBuffers(1, &vertBuffer);
+						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0].x,
+							GL_STATIC_DRAW);
+
+						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
+
+						glVertexAttribPointer(
+							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
+							3,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+
+					// if we have colours:
+					if(rc.colours.size() > 0)
+					{
+						glEnableVertexAttribArray(1);
+
+						glGenBuffers(1, &colourBuffer);
+						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(glm::vec4), &rc.colours[0].x,
+							GL_STATIC_DRAW);
+
+						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
+
+						glVertexAttribPointer(
+							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
+							4,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+					else if(rc.textureToBind != -1)
+					{
+						GL::pushTextureBinding(rc.textureToBind);
+						assert(rc.uvs.size() > 0);
+
+						glEnableVertexAttribArray(1);
+
+						glGenBuffers(1, &uvBuffer);
+						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0].x,
+							GL_STATIC_DRAW);
+
+						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+
+						glVertexAttribPointer(
+							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
+							2,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+
+					glDrawArrays(rc.type == CType::RenderVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
+
+					glDisableVertexAttribArray(0);
+					glDisableVertexAttribArray(1);
+
+					glDeleteBuffers(1, &uvBuffer);
+					glDeleteBuffers(1, &vertBuffer);
+					glDeleteBuffers(1, &colourBuffer);
+
+					if(rc.textureToBind != -1)
+						GL::popTextureBinding();
+				}
+				break;
+
+				case CType::RenderText: {
+					glUseProgram(this->textShaderProgram);
+
+					GLuint uvBuffer = -1;
+					GLuint vertBuffer = -1;
+
+					glEnableVertexAttribArray(0);
+					{
+						// we always have vertices
+						glGenBuffers(1, &vertBuffer);
+						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0].x,
+							GL_STATIC_DRAW);
+
+						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
+
+						glVertexAttribPointer(
+							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
+							3,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+
+					glEnableVertexAttribArray(1);
+					{
+						GL::pushTextureBinding(rc.textureToBind);
+						assert(rc.uvs.size() > 0);
+
+						glGenBuffers(1, &uvBuffer);
+						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0].x,
+							GL_STATIC_DRAW);
+
+						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+
+						glVertexAttribPointer(
+							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
+							2,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+
+					glDrawArrays(GL_TRIANGLES, 0, rc.vertices.size());
+
+					glDisableVertexAttribArray(0);
+					glDisableVertexAttribArray(1);
+
+					glDeleteBuffers(1, &uvBuffer);
+					glDeleteBuffers(1, &vertBuffer);
+
+					GL::popTextureBinding();
+				}
+				break;
+
+				case CType::Invalid:
+					ERROR("Invalid render command type");
+			}
+		}
+
+		this->clearRenderList();
 	}
-
-
 
 
 
@@ -267,11 +511,12 @@ namespace Rx
 
 	void BeginFrame(Rx::Renderer* renderer)
 	{
-		ImGui_ImplSdl_NewFrame(renderer->window->sdlWin);
+		// ImGui_ImplSdl_NewFrame(renderer->window->sdlWin);
 	}
 
 	void EndFrame(Rx::Renderer* renderer)
 	{
+		#if 0
 		// call back to opengl
 		glViewport(0, 0, (int) ImGui::GetIO().DisplaySize.x, (int) ImGui::GetIO().DisplaySize.y);
 		glClearColor(renderer->clearColour.fr, renderer->clearColour.fg, renderer->clearColour.fb, renderer->clearColour.fa);
@@ -308,7 +553,32 @@ namespace Rx
 			// finish
 			FinishOpenGL2D();
 		}
+		#endif
 
+		// glViewport(0, 0, (int) ImGui::GetIO().DisplaySize.x, (int) ImGui::GetIO().DisplaySize.y);
+
+		renderer->renderAll();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		// swap.
 		SDL_GL_SwapWindow(renderer->window->sdlWin);
 	}
 

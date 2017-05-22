@@ -13,11 +13,15 @@
 
 #include <glbinding/gl/enum.h>
 
+#include <glm/mat4x4.hpp>
+
 #include "utilities.h"
 #include "assetloader.h"
 #include "mathprimitives.h"
 
 struct ImDrawData;
+
+#include "stb_truetype.h"
 
 namespace Rx
 {
@@ -26,17 +30,73 @@ namespace Rx
 	{
 		Font() { }
 		Font(std::string n) : name(n) { }
-		Font(const Font& other) : name(other.name), imgui(other.imgui) { }
-		Font& operator = (const Font& other) { this->name = other.name; this->imgui = other.imgui; return *this; }
+
+		// note: these are shallow things.
+		#if 0
+		Font(const Font& o)
+		{
+			this->name				= o.name;
+			this->ttfBufferSize		= o.ttfBufferSize;
+			this->ttfBuffer			= o.ttfBuffer;
+			this->atlas				= o.atlas;
+			this->atlasWidth		= o.atlasWidth;
+			this->atlasHeight		= o.atlasHeight;
+			this->vertOversample	= o.vertOversample;
+			this->horzOversample	= o.horzOversample;
+			this->firstChar			= o.firstChar;
+			this->numChars			= o.numChars;
+			this->charInfo			= o.charInfo;
+		}
+
+		Font& operator = (const Font& o)
+		{
+			this->name				= o.name;
+			this->ttfBufferSize		= o.ttfBufferSize;
+			this->ttfBuffer			= o.ttfBuffer;
+			this->atlas				= o.atlas;
+			this->atlasWidth		= o.atlasWidth;
+			this->atlasHeight		= o.atlasHeight;
+			this->vertOversample	= o.vertOversample;
+			this->horzOversample	= o.horzOversample;
+			this->firstChar			= o.firstChar;
+			this->numChars			= o.numChars;
+			this->charInfo			= o.charInfo;
+
+			return *this;
+		}
+		#endif
+
+		Font(const Font&) = delete;
+		Font& operator = (const Font&) = delete;
 
 		std::string name;
 
-		ImFont* imgui = 0;
 		uint8_t* ttfBuffer = 0;
 		size_t ttfBufferSize = 0;
+
+		uint8_t* atlas = 0;
+		size_t atlasWidth = 0;
+		size_t atlasHeight = 0;
+
+		size_t vertOversample = 0;
+		size_t horzOversample = 0;
+
+		uint32_t firstChar = 0;
+		size_t numChars = 0;
+
+		gl::GLuint glTextureID = -1;
+		stbtt_packedchar* charInfo = 0;
 	};
 
-	Font getFont(std::string name, int size, bool hinting = true);
+	struct FontGlyphPos
+	{
+		glm::vec2 vertices[4];
+		glm::vec2 uvs[4];
+	};
+
+	Font* getFont(std::string name, size_t pixelSize, uint32_t firstChar, size_t numChars, size_t oversampleH, size_t oversampleV);
+	FontGlyphPos getGlyphPosition(Font* font, uint32_t u32);
+
 	void closeAllFonts();
 
 
@@ -79,101 +139,118 @@ namespace Rx
 		{
 			Invalid,
 			Clear,
-			RenderVerts,
-			RenderQuads,
+
+			RenderVerticesFilled,
+			RenderVerticesWireframe,
+
+			RenderText,
 		};
 
 		RenderCommand() { }
-
-		RenderCommand(const RenderCommand& o) : fill(o.fill), textureId(o.textureId), colour(o.colour),
-			vertices(o.vertices), type(o.type), mode(o.mode) { }
+		RenderCommand(const RenderCommand& o)
+		{
+			this->type			= o.type;
+			this->uvs			= o.uvs;
+			this->colours		= o.colours;
+			this->normals		= o.normals;
+			this->vertices		= o.vertices;
+			this->dimensions	= o.dimensions;
+			this->textureToBind	= o.textureToBind;
+		}
 
 		RenderCommand& operator = (const RenderCommand& o)
 		{
-			this->fill = o.fill;
-			this->textureId = o.textureId;
-			this->colour = o.colour;
-			this->vertices = o.vertices;
-			this->type = o.type;
-			this->mode = o.mode;
+			this->type			= o.type;
+			this->uvs			= o.uvs;
+			this->colours		= o.colours;
+			this->normals		= o.normals;
+			this->vertices		= o.vertices;
+			this->dimensions	= o.dimensions;
+			this->textureToBind	= o.textureToBind;
 
 			return *this;
 		}
 
-		void doRender();
-
-		static RenderCommand createRenderString(std::string s, Rx::Font font, float size, Util::Colour col, Math::Vector2 pos);
-		static RenderCommand createRenderTexture(Texture* tex, Math::Rectangle src, Math::Rectangle dest);
-		static RenderCommand createRenderVertices(std::vector<Math::Vector2> vertices, gl::GLenum mode, Util::Colour col, bool fill);
-
-		bool fill = 0;
-		int textureId = 0;
-		Util::Colour colour;
-		std::vector<Math::Vector2> vertices;
+		size_t dimensions = 0;
+		bool isInScreenSpace = false;
+		gl::GLuint textureToBind = -1;
 		CommandType type = CommandType::Invalid;
 
-		std::pair<Math::Vector2, Math::Vector2> bounds;
+		std::vector<glm::vec2> uvs;
+		std::vector<glm::vec4> colours;
 
-		gl::GLenum mode;
+		std::vector<glm::vec3> normals;
+		std::vector<glm::vec3> vertices;
 	};
 
 	struct Renderer
 	{
-		Renderer(Window* win, SDL_GLContext glc, Util::Colour clear)
-		{
-			assert(win);
-			this->window = win;
-			this->glContext = glc;
-			this->clearColour = clear;
+		Renderer(Window* win, SDL_GLContext glc, util::colour clearColour, glm::mat4 camera, gl::GLuint mainShaderProg,
+			gl::GLuint textShaderProg, double fov, double width, double height, double near, double far);
 
-			LOG("Created new SDL Renderer");
-		}
+		void clearRenderList();
+		void renderAll();
 
-		void Clear();
-		void RenderAll();
+		void setCamera(glm::mat4 cameraViewMatrix);
+		glm::mat4 getCameraViewMatrix();
 
-		// primitive shapes
-		void RenderPoint(Math::Vector2 pt);
-		void RenderCircle(Math::Circle circ, bool fill = true);
-		void RenderRect(Math::Rectangle rect, bool fill = true);
-		void RenderLine(Math::Vector2 start, Math::Vector2 end);
+		void setProjectionMatrix(glm::mat4 projMatrix);
+		glm::mat4 getProjectionMatrix();
 
-		// textures
-		void RenderTex(Texture* text, Math::Vector2 at);
-		void RenderTex(Texture* text, uint32_t x, uint32_t y);
-		void RenderTex(Texture* text, Math::Rectangle dest);
-		void RenderTex(Texture* text, Math::Rectangle src, Math::Rectangle dest);
+		void setProjectionMatrix(double fieldOfView, double width, double height, double nearPlane, double farPlane);
 
+		double getFOV();
+		double getNearPlane();
+		double getFarPlane();
 
-		void SetColour(Util::Colour c);
-		Util::Colour GetColour() { return this->drawColour; }
+		void updateWindowSize(double width, double height);
 
-		void SetClearColour(Util::Colour c);
-		Util::Colour GetClearColour() { return this->clearColour; }
+		void setShaderProgram(gl::GLuint programId);
+		gl::GLuint getShaderProgramId();
 
 
 
 
+		// start of 'rendering' functions, so to speak
+
+		void clearScreen(util::colour colour);
+
+		void renderVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals,
+			std::vector<glm::vec2> uvs);
+
+		// screenspace takes pixel positions
+		// glspace takes 0-1 positions
+		void renderStringInScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos);
+		void renderStringInGLSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos);
 
 
-		void RenderString(std::string txt, Rx::Font font, float size, Math::Vector2 pt);
-
-		// `pt` would be the position of the top-right of the whole text.
-		void RenderStringRightAligned(std::string txt, Rx::Font font, float size, Math::Vector2 pt);
-
-		size_t getStringWidthInPixels(std::string txt, Rx::Font font, float size);
 
 
 		std::vector<RenderCommand> renderList;
 
-		Util::Colour drawColour;
-		Util::Colour clearColour;
-
 		Window* window;
 		SDL_GLContext glContext;
 
+		private:
+			glm::mat4 cameraMatrix;
+			glm::mat4 projectionMatrix;
 
+			util::colour clearColour;
+
+			double _fov = 0;
+			double _near = 0;
+			double _far = 0;
+			double _width = 0;
+			double _height = 0;
+
+			gl::GLuint mainShaderProgram = -1;
+			gl::GLuint textShaderProgram = -1;
+			gl::GLuint mvpMatrixId = -1;
 	};
+
+
+
+
 
 	struct Surface
 	{
@@ -213,7 +290,7 @@ namespace Rx
 
 	// imgui stuff
 
-	std::pair<SDL_GLContext, Rx::Renderer*> Initialise(int width, int height, Util::Colour clear);
+	std::pair<SDL_GLContext, Rx::Window*> Initialise(int width, int height);
 	std::pair<SDL_Event, bool> ProcessEvents();
 
 	// rendering stuff.
@@ -224,14 +301,16 @@ namespace Rx
 
 
 
+
+
 	// internal stuff, mostly
-	void SetupOpenGL2D(ImDrawData* draw_data, int* fb_width, int* fb_height);
-	void RenderImGui(ImDrawData* draw_data, int fb_height);
-	void FinishOpenGL2D();
+	// void SetupOpenGL2D(ImDrawData* draw_data, int* fb_width, int* fb_height);
+	// void RenderImGui(ImDrawData* draw_data, int fb_height);
+	// void FinishOpenGL2D();
 
 
-	void SetupOpenGL3D();
-	void FinishOpenGL3D();
+	// void SetupOpenGL3D();
+	// void FinishOpenGL3D();
 
 
 

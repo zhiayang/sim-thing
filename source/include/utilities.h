@@ -10,9 +10,11 @@
 
 #include "units.h"
 
+#include <glm/vec4.hpp>
+
 struct ImFont;
 
-namespace Util
+namespace util
 {
 	namespace Random
 	{
@@ -45,9 +47,9 @@ namespace Util
 		}
 	};
 
-	struct Colour
+	struct colour
 	{
-		Colour(const Colour& other)
+		colour(const colour& other)
 		{
 			this->r = other.r;
 			this->g = other.g;
@@ -60,7 +62,7 @@ namespace Util
 			this->fa = other.fa;
 		}
 
-		Colour& operator = (const Colour& other)
+		colour& operator = (const colour& other)
 		{
 			this->r = other.r;
 			this->g = other.g;
@@ -75,7 +77,7 @@ namespace Util
 			return *this;
 		}
 
-		Colour(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) : r(red), g(green), b(blue), a(alpha)
+		colour(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) : r(red), g(green), b(blue), a(alpha)
 		{
 			fr = (1.0f / 255.0f) * r;
 			fg = (1.0f / 255.0f) * g;
@@ -83,7 +85,7 @@ namespace Util
 			fa = (1.0f / 255.0f) * a;
 		}
 
-		Colour(uint8_t red, uint8_t green, uint8_t blue) : r(red), g(green), b(blue), a(0xFF)
+		colour(uint8_t red, uint8_t green, uint8_t blue) : r(red), g(green), b(blue), a(0xFF)
 		{
 			fr = (1.0f / 255.0f) * r;
 			fg = (1.0f / 255.0f) * g;
@@ -91,7 +93,7 @@ namespace Util
 			fa = (1.0f / 255.0f) * a;
 		}
 
-		Colour() : r(0), g(0), b(0), a(0)
+		colour() : r(0), g(0), b(0), a(0)
 		{
 			fr = (1.0f / 255.0f) * r;
 			fg = (1.0f / 255.0f) * g;
@@ -109,10 +111,10 @@ namespace Util
 		float fb;
 		float fa;
 
-		Colour operator+(Colour other)
+		colour operator+(colour other)
 		{
 			// stop overflow to zero
-			return Colour(std::max(this->r + other.r, 0xFF), std::max(this->g + other.g, 0xFF),
+			return colour(std::max(this->r + other.r, 0xFF), std::max(this->g + other.g, 0xFF),
 				std::max(this->b + other.b, 0xFF), std::max(this->a + other.a, 0xFF));
 		}
 
@@ -121,17 +123,21 @@ namespace Util
 			return (r << 24) | (g << 16) | (b << 8) | a;
 		}
 
+		glm::vec4 toVec4()
+		{
+			return glm::vec4(this->fr, this->fg, this->fb, this->fa);
+		}
 
-		static Colour black() { return Colour(0, 0, 0); }
-		static Colour white() { return Colour(0xFF, 0xFF, 0xFF); }
+		static colour black() { return colour(0, 0, 0); }
+		static colour white() { return colour(0xFF, 0xFF, 0xFF); }
 
-		static Colour red() { return Colour(0xFF, 0, 0); }
-		static Colour blue() { return Colour(0, 0, 0xFF); }
-		static Colour green() { return Colour(0, 0xFF, 0); }
-		static Colour cyan() { return Colour::green() + Colour::blue(); }
-		static Colour yellow() { return Colour::red() + Colour::green(); }
-		static Colour magenta() { return Colour::blue() + Colour::red(); }
-		static Colour random() { return Colour((uint8_t) Util::Random::get(0, 255), (uint8_t) Util::Random::get(0, 255), (uint8_t) Util::Random::get(0, 255)); }
+		static colour red() { return colour(0xFF, 0, 0); }
+		static colour blue() { return colour(0, 0, 0xFF); }
+		static colour green() { return colour(0, 0xFF, 0); }
+		static colour cyan() { return colour::green() + colour::blue(); }
+		static colour yellow() { return colour::red() + colour::green(); }
+		static colour magenta() { return colour::blue() + colour::red(); }
+		static colour random() { return colour((uint8_t) util::Random::get(0, 255), (uint8_t) util::Random::get(0, 255), (uint8_t) util::Random::get(0, 255)); }
 	};
 }
 

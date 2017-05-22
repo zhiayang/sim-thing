@@ -10,6 +10,5 @@ uniform sampler2D textureSampler;
 
 void main()
 {
-	// colour = fragmentColour;
 	colour = texture(textureSampler, UV).rgb;
 }

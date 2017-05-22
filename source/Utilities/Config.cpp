@@ -6,8 +6,8 @@
 namespace Config
 {
 	// lol such place many holder
-	static uint64_t rx = 1024;
-	static uint64_t ry = 640;
+	static uint64_t rx = 640;
+	static uint64_t ry = 480;
 	static bool vsyncEnabled = true;
 	static bool showFps = true;
 

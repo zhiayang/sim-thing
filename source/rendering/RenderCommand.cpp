@@ -11,6 +11,7 @@
 
 // copied from imgui.cpp
 
+#if 0
 // Convert UTF-8 to 32-bits character, process single character input.
 // Based on stb_from_utf8() from github.com/nothings/stb/
 // We handle UTF-8 decoding error by skipping forward.
@@ -200,7 +201,7 @@ namespace Rx
 
 		RenderCommand rc;
 		rc.type = CommandType::RenderQuads;
-		rc.colour = Util::Colour::white();
+		rc.colour = util::colour::white();
 
 		rc.vertices.push_back(vert1);
 		rc.vertices.push_back(vert2);
@@ -212,7 +213,7 @@ namespace Rx
 		return rc;
 	}
 
-	RenderCommand RenderCommand::createRenderVertices(std::vector<Math::Vector2> vertices, gl::GLenum mode, Util::Colour col, bool fill)
+	RenderCommand RenderCommand::createRenderVertices(std::vector<Math::Vector2> vertices, gl::GLenum mode, util::colour col, bool fill)
 	{
 		RenderCommand rc;
 		rc.type = CommandType::RenderVerts;
@@ -232,7 +233,7 @@ namespace Rx
 
 
 
-	RenderCommand RenderCommand::createRenderString(std::string str, Rx::Font font, float size, Util::Colour col, Math::Vector2 pos)
+	RenderCommand RenderCommand::createRenderString(std::string str, Rx::Font font, float size, util::colour col, Math::Vector2 pos)
 	{
 		RenderCommand rc;
 		rc.type = CommandType::RenderQuads;
@@ -440,3 +441,4 @@ namespace Rx
 		return rc;
 	}
 }
+#endif

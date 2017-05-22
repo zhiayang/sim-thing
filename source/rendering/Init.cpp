@@ -16,7 +16,7 @@
 
 namespace Rx
 {
-	std::pair<SDL_GLContext, Rx::Renderer*> Initialise(int width, int height, Util::Colour clear)
+	std::pair<SDL_GLContext, Rx::Window*> Initialise(int width, int height)
 	{
 		// initialise SDL
 		{
@@ -57,9 +57,7 @@ namespace Rx
 		// Setup ImGui binding
 		ImGui_ImplSdl_Init(window->sdlWin);
 
-		Rx::Renderer* renderer = new Rx::Renderer(window, glcontext, clear);
-
-		return { glcontext, renderer };
+		return { glcontext, window };
 	}
 
 

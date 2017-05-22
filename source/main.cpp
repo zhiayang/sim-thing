@@ -32,6 +32,7 @@ static const double targetFramerate		= 60.0;
 static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
 static Sotv::GameState* gameState = 0;
+static Rx::Renderer* theRenderer = 0;
 
 namespace Rx
 {
@@ -48,7 +49,20 @@ namespace Rx
 			ImGui_ImplSdl_ProcessEvent(&event);
 
 			if(event.type == SDL_QUIT)
+			{
 				done = true;
+			}
+			else if(event.type == SDL_WINDOWEVENT_RESIZED)
+			{
+				assert(theRenderer);
+				auto sdlw = theRenderer->window->sdlWin;
+
+				int w = 0;
+				int h = 0;
+				SDL_GetWindowSize(sdlw, &w, &h);
+
+				theRenderer->updateWindowSize(w, h);
+			}
 		}
 
 		return { event, done };
@@ -98,9 +112,9 @@ static std::pair<double, double> determineCurrentFPS(double previous, double fra
 int main(int argc, char** argv)
 {
 	// Setup SDL
-	auto r = Rx::Initialise(Config::getResX(), Config::getResY(), Util::Colour(0xC, 0x12, 0x18));
+	auto r = Rx::Initialise(Config::getResX(), Config::getResY());
 	SDL_GLContext glcontext = r.first;
-	Rx::Renderer* renderer = r.second;
+	Rx::Window* window = r.second;
 
 	// any lower, and it gets sketchy.
 	// for some reason, increasing oversampling doesn't help beyond a certain point.
@@ -117,12 +131,11 @@ int main(int argc, char** argv)
 		io.FontGlobalScale = 0.25;
 
 		// init.cpp
-		Rx::SetupDefaultStyle();
+		// Rx::SetupDefaultStyle();
 	}
 
 
-	Rx::Font primaryFont = Rx::getFont("menlo", 32);
-	ImFont* menlo = primaryFont.imgui;
+	auto primaryFont = Rx::getFont("menlo", 128, ' ', 0xFF - ' ', 2, 2);
 
 
 	// initialise some things
@@ -136,7 +149,7 @@ int main(int argc, char** argv)
 	double frameTime = S_TO_NS(0.01667);
 	double currentFps = 0.0;
 
-	double prevTimestamp = Util::Time::ns();
+	double prevTimestamp = util::Time::ns();
 	double renderDelta = 0;
 
 
@@ -151,129 +164,96 @@ int main(int argc, char** argv)
 	// Rx::Model* model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"));
 
 
-
-
-
-	gl::glEnable(gl::GL_DEPTH_TEST);
-	gl::glDepthFunc(gl::GL_LESS);
-
-
-	gl::GLuint vertexArrayID;
-	gl::glGenVertexArrays(1, &vertexArrayID);
-	gl::glBindVertexArray(vertexArrayID);
-
 	auto progId = AssetLoader::compileAndLinkGLShaderProgram("shaders/simplevert.vert", "shaders/simplefrag.frag");
+	auto textProgId = AssetLoader::compileAndLinkGLShaderProgram("shaders/textShader.vert", "shaders/textShader.frag");
+
 	assert(progId >= 0);
+	assert(textProgId >= 0);
+
+	// camera matrix: camera at [ 0, 3, 7 ], looking at [ 0, 0, 0 ], rotated right-side up
+	theRenderer = new Rx::Renderer(window, glcontext, util::colour(25, 25, 25, 255),
+		glm::lookAt(glm::vec3(0, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), progId, textProgId, glm::radians(70.0f),
+		Config::getResX(), Config::getResY(), 0.001, 1000);
 
 
-	gl::GLuint matrixID = gl::glGetUniformLocation(progId, "MVP");
-
-	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	glm::mat4 matProj = glm::perspective(glm::radians(45.0f), (float) Config::getResX() / (float) Config::getResY(), 0.1f, 100.0f);
-
-	// Camera matrix
-	glm::mat4 matView = glm::lookAt(
-							glm::vec3(4,3,-3),	// Camera is at (4,3,-3), in World Space
-							glm::vec3(0,0,0),	// and looks at the origin
-							glm::vec3(0,1,0));	// Head is up (set to 0,-1,0 to look upside-down)
-
-	// Model matrix : an identity matrix (model will be at the origin)
-	glm::mat4 matModel = glm::mat4(1.0f);
-	glm::mat4 mvp = matProj * matView * matModel;
-
-	static const float g_vertex_buffer_data[] = {
-		-1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		 1.0f, 1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-		 1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		 1.0f,-1.0f,-1.0f,
-		 1.0f, 1.0f,-1.0f,
-		 1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		 1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		 1.0f,-1.0f, 1.0f,
-		 1.0f, 1.0f, 1.0f,
-		 1.0f,-1.0f,-1.0f,
-		 1.0f, 1.0f,-1.0f,
-		 1.0f,-1.0f,-1.0f,
-		 1.0f, 1.0f, 1.0f,
-		 1.0f,-1.0f, 1.0f,
-		 1.0f, 1.0f, 1.0f,
-		 1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-		 1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		 1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		 1.0f,-1.0f, 1.0f
+	std::vector<glm::vec3> vertices = {
+		{ -1.0f,-1.0f,-1.0f, },
+		{ -1.0f,-1.0f, 1.0f, },
+		{ -1.0f, 1.0f, 1.0f, },
+		{  1.0f, 1.0f,-1.0f, },
+		{ -1.0f,-1.0f,-1.0f, },
+		{ -1.0f, 1.0f,-1.0f, },
+		{  1.0f,-1.0f, 1.0f, },
+		{ -1.0f,-1.0f,-1.0f, },
+		{  1.0f,-1.0f,-1.0f, },
+		{  1.0f, 1.0f,-1.0f, },
+		{  1.0f,-1.0f,-1.0f, },
+		{ -1.0f,-1.0f,-1.0f, },
+		{ -1.0f,-1.0f,-1.0f, },
+		{ -1.0f, 1.0f, 1.0f, },
+		{ -1.0f, 1.0f,-1.0f, },
+		{  1.0f,-1.0f, 1.0f, },
+		{ -1.0f,-1.0f, 1.0f, },
+		{ -1.0f,-1.0f,-1.0f, },
+		{ -1.0f, 1.0f, 1.0f, },
+		{ -1.0f,-1.0f, 1.0f, },
+		{  1.0f,-1.0f, 1.0f, },
+		{  1.0f, 1.0f, 1.0f, },
+		{  1.0f,-1.0f,-1.0f, },
+		{  1.0f, 1.0f,-1.0f, },
+		{  1.0f,-1.0f,-1.0f, },
+		{  1.0f, 1.0f, 1.0f, },
+		{  1.0f,-1.0f, 1.0f, },
+		{  1.0f, 1.0f, 1.0f, },
+		{  1.0f, 1.0f,-1.0f, },
+		{ -1.0f, 1.0f,-1.0f, },
+		{  1.0f, 1.0f, 1.0f, },
+		{ -1.0f, 1.0f,-1.0f, },
+		{ -1.0f, 1.0f, 1.0f, },
+		{  1.0f, 1.0f, 1.0f, },
+		{ -1.0f, 1.0f, 1.0f, },
+		{  1.0f,-1.0f, 1.0f },
 	};
 
 	// One color for each vertex. They were generated randomly.
-	static const float g_color_buffer_data[] = {
-		0.583f,  0.771f,  0.014f,
-		0.609f,  0.115f,  0.436f,
-		0.327f,  0.483f,  0.844f,
-		0.822f,  0.569f,  0.201f,
-		0.435f,  0.602f,  0.223f,
-		0.310f,  0.747f,  0.185f,
-		0.597f,  0.770f,  0.761f,
-		0.559f,  0.436f,  0.730f,
-		0.359f,  0.583f,  0.152f,
-		0.483f,  0.596f,  0.789f,
-		0.559f,  0.861f,  0.639f,
-		0.195f,  0.548f,  0.859f,
-		0.014f,  0.184f,  0.576f,
-		0.771f,  0.328f,  0.970f,
-		0.406f,  0.615f,  0.116f,
-		0.676f,  0.977f,  0.133f,
-		0.971f,  0.572f,  0.833f,
-		0.140f,  0.616f,  0.489f,
-		0.997f,  0.513f,  0.064f,
-		0.945f,  0.719f,  0.592f,
-		0.543f,  0.021f,  0.978f,
-		0.279f,  0.317f,  0.505f,
-		0.167f,  0.620f,  0.077f,
-		0.347f,  0.857f,  0.137f,
-		0.055f,  0.953f,  0.042f,
-		0.714f,  0.505f,  0.345f,
-		0.783f,  0.290f,  0.734f,
-		0.722f,  0.645f,  0.174f,
-		0.302f,  0.455f,  0.848f,
-		0.225f,  0.587f,  0.040f,
-		0.517f,  0.713f,  0.338f,
-		0.053f,  0.959f,  0.120f,
-		0.393f,  0.621f,  0.362f,
-		0.673f,  0.211f,  0.457f,
-		0.820f,  0.883f,  0.371f,
-		0.982f,  0.099f,  0.879f
+	std::vector<glm::vec4> colours = {
+		{ 0.583f, 0.771f, 0.014f, 1.0f },
+		{ 0.609f, 0.115f, 0.436f, 1.0f },
+		{ 0.327f, 0.483f, 0.844f, 1.0f },
+		{ 0.822f, 0.569f, 0.201f, 1.0f },
+		{ 0.435f, 0.602f, 0.223f, 1.0f },
+		{ 0.310f, 0.747f, 0.185f, 1.0f },
+		{ 0.597f, 0.770f, 0.761f, 1.0f },
+		{ 0.559f, 0.436f, 0.730f, 1.0f },
+		{ 0.359f, 0.583f, 0.152f, 1.0f },
+		{ 0.483f, 0.596f, 0.789f, 1.0f },
+		{ 0.559f, 0.861f, 0.639f, 1.0f },
+		{ 0.195f, 0.548f, 0.859f, 1.0f },
+		{ 0.014f, 0.184f, 0.576f, 1.0f },
+		{ 0.771f, 0.328f, 0.970f, 1.0f },
+		{ 0.406f, 0.615f, 0.116f, 1.0f },
+		{ 0.676f, 0.977f, 0.133f, 1.0f },
+		{ 0.971f, 0.572f, 0.833f, 1.0f },
+		{ 0.140f, 0.616f, 0.489f, 1.0f },
+		{ 0.997f, 0.513f, 0.064f, 1.0f },
+		{ 0.945f, 0.719f, 0.592f, 1.0f },
+		{ 0.543f, 0.021f, 0.978f, 1.0f },
+		{ 0.279f, 0.317f, 0.505f, 1.0f },
+		{ 0.167f, 0.620f, 0.077f, 1.0f },
+		{ 0.347f, 0.857f, 0.137f, 1.0f },
+		{ 0.055f, 0.953f, 0.042f, 1.0f },
+		{ 0.714f, 0.505f, 0.345f, 1.0f },
+		{ 0.783f, 0.290f, 0.734f, 1.0f },
+		{ 0.722f, 0.645f, 0.174f, 1.0f },
+		{ 0.302f, 0.455f, 0.848f, 1.0f },
+		{ 0.225f, 0.587f, 0.040f, 1.0f },
+		{ 0.517f, 0.713f, 0.338f, 1.0f },
+		{ 0.053f, 0.959f, 0.120f, 1.0f },
+		{ 0.393f, 0.621f, 0.362f, 1.0f },
+		{ 0.673f, 0.211f, 0.457f, 1.0f },
+		{ 0.820f, 0.883f, 0.371f, 1.0f },
+		{ 0.982f, 0.099f, 0.879f, 1.0f }
 	};
-
-	gl::GLuint vertBuffer;
-	gl::glGenBuffers(1, &vertBuffer);
-	gl::glBindBuffer(gl::GL_ARRAY_BUFFER, vertBuffer);
-	gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, gl::GL_STATIC_DRAW);
-
-	gl::GLuint colourBuffer;
-	gl::glGenBuffers(1, &colourBuffer);
-	gl::glBindBuffer(gl::GL_ARRAY_BUFFER, colourBuffer);
-	gl::glBufferData(gl::GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, gl::GL_STATIC_DRAW);
-
-
-
-
-
 
 
 
@@ -289,7 +269,7 @@ int main(int argc, char** argv)
 			done = t.second;
 		}
 
-		double frameBegin = Util::Time::ns();
+		double frameBegin = util::Time::ns();
 		std::tie(currentFps, renderDelta) = determineCurrentFPS(prevTimestamp, frameBegin, frameTime);
 
 
@@ -308,6 +288,13 @@ int main(int argc, char** argv)
 
 
 
+		Rx::PreFrame(theRenderer);
+		Rx::BeginFrame(theRenderer);
+
+		// theRenderer->renderVertices(vertices, colours, { }, { });
+		theRenderer->renderStringInScreenSpace("x", primaryFont, 64, glm::vec2(30, 30));
+
+		Rx::EndFrame(theRenderer);
 
 
 
@@ -318,61 +305,6 @@ int main(int argc, char** argv)
 
 
 
-		using namespace gl;
-
-
-		glClearColor(0.1, 0.1, 0.1, 1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glUseProgram(progId);
-
-
-
-
-		glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp[0][0]);
-
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-
-		glVertexAttribPointer(
-			0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
-
-		// 2nd attribute buffer : colors
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
-		glVertexAttribPointer(
-			1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			3,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-		);
-
-		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
-
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-
-
-
-
-
-
-
-
-
-
-
-		SDL_GL_SwapWindow(renderer->window->sdlWin);
 
 
 
@@ -405,7 +337,7 @@ int main(int argc, char** argv)
 
 		if(Config::getShowFps())
 		{
-			renderer->SetColour(Util::Colour::white());
+			renderer->SetColour(util::colour::white());
 		}
 
 		Sotv::Render(*gameState, renderDelta, renderer);
@@ -485,7 +417,7 @@ int main(int argc, char** argv)
 
 		// more fps computation
 		{
-			double end = Util::Time::ns();
+			double end = util::Time::ns();
 			frameTime = end - frameBegin;
 
 			// don't kill the CPU
@@ -512,7 +444,7 @@ int main(int argc, char** argv)
 	// Cleanup
 	ImGui_ImplSdl_Shutdown();
 	SDL_GL_DeleteContext(glcontext);
-	SDL_DestroyWindow(renderer->window->sdlWin);
+	SDL_DestroyWindow(theRenderer->window->sdlWin);
 	SDL_Quit();
 
 	return 0;

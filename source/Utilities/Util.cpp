@@ -13,7 +13,7 @@
 
 #include <SDL2/SDL_ttf.h>
 
-namespace Util
+namespace util
 {
 	namespace Random
 	{

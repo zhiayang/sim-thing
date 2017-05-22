@@ -3,7 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #include <map>
-#include <tuple>
+#include <algorithm>
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -11,17 +11,24 @@
 #include "imgui.h"
 #include "graphicswrapper.h"
 
+#include <glbinding/gl/gl.h>
+
+#define STB_RECT_PACK_IMPLEMENTATION
+#include "stb_rect_pack.h"
+
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
+
 namespace Rx
 {
-	typedef std::tuple<std::string, int> FontTuple;
-	static std::map<FontTuple, Font> fontMap;
+	typedef std::pair<std::string, size_t> FontTuple;
+	static std::map<FontTuple, Font*> fontMap;
 
-	Font getFont(std::string name, int size, bool hinting)
+	Font* getFont(std::string name, size_t pixelSize, uint32_t firstChar, size_t numChars, size_t oversampleH, size_t oversampleV)
 	{
 		// see long comment on fonts in main.cpp
-		size *= 2;
 
-		FontTuple tup(name, size);
+		FontTuple tup(name, pixelSize);
 		if(fontMap.find(tup) != fontMap.end())
 		{
 			return fontMap[tup];
@@ -51,28 +58,122 @@ namespace Rx
 		}
 
 		// this is because imgui deletes the buffer
-		uint8_t* bufcopy = new uint8_t[ttfSize];
-		memcpy(bufcopy, ttfbuffer, ttfSize);
+		// uint8_t* bufcopy = new uint8_t[ttfSize];
+		// memcpy(bufcopy, ttfbuffer, ttfSize);
 
-		ImFont* imguif = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(bufcopy, (int) ttfSize, size);
+		Font* font = new Font(name);
 
-		Font fnt = Font(name);
-		fnt.imgui = imguif;
+		font->ttfBuffer = ttfbuffer;
+		font->ttfBufferSize = ttfSize;
 
-		fnt.ttfBuffer = ttfbuffer;
-		fnt.ttfBufferSize = ttfSize;
+		font->firstChar = firstChar;
+		font->numChars = numChars;
 
-		fontMap[tup] = fnt;
+		font->horzOversample = oversampleH;
+		font->vertOversample = oversampleV;
 
-		return fnt;
+		// determine how large, approximately, the atlas needs to be.
+		size_t maxpixsize = std::max(oversampleH * pixelSize, oversampleV * pixelSize);
+		size_t numperside = (size_t) (sqrt(numChars) + 1);
+
+		font->atlasHeight = numperside * maxpixsize;
+		font->atlasWidth = numperside * maxpixsize;
+
+		font->atlas = new uint8_t[font->atlasWidth * font->atlasHeight];
+		assert(font->atlas && "failed to allocate memory for atlas");
+		memset(font->atlas, 0, font->atlasWidth * font->atlasHeight);
+
+
+		LOG("Allocated a %s font atlas (%zux%zu) for font '%s'", Units::formatWithUnits(font->atlasWidth * font->atlasHeight, 1, "B").c_str(),
+			font->atlasWidth, font->atlasHeight, name.c_str());
+
+
+		// begin stb_truetype stuff
+		{
+			stbtt_pack_context context;
+			if(!stbtt_PackBegin(&context, font->atlas, font->atlasWidth, font->atlasHeight, 0, 1, nullptr))
+				ERROR("Failed to initialise font '%s'", name.c_str());
+
+			font->charInfo = new stbtt_packedchar[font->numChars];
+			memset(font->charInfo, 0, sizeof(stbtt_packedchar) * font->numChars);
+
+			stbtt_PackSetOversampling(&context, font->horzOversample, font->vertOversample);
+
+			if(!stbtt_PackFontRange(&context, font->ttfBuffer, 0, pixelSize, font->firstChar,
+				font->numChars, (stbtt_packedchar*) font->charInfo))
+			{
+				ERROR("Failed to pack font '%s' into atlas", name.c_str());
+			}
+
+			stbtt_PackEnd(&context);
+
+
+			// make the opengl texture
+			{
+				using namespace gl;
+				glGenTextures(1, &font->glTextureID);
+				glBindTexture(GL_TEXTURE_2D, font->glTextureID);
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, font->atlasWidth, font->atlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE,
+					font->atlas);
+
+				glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+				glGenerateMipmap(GL_TEXTURE_2D);
+			}
+		}
+
+
+		fontMap[tup] = font;
+		return font;
 	}
+
+	FontGlyphPos getGlyphPosition(Font* font, uint32_t character)
+	{
+		float xpos = 0;
+		float ypos = 0;
+
+		stbtt_aligned_quad quad;
+		memset(&quad, 0, sizeof(stbtt_aligned_quad));
+
+		stbtt_GetPackedQuad((stbtt_packedchar*) font->charInfo, font->atlasWidth, font->atlasHeight, character - font->firstChar,
+			&xpos, &ypos, &quad, 1);
+
+		auto xmin = quad.x0;
+		auto xmax = quad.x1;
+		auto ymin = -quad.y1;
+		auto ymax = -quad.y0;
+
+		auto ret = FontGlyphPos();
+		// ret.offsetX = offsetX;
+		// ret.offsetY = offsetY;
+
+		ret.vertices[0] = glm::vec2(xmin, ymin);
+		ret.vertices[1] = glm::vec2(xmax, ymin);
+		ret.vertices[2] = glm::vec2(xmax, ymax);
+		ret.vertices[3] = glm::vec2(xmin, ymax);
+
+		ret.uvs[0] = glm::vec2(quad.s0, quad.t0);
+		ret.uvs[1] = glm::vec2(quad.s1, quad.t0);
+		ret.uvs[2] = glm::vec2(quad.s1, quad.t1);
+		ret.uvs[3] = glm::vec2(quad.s0, quad.t1);
+
+		// printf("(%f, %f) : (%f, %f) // (%f, %f) : (%f, %f) // (%f, %f)\n",
+		// 	xmin, ymin, xmax, ymax, quad.s0, quad.t0, quad.s1, quad.t1, xpos, ypos);
+
+		return ret;
+	}
+
+
+
+
 
 	void closeAllFonts()
 	{
 		for(auto pair : fontMap)
 		{
-			pair.second.imgui->Clear();
-			delete[] pair.second.ttfBuffer;
+			delete[] pair.second->ttfBuffer;
+			delete[] pair.second->atlas;
+			delete[] ((stbtt_packedchar*) pair.second->charInfo);
 		}
 	}
 }

@@ -21,7 +21,6 @@ namespace AssetLoader
 
 
 
-		LOG("Compiling vertex shader '%s'", vertexPath.c_str());
 		{
 			Asset* vsAsset = AssetLoader::Load(vertexPath.c_str());
 			const char* source = (const char*) vsAsset->raw;
@@ -45,7 +44,6 @@ namespace AssetLoader
 		}
 
 
-		LOG("Compiling fragment shader '%s'", fragmentPath.c_str());
 		{
 			Asset* fsAsset = AssetLoader::Load(fragmentPath.c_str());
 			const char* source = (const char*) fsAsset->raw;
@@ -70,7 +68,6 @@ namespace AssetLoader
 
 
 		// Link the program
-		LOG("Linking program\n");
 		{
 			glAttachShader(progID, vShaderID);
 			glAttachShader(progID, fShaderID);
@@ -91,6 +88,7 @@ namespace AssetLoader
 				ERROR("Error linking program: '%s'", errmsg);
 			}
 		}
+		LOG("Linked shader program with ID %d\n", progID);
 
 		glDetachShader(progID, vShaderID);
 		glDetachShader(progID, fShaderID);
