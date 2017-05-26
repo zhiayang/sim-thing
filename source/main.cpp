@@ -52,16 +52,17 @@ namespace Rx
 			{
 				done = true;
 			}
-			else if(event.type == SDL_WINDOWEVENT_RESIZED)
+			else if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
 			{
 				assert(theRenderer);
-				auto sdlw = theRenderer->window->sdlWin;
+				// auto sdlw = theRenderer->window->sdlWin;
 
-				int w = 0;
-				int h = 0;
-				SDL_GetWindowSize(sdlw, &w, &h);
+				// int w = 0;
+				// int h = 0;
+				// SDL_GetWindowSize(sdlw, &w, &h);
 
-				theRenderer->updateWindowSize(w, h);
+				LOG("resize");
+				theRenderer->updateWindowSize(event.window.data1, event.window.data2);
 			}
 		}
 
@@ -111,6 +112,15 @@ static std::pair<double, double> determineCurrentFPS(double previous, double fra
 
 int main(int argc, char** argv)
 {
+	Config::setResX(1024);
+	Config::setResY(640);
+
+
+
+
+
+
+
 	// Setup SDL
 	auto r = Rx::Initialise(Config::getResX(), Config::getResY());
 	SDL_GLContext glcontext = r.first;
@@ -135,7 +145,7 @@ int main(int argc, char** argv)
 	}
 
 
-	auto primaryFont = Rx::getFont("menlo", 128, ' ', 0xFF - ' ', 2, 2);
+	auto primaryFont = Rx::getFont("menlo", 64, ' ', 0xFF - ' ', 2, 2);
 
 
 	// initialise some things
@@ -171,9 +181,16 @@ int main(int argc, char** argv)
 	assert(textProgId >= 0);
 
 	// camera matrix: camera at [ 0, 3, 7 ], looking at [ 0, 0, 0 ], rotated right-side up
-	theRenderer = new Rx::Renderer(window, glcontext, util::colour(25, 25, 25, 255),
-		glm::lookAt(glm::vec3(0, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), progId, textProgId, glm::radians(70.0f),
-		Config::getResX(), Config::getResY(), 0.001, 1000);
+	assert(io.DisplayFramebufferScale.x == io.DisplayFramebufferScale.y);
+	{
+		int rx = 0; int ry = 0;
+		SDL_GetWindowSize(window->sdlWin, &rx, &ry);
+		LOG("window is %d x %d", rx, ry);
+
+		theRenderer = new Rx::Renderer(window, glcontext, util::colour(25, 25, 25, 255),
+			glm::lookAt(glm::vec3(0, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), progId, textProgId, glm::radians(70.0f),
+			rx, ry, io.DisplayFramebufferScale.x, 0.001, 1000);
+	}
 
 
 	std::vector<glm::vec3> vertices = {
@@ -292,7 +309,7 @@ int main(int argc, char** argv)
 		Rx::BeginFrame(theRenderer);
 
 		// theRenderer->renderVertices(vertices, colours, { }, { });
-		theRenderer->renderStringInScreenSpace("x", primaryFont, 64, glm::vec2(30, 30));
+		theRenderer->renderStringInScreenSpace("x", primaryFont, 16, glm::vec2(600, 300));
 
 		Rx::EndFrame(theRenderer);
 

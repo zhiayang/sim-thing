@@ -71,6 +71,8 @@ namespace Rx
 
 		std::string name;
 
+		size_t pixelSize = 0;
+
 		uint8_t* ttfBuffer = 0;
 		size_t ttfBufferSize = 0;
 
@@ -186,7 +188,7 @@ namespace Rx
 	struct Renderer
 	{
 		Renderer(Window* win, SDL_GLContext glc, util::colour clearColour, glm::mat4 camera, gl::GLuint mainShaderProg,
-			gl::GLuint textShaderProg, double fov, double width, double height, double near, double far);
+			gl::GLuint textShaderProg, double fov, double width, double height, double resscale, double near, double far);
 
 		void clearRenderList();
 		void renderAll();
@@ -242,10 +244,13 @@ namespace Rx
 			double _far = 0;
 			double _width = 0;
 			double _height = 0;
+			double _resolutionScale = 0;
 
 			gl::GLuint mainShaderProgram = -1;
 			gl::GLuint textShaderProgram = -1;
 			gl::GLuint mvpMatrixId = -1;
+
+			gl::GLuint orthoProjectionMatrixId = -1;
 	};
 
 

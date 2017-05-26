@@ -36,8 +36,7 @@ namespace Rx
 		{
 			case AssetType::ModelOBJ: {
 				loadWavefrontOBJIntoModel(asset, model);
-			}
-			break;
+			} break;
 
 			default:
 				ERROR("Invalid asset to load model from (type %d)", asset->type);

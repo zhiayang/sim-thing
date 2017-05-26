@@ -62,6 +62,7 @@ namespace Rx
 		// memcpy(bufcopy, ttfbuffer, ttfSize);
 
 		Font* font = new Font(name);
+		font->pixelSize = pixelSize;
 
 		font->ttfBuffer = ttfbuffer;
 		font->ttfBufferSize = ttfSize;
@@ -114,6 +115,10 @@ namespace Rx
 				glGenTextures(1, &font->glTextureID);
 				glBindTexture(GL_TEXTURE_2D, font->glTextureID);
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, font->atlasWidth, font->atlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE,
 					font->atlas);
 
