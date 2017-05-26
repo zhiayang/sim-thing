@@ -3,9 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #include "glwrapper.h"
-#include "graphicswrapper.h"
-
-#include "imgui.h"
+#include "renderer/rx.h"
 
 #include <glbinding/gl/gl.h>
 

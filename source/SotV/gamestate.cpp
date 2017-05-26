@@ -3,7 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #include "imgui.h"
-#include "graphicswrapper.h"
+#include "renderer/rx.h"
 
 #include "sotv/sotv.h"
 #include "sotv/gui.h"

@@ -3,10 +3,9 @@
 // Licensed under the Apache License Version 2.0.
 
 #include "glwrapper.h"
-#include "graphicswrapper.h"
+#include "renderer/rx.h"
 
-#include "imgui.h"
-#include "imgui_impl_sdl.h"
+#include "utf8rewind.h"
 
 #include <glbinding/gl/gl.h>
 
@@ -18,8 +17,6 @@
 #include <glm/gtx/string_cast.hpp>
 
 using namespace gl;
-using namespace Math;
-
 
 namespace Rx
 {
@@ -132,8 +129,119 @@ namespace Rx
 		this->renderList.push_back(rc);
 	}
 
-	void Renderer::renderStringInScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos)
+	void Renderer::renderStringInScreenSpace(std::string str, Rx::Font* font, float size, glm::vec2 pos)
 	{
+		uint32_t* text = 0;
+		size_t length = 0;
+		{
+			length = utf8toutf32(str.c_str(), str.size(), nullptr, 0, 0) / 4;
+			text = new uint32_t[length];
+
+			int32_t errs = 0;
+			utf8toutf32(str.c_str(), str.size(), text, length * 4, &errs);
+			assert(errs == UTF8_ERR_NONE);
+		}
+
+
+		// todo: this produces one rendercommand per character,
+		// might be slightly inefficient...
+
+		// do the magic
+
+		double xPos = glm::round(pos).x;
+		double yPos = glm::round(pos).y;
+		float scale = size / (float) font->pixelSize;
+
+		glm::vec4 cliprect;
+		{
+			double x0 = xPos;
+			double y0 = yPos + (scale * font->descent);
+
+			double advx = 0;
+			for(size_t i = 0; i < length; i++)
+				advx += scale * font->getGlyphMetrics(text[i]).xAdvance;
+
+			double advy = scale * font->ascent;
+
+			double x1 = x0 + advx;
+			double y1 = y0 + advy;
+
+			cliprect = { x0, y0, x1, y1 };
+		}
+
+
+		double initXPos = xPos;
+		for(size_t i = 0; i < length; i++)
+		{
+			if(text[i] < ' ')
+			{
+				if(text[i] == '\n')
+				{
+					// line height is just the pixel height; increment
+					yPos += font->pixelSize;
+					continue;
+				}
+				else if(text[i] == '\r')
+				{
+					xPos = initXPos;
+					continue;
+				}
+			}
+			else
+			{
+				auto gpos = font->getGlyphMetrics(text[i]);
+				auto width = scale * gpos.xAdvance;
+
+				xPos += width;
+				if(text[i] != ' ')
+				{
+					RenderCommand rc;
+
+					rc.type = RenderCommand::CommandType::RenderText;
+
+					rc.dimensions = 2;
+					rc.isInScreenSpace = true;
+					rc.textureToBind = font->glTextureID;
+
+					// fill it up.
+					auto pos = glm::vec2(xPos, yPos - gpos.descent * scale);
+					fprintf(stderr, "(%c) -- A: %.1f, B: %.1f\n", text[i], yPos, (yPos - gpos.descent * scale));
+
+					glm::vec2 x0y0 = glm::round(pos + (gpos.vertices[0] * scale));
+					glm::vec2 x1y0 = glm::round(pos + (gpos.vertices[1] * scale));
+					glm::vec2 x1y1 = glm::round(pos + (gpos.vertices[2] * scale));
+					glm::vec2 x0y1 = glm::round(pos + (gpos.vertices[3] * scale));
+
+					rc.vertices.push_back(glm::vec4(x0y0, 0, 1));
+					rc.vertices.push_back(glm::vec4(x0y1, 0, 1));
+					rc.vertices.push_back(glm::vec4(x1y0, 0, 1));
+					rc.vertices.push_back(glm::vec4(x1y1, 0, 1));
+					rc.vertices.push_back(glm::vec4(x1y0, 0, 1));
+					rc.vertices.push_back(glm::vec4(x0y1, 0, 1));
+
+					rc.uvs = {
+								gpos.uvs[0],
+								gpos.uvs[3],
+								gpos.uvs[1],
+								gpos.uvs[2],
+								gpos.uvs[1],
+								gpos.uvs[3]
+							};
+
+					this->renderList.push_back(rc);
+				}
+			}
+		}
+
+
+
+
+
+
+
+
+
+		#if 0
 		auto gpos = getGlyphPosition(font, 'R');
 		RenderCommand rc;
 
@@ -142,6 +250,8 @@ namespace Rx
 		rc.dimensions = 2;
 		rc.isInScreenSpace = true;
 
+		// make pixel-perfect using glm::round (ie. don't have floating-point coords, since we're using a 1:1 mapping to pixels
+		// on screen with vertex coords). openGL does weird rendering things with non-aligned coords, apparently. looks fugly otherwise.
 		float scale = size / (float) font->pixelSize;
 		glm::vec2 x0y0 = glm::round(pos + (gpos.vertices[0] * scale));
 		glm::vec2 x1y0 = glm::round(pos + (gpos.vertices[1] * scale));
@@ -166,6 +276,7 @@ namespace Rx
 
 		rc.textureToBind = font->glTextureID;
 		this->renderList.push_back(rc);
+		#endif
 	}
 
 
@@ -493,7 +604,7 @@ namespace Rx
 
 
 
-
+	#if 0
 
 
 	// split the RenderDrawLists function into separate parts.
@@ -641,6 +752,7 @@ namespace Rx
 	void FinishOpenGL3D()
 	{
 	}
+	#endif
 }
 
 

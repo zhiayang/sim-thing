@@ -78,7 +78,7 @@ $(OUTPUT): $(CXXOBJ) $(COBJ)
 %.cpp.o: %.cpp
 	@$(eval DONEFILES += "CPP")
 	@printf "# compiling [$(words $(DONEFILES))/$(NUMFILES)] $<\n"
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -MF $<.d -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -Isource/utf8rewind/include/utf8rewind -MMD -MP -MF $<.d -o $@ $<
 
 
 %.c.o: %.c

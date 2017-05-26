@@ -4,7 +4,7 @@
 
 #include "imgui.h"
 #include "glwrapper.h"
-#include "graphicswrapper.h"
+#include "renderer/rx.h"
 
 #include <glbinding/gl/gl.h>
 

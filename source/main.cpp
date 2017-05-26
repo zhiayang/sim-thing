@@ -11,9 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "imgui.h"
-#include "imgui_impl_sdl.h"
-#include "graphicswrapper.h"
+#include "renderer/rx.h"
 
 #include "model.h"
 
@@ -46,7 +44,7 @@ namespace Rx
 			if(event.type == SDL_KEYUP || event.type == SDL_KEYDOWN)
 				Input::HandleInput(&gameState->inputState, &event);
 
-			ImGui_ImplSdl_ProcessEvent(&event);
+			// ImGui_ImplSdl_ProcessEvent(&event);
 
 			if(event.type == SDL_QUIT)
 			{
@@ -126,24 +124,6 @@ int main(int argc, char** argv)
 	SDL_GLContext glcontext = r.first;
 	Rx::Window* window = r.second;
 
-	// any lower, and it gets sketchy.
-	// for some reason, increasing oversampling doesn't help beyond a certain point.
-	// in fact, going beyond 8 for some reason wrecks the font totally.
-
-	// hence, this hack: we pass getFont() the *actual* size we want the font to be, in pixels.
-	// however, it multiplies that by 2 internally, so if we say we want font-size 16, it actually
-	// loads font-size 32.
-	// since our global scale is 0.50, this effectively gives us another *level* of oversampling.
-	// it doesn't seem to affect framerate too much, and produces **MUCH** crisper text.
-
-	ImGuiIO& io = ImGui::GetIO();
-	{
-		io.FontGlobalScale = 0.25;
-
-		// init.cpp
-		// Rx::SetupDefaultStyle();
-	}
-
 
 	auto primaryFont = Rx::getFont("menlo", 64, ' ', 0xFF - ' ', 2, 2);
 
@@ -181,15 +161,22 @@ int main(int argc, char** argv)
 	assert(textProgId >= 0);
 
 	// camera matrix: camera at [ 0, 3, 7 ], looking at [ 0, 0, 0 ], rotated right-side up
-	assert(io.DisplayFramebufferScale.x == io.DisplayFramebufferScale.y);
 	{
 		int rx = 0; int ry = 0;
 		SDL_GetWindowSize(window->sdlWin, &rx, &ry);
 		LOG("window is %d x %d", rx, ry);
 
+		int dx = 0; int dy = 0;
+		SDL_GL_GetDrawableSize(window->sdlWin, &dx, &dy);
+
+		int sx = dx / rx;
+		int sy = dy / ry;
+
+		assert(sx == sy);
+
 		theRenderer = new Rx::Renderer(window, glcontext, util::colour(25, 25, 25, 255),
 			glm::lookAt(glm::vec3(0, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), progId, textProgId, glm::radians(70.0f),
-			rx, ry, io.DisplayFramebufferScale.x, 0.001, 1000);
+			rx, ry, sx, 0.001, 1000);
 	}
 
 
@@ -309,7 +296,9 @@ int main(int argc, char** argv)
 		Rx::BeginFrame(theRenderer);
 
 		// theRenderer->renderVertices(vertices, colours, { }, { });
-		theRenderer->renderStringInScreenSpace("x", primaryFont, 16, glm::vec2(600, 300));
+		theRenderer->renderStringInScreenSpace("3,.94 pqkWh / 43.50 kWh (9.1%)  |  +47.33 kW / -0.00 W", primaryFont, 14, glm::vec2(0, 10));
+
+		// theRenderer->renderStringInScreenSpace("A    B C", primaryFont, 16, glm::vec2(200, 50));
 
 		Rx::EndFrame(theRenderer);
 
@@ -459,7 +448,8 @@ int main(int argc, char** argv)
 	}
 
 	// Cleanup
-	ImGui_ImplSdl_Shutdown();
+	// ImGui_ImplSdl_Shutdown();
+
 	SDL_GL_DeleteContext(glcontext);
 	SDL_DestroyWindow(theRenderer->window->sdlWin);
 	SDL_Quit();

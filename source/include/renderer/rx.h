@@ -1,118 +1,29 @@
-// SDLWrapper.h
-// Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
+// rx.h
+// Copyright (c) 2014 - 2016, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
 #pragma once
 
-#include <stdint.h>
-#include <assert.h>
 
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_image.h"
-// #include "SDL2/SDL_opengl.h"
+#include <stdint.h>
+#include <stddef.h>
+
+#include <string>
+#include <unordered_map>
 
 #include <glbinding/gl/enum.h>
+#include <glbinding/gl/types.h>
 
 #include <glm/mat4x4.hpp>
 
+#include "SDL2/SDL.h"
+
 #include "utilities.h"
 #include "assetloader.h"
-#include "mathprimitives.h"
-
-struct ImDrawData;
-
-#include "stb_truetype.h"
+#include "renderer/font.h"
 
 namespace Rx
 {
-	// font stuff
-	struct Font
-	{
-		Font() { }
-		Font(std::string n) : name(n) { }
-
-		// note: these are shallow things.
-		#if 0
-		Font(const Font& o)
-		{
-			this->name				= o.name;
-			this->ttfBufferSize		= o.ttfBufferSize;
-			this->ttfBuffer			= o.ttfBuffer;
-			this->atlas				= o.atlas;
-			this->atlasWidth		= o.atlasWidth;
-			this->atlasHeight		= o.atlasHeight;
-			this->vertOversample	= o.vertOversample;
-			this->horzOversample	= o.horzOversample;
-			this->firstChar			= o.firstChar;
-			this->numChars			= o.numChars;
-			this->charInfo			= o.charInfo;
-		}
-
-		Font& operator = (const Font& o)
-		{
-			this->name				= o.name;
-			this->ttfBufferSize		= o.ttfBufferSize;
-			this->ttfBuffer			= o.ttfBuffer;
-			this->atlas				= o.atlas;
-			this->atlasWidth		= o.atlasWidth;
-			this->atlasHeight		= o.atlasHeight;
-			this->vertOversample	= o.vertOversample;
-			this->horzOversample	= o.horzOversample;
-			this->firstChar			= o.firstChar;
-			this->numChars			= o.numChars;
-			this->charInfo			= o.charInfo;
-
-			return *this;
-		}
-		#endif
-
-		Font(const Font&) = delete;
-		Font& operator = (const Font&) = delete;
-
-		std::string name;
-
-		size_t pixelSize = 0;
-
-		uint8_t* ttfBuffer = 0;
-		size_t ttfBufferSize = 0;
-
-		uint8_t* atlas = 0;
-		size_t atlasWidth = 0;
-		size_t atlasHeight = 0;
-
-		size_t vertOversample = 0;
-		size_t horzOversample = 0;
-
-		uint32_t firstChar = 0;
-		size_t numChars = 0;
-
-		gl::GLuint glTextureID = -1;
-		stbtt_packedchar* charInfo = 0;
-	};
-
-	struct FontGlyphPos
-	{
-		glm::vec2 vertices[4];
-		glm::vec2 uvs[4];
-	};
-
-	Font* getFont(std::string name, size_t pixelSize, uint32_t firstChar, size_t numChars, size_t oversampleH, size_t oversampleV);
-	FontGlyphPos getGlyphPosition(Font* font, uint32_t u32);
-
-	void closeAllFonts();
-
-
-	void SetupDefaultStyle();
-
-
-
-
-
-
-
-
-
-
 	struct Texture;
 
 	struct Window
@@ -305,37 +216,4 @@ namespace Rx
 
 
 
-
-
-
-	// internal stuff, mostly
-	// void SetupOpenGL2D(ImDrawData* draw_data, int* fb_width, int* fb_height);
-	// void RenderImGui(ImDrawData* draw_data, int fb_height);
-	// void FinishOpenGL2D();
-
-
-	// void SetupOpenGL3D();
-	// void FinishOpenGL3D();
-
-
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
