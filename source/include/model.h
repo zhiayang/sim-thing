@@ -24,10 +24,14 @@ namespace Rx
 			std::vector<glm::vec2> uvs;
 		};
 
+		Model();
+
 		std::string name;
 		id_t id;
 
 		std::vector<Face> faces;
+
+		static Model* getUnitCube();
 	};
 
 	Model* loadModelFromAsset(AssetLoader::Asset* asset);

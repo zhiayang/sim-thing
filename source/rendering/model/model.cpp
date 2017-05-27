@@ -5,8 +5,6 @@
 #include "model.h"
 #include "utilities.h"
 
-#include "earcut.h"
-
 #include <glm/glm.hpp>
 
 #include <sstream>
@@ -30,8 +28,13 @@ namespace Rx
 {
 	// given 4 vertices, returns 6 vertices which are the triangles of the quad.
 	static Model::Face triangulateQuadFace(Model::Face face);
-
 	static void loadWavefrontOBJIntoModel(Asset* asset, Model* model);
+
+	Model::Model()
+	{
+		static id_t __id = 1;
+		this->id = __id++;
+	}
 
 
 	Model* loadModelFromAsset(Asset* asset)
@@ -217,7 +220,7 @@ namespace Rx
 
 			Face face;
 			for(auto vi : iface.vertexIndices)
-				face.vertices.push_back(vertices[vi - 1] / 10000.0f);
+				face.vertices.push_back(vertices[vi - 1] / 1000.0f);
 
 			for(auto ni : iface.normalIndices)
 				face.normals.push_back(normals[ni - 1]);
@@ -252,15 +255,15 @@ namespace Rx
 		auto c = face.vertices[2];
 		auto d = face.vertices[3];
 
-		auto an = face.normals[0];
-		auto bn = face.normals[1];
-		auto cn = face.normals[2];
-		auto dn = face.normals[3];
+		auto an = face.normals.size() > 0 ? face.normals[0] : glm::vec3();
+		auto bn = face.normals.size() > 0 ? face.normals[1] : glm::vec3();
+		auto cn = face.normals.size() > 0 ? face.normals[2] : glm::vec3();
+		auto dn = face.normals.size() > 0 ? face.normals[3] : glm::vec3();
 
-		auto at = face.uvs[0];
-		auto bt = face.uvs[1];
-		auto ct = face.uvs[2];
-		auto dt = face.uvs[3];
+		auto at = face.uvs.size() > 0 ? face.uvs[0] : glm::vec2();
+		auto bt = face.uvs.size() > 0 ? face.uvs[1] : glm::vec2();
+		auto ct = face.uvs.size() > 0 ? face.uvs[2] : glm::vec2();
+		auto dt = face.uvs.size() > 0 ? face.uvs[3] : glm::vec2();
 
 		auto ac = glm::distance(a, c);
 		auto bd = glm::distance(b, d);
@@ -291,6 +294,80 @@ namespace Rx
 		ret.vertices = verts;
 		ret.normals = norms;
 		ret.uvs = uvs;
+
+		return ret;
+	}
+
+
+
+
+
+
+
+
+	Model* Model::getUnitCube()
+	{
+		Model* ret = new Model();
+		ret->name = "unit_cube";
+
+
+		Face top;
+		{
+			top.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));
+			top.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));
+			top.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));
+			top.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));
+		}
+
+		Face bottom;
+		{
+			bottom.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));
+			bottom.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));
+			bottom.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));
+			bottom.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));
+		}
+
+		Face left;
+		{
+			left.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));
+			left.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));
+			left.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));
+			left.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));
+		}
+
+		Face right;
+		{
+			right.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));
+			right.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));
+			right.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));
+			right.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));
+		}
+
+		Face front;
+		{
+			front.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));
+			front.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));
+			front.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));
+			front.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));
+		}
+
+		Face back;
+		{
+			back.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));
+			back.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));
+			back.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));
+			back.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));
+		}
+
+		ret->faces.push_back(top);
+		ret->faces.push_back(bottom);
+		ret->faces.push_back(left);
+		ret->faces.push_back(right);
+		ret->faces.push_back(front);
+		ret->faces.push_back(back);
+
+		for(auto& face : ret->faces)
+			face = triangulateQuadFace(face);
 
 		return ret;
 	}

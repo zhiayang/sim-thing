@@ -272,7 +272,9 @@ namespace Rx
 		{
 			for(auto v : face.vertices)
 			{
-				rc.vertices.push_back(v);
+				auto v4 = glm::vec4(v, 1.0);
+				rc.vertices.push_back(v4 * transform);
+
 				rc.colours.push_back(glm::vec4(0.24, 0.59, 0.77, 1.0));
 				// rc.colours.push_back(glm::vec4(util::colour::random().toGL()));
 			}

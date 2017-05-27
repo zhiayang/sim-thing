@@ -165,7 +165,7 @@ int main(int argc, char** argv)
 	assert(colourProgId >= 0);
 	assert(textProgId >= 0);
 
-	// camera matrix: camera at [ 0, 3, 7 ], looking at [ 0, 0, 0 ], rotated right-side up
+	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
 		int rx = 0; int ry = 0;
 		SDL_GetWindowSize(window->sdlWin, &rx, &ry);
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
 		assert(sx == sy);
 
 		theRenderer = new Rx::Renderer(window, glcontext, util::colour(25, 25, 25, 255),
-			glm::lookAt(glm::vec3(7, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), textureProgId, colourProgId, textProgId,
+			glm::lookAt(glm::vec3(70, 30, 70), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), textureProgId, colourProgId, textProgId,
 			glm::radians(70.0f), rx, ry, sx, 0.001, 1000);
 	}
 
@@ -304,7 +304,8 @@ int main(int argc, char** argv)
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
 
-		theRenderer->renderModel(model, glm::mat4(1.0));
+		// theRenderer->renderModel(model, glm::mat4(1.0));
+		theRenderer->renderModel(Rx::Model::getUnitCube(), glm::scale(glm::mat4(1.0), glm::vec3(10.0)));
 		// theRenderer->renderColouredVertices(vertices, colours, { });
 
 
