@@ -17,12 +17,17 @@ namespace Rx
 {
 	struct Model
 	{
+		struct Face
+		{
+			std::vector<glm::vec3> vertices;
+			std::vector<glm::vec3> normals;
+			std::vector<glm::vec2> uvs;
+		};
+
 		std::string name;
 		id_t id;
 
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec2> uvs;
+		std::vector<Face> faces;
 	};
 
 	Model* loadModelFromAsset(AssetLoader::Asset* asset);

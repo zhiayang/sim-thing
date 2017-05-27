@@ -2,6 +2,7 @@
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
+#include "model.h"
 #include "glwrapper.h"
 #include "renderer/rx.h"
 
@@ -89,7 +90,7 @@ namespace Rx
 	{
 		RenderCommand rc;
 		rc.type = RenderCommand::CommandType::Clear;
-		rc.colours.push_back(colour.toVec4());
+		rc.colours.push_back(colour.toGL());
 
 		this->renderList.push_back(rc);
 	}
@@ -256,6 +257,60 @@ namespace Rx
 
 
 
+	void Renderer::renderModel(Model* model, glm::mat4 transform)
+	{
+		RenderCommand rc;
+
+		rc.type = RenderCommand::CommandType::RenderColouredVerticesFilled;
+
+		rc.dimensions = 3;
+		rc.isInScreenSpace = false;
+		rc.textureToBind = -1;
+
+
+		for(auto face : model->faces)
+		{
+			for(auto v : face.vertices)
+			{
+				rc.vertices.push_back(v);
+				rc.colours.push_back(glm::vec4(0.24, 0.59, 0.77, 1.0));
+				// rc.colours.push_back(glm::vec4(util::colour::random().toGL()));
+			}
+		}
+
+		this->renderList.push_back(rc);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -269,15 +324,15 @@ namespace Rx
 		double rscale = this->_resolutionScale;
 		glViewport(0, 0, (int) (this->_width * rscale), (int) (this->_height * rscale));
 
-		// this->renderList.clear();
+		// generate one buffer, once.
 
-		// static GLuint uvBuffer = -1;
-		// static GLuint vertBuffer = -1;
-		// static GLuint colourBuffer = -1;
+		static GLuint uvBuffer = -1;
+		static GLuint vertBuffer = -1;
+		static GLuint colourBuffer = -1;
 
-		// if(uvBuffer == (GLuint) -1)		glGenBuffers(1, &uvBuffer);
-		// if(vertBuffer == (GLuint) -1)	glGenBuffers(1, &vertBuffer);
-		// if(colourBuffer == (GLuint) -1)	glGenBuffers(1, &colourBuffer);
+		if(uvBuffer == (GLuint) -1)		glGenBuffers(1, &uvBuffer);
+		if(vertBuffer == (GLuint) -1)	glGenBuffers(1, &vertBuffer);
+		if(colourBuffer == (GLuint) -1)	glGenBuffers(1, &colourBuffer);
 
 		for(auto rc : this->renderList)
 		{
@@ -296,11 +351,6 @@ namespace Rx
 
 				case CType::RenderColouredVerticesFilled:	// fallthrough
 				case CType::RenderColouredVerticesWireframe: {
-
-					GLuint vertBuffer = -1;
-					GLuint colourBuffer = -1;
-					glGenBuffers(1, &vertBuffer);
-					glGenBuffers(1, &colourBuffer);
 
 					glUseProgram(this->colourShaderProgram);
 
@@ -346,9 +396,6 @@ namespace Rx
 
 					glDrawArrays(rc.type == CType::RenderColouredVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
-					glDeleteBuffers(1, &vertBuffer);
-					glDeleteBuffers(1, &colourBuffer);
-
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 
@@ -360,11 +407,6 @@ namespace Rx
 
 				case CType::RenderTexturedVerticesFilled:	// fallthrough
 				case CType::RenderTexturedVerticesWireframe: {
-
-					GLuint vertBuffer = -1;
-					GLuint uvBuffer = -1;
-					glGenBuffers(1, &vertBuffer);
-					glGenBuffers(1, &uvBuffer);
 
 					glUseProgram(this->textureShaderProgram);
 
@@ -388,7 +430,7 @@ namespace Rx
 						);
 					}
 
-					assert(rc.textureToBind != -1);
+					assert(rc.textureToBind != (GLuint) -1);
 					{
 						GL::pushTextureBinding(rc.textureToBind);
 						assert(rc.uvs.size() > 0);
@@ -411,9 +453,6 @@ namespace Rx
 
 					glDrawArrays(rc.type == CType::RenderColouredVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
-					glDeleteBuffers(1, &vertBuffer);
-					glDeleteBuffers(1, &uvBuffer);
-
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 
@@ -422,11 +461,6 @@ namespace Rx
 
 
 				case CType::RenderText: {
-
-					GLuint vertBuffer = -1;
-					GLuint uvBuffer = -1;
-					glGenBuffers(1, &vertBuffer);
-					glGenBuffers(1, &uvBuffer);
 
 					glUseProgram(this->textShaderProgram);
 
@@ -450,9 +484,8 @@ namespace Rx
 						);
 					}
 
-					// GL::pushTextureBinding(rc.textureToBind);
+					GL::pushTextureBinding(rc.textureToBind);
 
-					glBindTexture(GL_TEXTURE_2D, rc.textureToBind);
 					glEnableVertexAttribArray(1);
 					{
 						assert(rc.uvs.size() > 0);
@@ -473,13 +506,10 @@ namespace Rx
 
 					glDrawArrays(GL_TRIANGLES, 0, rc.vertices.size());
 
-					glDeleteBuffers(1, &vertBuffer);
-					glDeleteBuffers(1, &uvBuffer);
-
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 
-					// GL::popTextureBinding();
+					GL::popTextureBinding();
 
 				} break;
 

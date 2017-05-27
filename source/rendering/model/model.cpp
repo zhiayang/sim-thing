@@ -5,6 +5,8 @@
 #include "model.h"
 #include "utilities.h"
 
+#include "earcut.h"
+
 #include <glm/glm.hpp>
 
 #include <sstream>
@@ -23,8 +25,12 @@ namespace glm
 	}
 }
 
+
 namespace Rx
 {
+	// given 4 vertices, returns 6 vertices which are the triangles of the quad.
+	static Model::Face triangulateQuadFace(Model::Face face);
+
 	static void loadWavefrontOBJIntoModel(Asset* asset, Model* model);
 
 
@@ -90,13 +96,18 @@ namespace Rx
 				line.remove_prefix(1);
 		}
 
+		struct IndexedFace
+		{
+			std::vector<int64_t> vertexIndices;
+			std::vector<int64_t> normalIndices;
+			std::vector<int64_t> uvIndices;
+		};
+
+		std::vector<IndexedFace> ifaces;
+
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normals;
 		std::vector<glm::vec2> uvs;
-
-		std::vector<int64_t> vertexIndices;
-		std::vector<int64_t> normalIndices;
-		std::vector<int64_t> uvIndices;
 
 		size_t ln = 1;
 		for(auto line : lines)
@@ -152,27 +163,34 @@ namespace Rx
 
 				// for now, only accept the full form: f x/x/x y/y/y z/z/z
 
-				double vx = 0; double tx = 0; double nx = 0;
-				double vy = 0; double ty = 0; double ny = 0;
-				double vz = 0; double tz = 0; double nz = 0;
+				line.remove_prefix(2);
+				IndexedFace iface;
 
-				int res = sscanf(line.to_string().c_str(), "f %lf/%lf/%lf %lf/%lf/%lf %lf/%lf/%lf",
-					&vx, &tx, &nx, &vy, &ty, &ny, &vz, &tz, &nz);
+				while(true)
+				{
+					double v = 0; double t = 0; double n = 0;
 
-				vertexIndices.push_back(vx);
-				vertexIndices.push_back(vy);
-				vertexIndices.push_back(vz);
+					int didread = 0;
+					int res = sscanf(line.to_string().c_str(), "%lf/%lf/%lf%n",
+						&v, &t, &n, &didread);
 
-				normalIndices.push_back(nx);
-				normalIndices.push_back(ny);
-				normalIndices.push_back(nz);
+					if(res > 0)
+					{
+						iface.vertexIndices.push_back(v);
+						iface.normalIndices.push_back(n);
+						iface.uvIndices.push_back(t);
 
-				uvIndices.push_back(tx);
-				uvIndices.push_back(ty);
-				uvIndices.push_back(tz);
+						line.remove_prefix(didread);
+						fprintf(stderr, "face vert %f/%f/%f\n", v, n, t);
+					}
+					else
+					{
+						break;
+					}
+				}
 
-				if(res != 9)
-					ERROR("Malformed face on line %zu", ln);
+				fprintf(stderr, "face with %zu verts\n\n", iface.vertexIndices.size());
+				ifaces.push_back(iface);
 			}
 			else if(line.find("mtllib") == 0 || line.find("usemtl") == 0)
 			{
@@ -193,22 +211,88 @@ namespace Rx
 			ln++;
 		}
 
-		// get all the vertices
-		for(size_t i = 0; i < vertexIndices.size(); i++)
+		for(auto iface : ifaces)
 		{
-			auto vi = vertexIndices[i];
-			auto ni = normalIndices[i];
-			auto ti = uvIndices[i];
+			using Face = Model::Face;
 
-			// -1 because OBJ indices start from 1
-			glm::vec3 vertex = vertices[vi - 1];
-			glm::vec3 normal = normals[ni - 1];
-			glm::vec2 uv = uvs[ti - 1];
+			Face face;
+			for(auto vi : iface.vertexIndices)
+				face.vertices.push_back(vertices[vi - 1] / 10000.0f);
 
-			mdl->vertices.push_back(vertex);
-			mdl->normals.push_back(normal);
-			mdl->uvs.push_back(uv);
+			for(auto ni : iface.normalIndices)
+				face.normals.push_back(normals[ni - 1]);
+
+			for(auto ti : iface.uvIndices)
+				face.uvs.push_back(uvs[ti - 1]);
+
+
+			if(face.vertices.size() != 3 && face.vertices.size() != 4)
+				ERROR("Unsupported OBJ file with '%zu' vertices per face; only triangles (3) or quads (4) are supported", face.vertices.size());
+
+			// mdl->faces.push_back(face);
+			if(face.vertices.size() == 4)
+				mdl->faces.push_back(triangulateQuadFace(face));
+
+			else
+				mdl->faces.push_back(face);
 		}
+	}
+
+
+	static Model::Face triangulateQuadFace(Model::Face face)
+	{
+		std::vector<glm::vec3> verts;
+		std::vector<glm::vec3> norms;
+		std::vector<glm::vec2> uvs;
+
+		// only supprot quads
+		assert(face.vertices.size() == 4 && "only quads supported");
+		auto a = face.vertices[0];
+		auto b = face.vertices[1];
+		auto c = face.vertices[2];
+		auto d = face.vertices[3];
+
+		auto an = face.normals[0];
+		auto bn = face.normals[1];
+		auto cn = face.normals[2];
+		auto dn = face.normals[3];
+
+		auto at = face.uvs[0];
+		auto bt = face.uvs[1];
+		auto ct = face.uvs[2];
+		auto dt = face.uvs[3];
+
+		auto ac = glm::distance(a, c);
+		auto bd = glm::distance(b, d);
+
+		if(ac < bd)
+		{
+			verts.push_back(a);		uvs.push_back(at);		norms.push_back(an);
+			verts.push_back(b);		uvs.push_back(bt);		norms.push_back(an);
+			verts.push_back(c);		uvs.push_back(ct);		norms.push_back(an);
+
+			verts.push_back(a);		uvs.push_back(at);		norms.push_back(an);
+			verts.push_back(c);		uvs.push_back(ct);		norms.push_back(an);
+			verts.push_back(d);		uvs.push_back(dt);		norms.push_back(an);
+		}
+		else
+		{
+			verts.push_back(a);		uvs.push_back(at);		norms.push_back(an);
+			verts.push_back(b);		uvs.push_back(bt);		norms.push_back(bn);
+			verts.push_back(d);		uvs.push_back(dt);		norms.push_back(dn);
+
+			verts.push_back(d);		uvs.push_back(dt);		norms.push_back(dn);
+			verts.push_back(b);		uvs.push_back(bt);		norms.push_back(bn);
+			verts.push_back(c);		uvs.push_back(ct);		norms.push_back(cn);
+		}
+
+		Model::Face ret;
+
+		ret.vertices = verts;
+		ret.normals = norms;
+		ret.uvs = uvs;
+
+		return ret;
 	}
 }
 

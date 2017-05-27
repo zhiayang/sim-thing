@@ -35,7 +35,7 @@ namespace Sotv
 		{
 			auto joules = Units::convertWattHoursToJoules(14.5 * 1000.0);
 
-			double fill = util::Random::get(0.001, 0.3);
+			double fill = util::random::get(0.001, 0.3);
 			stn->powerSystem->addStorage(new LithiumBatteryModule(fill * joules, joules));
 		}
 

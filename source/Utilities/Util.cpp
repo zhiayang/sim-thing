@@ -15,7 +15,7 @@
 
 namespace util
 {
-	namespace Random
+	namespace random
 	{
 		static std::random_device g;
 		static std::uniform_real_distribution<double> d(-1.0, 1.0);

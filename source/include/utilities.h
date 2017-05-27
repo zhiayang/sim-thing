@@ -32,7 +32,7 @@ namespace stx
 
 namespace util
 {
-	namespace Random
+	namespace random
 	{
 		double get(double scale = 1);
 		double get(double lower, double upper);
@@ -139,9 +139,14 @@ namespace util
 			return (r << 24) | (g << 16) | (b << 8) | a;
 		}
 
-		glm::vec4 toVec4()
+		glm::vec4 toGL()
 		{
 			return glm::vec4(this->fr, this->fg, this->fb, this->fa);
+		}
+
+		static colour fromHex(uint32_t hex)
+		{
+			return colour(hex & 0xFF000000 >> 24, hex & 0x00FF0000 >> 16, hex & 0x0000FF00 >> 8, hex & 0xFF);
 		}
 
 		static colour black() { return colour(0, 0, 0); }
@@ -153,7 +158,8 @@ namespace util
 		static colour cyan() { return colour::green() + colour::blue(); }
 		static colour yellow() { return colour::red() + colour::green(); }
 		static colour magenta() { return colour::blue() + colour::red(); }
-		static colour random() { return colour((uint8_t) util::Random::get(0, 255), (uint8_t) util::Random::get(0, 255), (uint8_t) util::Random::get(0, 255)); }
+		static colour random() { return colour((uint8_t) util::random::get(0, 255), (uint8_t) util::random::get(0, 255),
+			(uint8_t) util::random::get(0, 255)); }
 	};
 }
 

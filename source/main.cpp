@@ -26,8 +26,9 @@
 
 static const double timeSpeedupFactor	= 20.0;
 static const double fixedDeltaTimeNs	= 1.0 * 1000.0 * 1000.0;
-static const double targetFramerate		= 60.0;
-static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
+
+// static const double targetFramerate		= 120.0;
+// static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
 static Sotv::GameState* gameState = 0;
 static Rx::Renderer* theRenderer = 0;
@@ -153,7 +154,7 @@ int main(int argc, char** argv)
 	}, Input::HandlerKind::PressDown);
 
 
-	// Rx::Model* model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"));
+	Rx::Model* model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"));
 
 
 	auto textureProgId = AssetLoader::compileAndLinkGLShaderProgram("shaders/simpleTexture.vert", "shaders/simpleTexture.frag");
@@ -179,7 +180,7 @@ int main(int argc, char** argv)
 		assert(sx == sy);
 
 		theRenderer = new Rx::Renderer(window, glcontext, util::colour(25, 25, 25, 255),
-			glm::lookAt(glm::vec3(0, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), textureProgId, colourProgId, textProgId,
+			glm::lookAt(glm::vec3(7, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), textureProgId, colourProgId, textProgId,
 			glm::radians(70.0f), rx, ry, sx, 0.001, 1000);
 	}
 
@@ -302,18 +303,15 @@ int main(int argc, char** argv)
 
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
-		theRenderer->renderColouredVertices(vertices, colours, { });
 
-		std::string fpsstr = tfm::format("%.2f fps", currentFps);
-		theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 14, glm::vec2(10, 10));
-		theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 14, glm::vec2(10, 25));
-		theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 14, glm::vec2(10, 40));
-		theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 14, glm::vec2(10, 55));
+		theRenderer->renderModel(model, glm::mat4(1.0));
+		// theRenderer->renderColouredVertices(vertices, colours, { });
+
 
 		if((true))
 		{
-			// std::string fpsstr = tfm::format("%.2f fps", currentFps);
-			// theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
+			std::string fpsstr = tfm::format("%.2f fps", currentFps);
+			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
 
 			auto psys = gameState->playerStation->powerSystem;
 			auto lss = gameState->playerStation->lifeSupportSystem;
@@ -380,14 +378,17 @@ int main(int argc, char** argv)
 			frameTime = end - frameBegin;
 
 			// don't kill the CPU
+			// todo: nanosleep() makes us die and hang.
+			// figure out a way...
+
+			#if 0
 			{
 				double toWait = targetFrameTimeNs - frameTime;
 
 				if(toWait >= 1000 * 1000)
 				{
-					fprintf(stderr, "fps = %.1f // %.2f ns\n", currentFps, toWait);
+					fprintf(stderr, "fps = %.1f // %.2f ns // %.1f, %.1f\n", currentFps, toWait, targetFrameTimeNs, frameTime);
 					struct timespec ts;
-					ts.tv_nsec = toWait;
 
 					// nanosleep(&ts, 0);
 				}
@@ -396,6 +397,7 @@ int main(int argc, char** argv)
 					// todo: we missed our framerate.
 				}
 			}
+			#endif
 
 			prevTimestamp = frameBegin;
 		}

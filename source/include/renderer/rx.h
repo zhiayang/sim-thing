@@ -32,6 +32,7 @@ namespace Rx
 	};
 
 	struct Texture;
+	struct Model;
 
 	struct Window
 	{
@@ -149,6 +150,7 @@ namespace Rx
 		void renderStringInNormalisedScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos,
 			TextAlignment align = TextAlignment::LeftAligned);
 
+		void renderModel(Model* model, glm::mat4 transform);
 
 
 
