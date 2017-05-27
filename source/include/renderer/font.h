@@ -22,8 +22,15 @@ namespace Rx
 	// font stuff
 	struct FontGlyphPos
 	{
-		glm::vec2 vertices[4];
-		glm::vec2 uvs[4];
+		double x0 = 0;
+		double y0 = 0;
+		double x1 = 0;
+		double y1 = 0;
+
+		double u0 = 0;
+		double v0 = 0;
+		double u1 = 0;
+		double v1 = 0;
 
 		double xAdvance = 0;
 

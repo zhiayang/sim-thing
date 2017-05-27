@@ -9,10 +9,26 @@
 #include <algorithm>
 
 #include "units.h"
+#include "profile.h"
 
 #include <glm/vec4.hpp>
 
 struct ImFont;
+
+namespace stx
+{
+	template <typename T>
+	struct reversion_wrapper { T& iterable; };
+
+	template <typename T>
+	auto begin (reversion_wrapper<T> w) { return rbegin(w.iterable); }
+
+	template <typename T>
+	auto end (reversion_wrapper<T> w) { return rend(w.iterable); }
+
+	template <typename T>
+	reversion_wrapper<T> reverse (T&& iterable) { return { iterable }; }
+}
 
 namespace util
 {

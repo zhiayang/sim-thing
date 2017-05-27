@@ -118,7 +118,13 @@ namespace Rx
 				glBindTexture(GL_TEXTURE_2D, font->glTextureID);
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				// minification is more important, since we usually oversample and down-scale for better-looking text
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+				float maxAnisotropicFiltering = 0;
+				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropicFiltering);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropicFiltering);
+
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, font->atlasWidth, font->atlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE,
@@ -159,37 +165,34 @@ namespace Rx
 
 		float xpos = 0;
 		float ypos = 0;
-
+//
 		stbtt_aligned_quad quad;
 
 		stbtt_GetPackedQuad(this->charInfo, this->atlasWidth, this->atlasHeight, character - this->firstChar,
-			&xpos, &ypos, &quad, 1);
+			&xpos, &ypos, &quad, 0);
 
-		auto xmin = quad.x0;
-		auto xmax = quad.x1;
-		auto ymin = -quad.y1;
-		auto ymax = -quad.y0;
-
+		auto x0 = quad.x0;
+		auto x1 = quad.x1;
+		auto y0 = quad.y1;
+		auto y1 = quad.y0;
 
 		FontGlyphPos ret;
 
-		ret.vertices[0] = glm::vec2(xmin, ymin);
-		ret.vertices[1] = glm::vec2(xmax, ymin);
-		ret.vertices[2] = glm::vec2(xmax, ymax);
-		ret.vertices[3] = glm::vec2(xmin, ymax);
+		ret.x0 = x0;
+		ret.y0 = y0;
+		ret.x1 = x1;
+		ret.y1 = y1;
 
-		ret.uvs[0] = glm::vec2(quad.s0, quad.t0);
-		ret.uvs[1] = glm::vec2(quad.s1, quad.t0);
-		ret.uvs[2] = glm::vec2(quad.s1, quad.t1);
-		ret.uvs[3] = glm::vec2(quad.s0, quad.t1);
+		// note that we flip the vertical tex coords, since opengl works with (0, 0) at bottom-left
+		// but stb_truetype gives us (0, 0) at top-left.
+		ret.u0 = quad.s0;
+		ret.v0 = quad.t1;
+		ret.u1 = quad.s1;
+		ret.v1 = quad.t0;
 
-		auto scale = 0.21875;
-		int x0 = 0; int y0 = 0; int x1 = 0; int y1 = 0;
-		stbtt_GetCodepointBox(&this->fontInfo, character, &x0, &y0, &x1, &y1);
-		fprintf(stderr, "(%c) x0 = %.1f, y0 = %.1f, x1 = %.1f, y1 = %.1f\n", character, x0 * scale, y0 * scale, x1 * scale, y1 * scale);
+		// fprintf(stderr, "glyph ('%c'):\nxy0: (%f, %f)\nxy1: (%f, %f)\n\n", character, x0, y0, x1, y1);
 
 		ret.xAdvance = this->charInfo->xadvance;
-		// ret.height = std::abs(y1 - y0);
 		ret.descent = -y0;
 
 		this->coordCache[character] = ret;

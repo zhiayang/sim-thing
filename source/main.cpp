@@ -113,6 +113,8 @@ int main(int argc, char** argv)
 	Config::setResX(1024);
 	Config::setResY(640);
 
+	prof::enable();
+
 
 
 
@@ -295,10 +297,61 @@ int main(int argc, char** argv)
 		Rx::PreFrame(theRenderer);
 		Rx::BeginFrame(theRenderer);
 
-		// theRenderer->renderVertices(vertices, colours, { }, { });
-		theRenderer->renderStringInScreenSpace("3,.94 pqkWh / 43.50 kWh (9.1%)  |  +47.33 kW / -0.00 W", primaryFont, 14, glm::vec2(0, 10));
 
-		// theRenderer->renderStringInScreenSpace("A    B C", primaryFont, 16, glm::vec2(200, 50));
+
+		Sotv::Render(*gameState, renderDelta, theRenderer);
+		if((true))
+		{
+			std::string fpsstr = tfm::format("%.2f fps", currentFps);
+
+			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
+
+			auto psys = gameState->playerStation->powerSystem;
+			auto lss = gameState->playerStation->lifeSupportSystem;
+
+			double stor = Units::convertJoulesToWattHours(psys->getTotalStorageInJoules());
+			double cap = Units::convertJoulesToWattHours(psys->getTotalCapacityInJoules());
+			double prod = psys->getTotalProductionInWatts();
+
+			double percentage = (stor / cap) * 100.0;
+
+			// divide stor and cap by system voltage to get a number in amp-hours.
+			// we divide by 3600 to convert from amp-seconds to amp-hours
+
+			auto str = tfm::format("%s / %s (%.1f%%)  |  +%s / -%s", Units::formatWithUnits(stor, 2, "Wh"),
+				Units::formatWithUnits(cap, 2, "Wh"), percentage,
+				Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
+
+			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, 5), Rx::TextAlignment::RightAligned);
+
+
+			size_t ofs = 5;
+
+			#if 1
+			for(auto batt : psys->storage)
+			{
+				double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
+				double cap = Units::convertJoulesToWattHours(batt->getCapacityInJoules());
+
+				auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
+					Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
+
+				theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), Rx::TextAlignment::RightAligned);
+			}
+			#endif
+
+			str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
+				Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
+
+			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), Rx::TextAlignment::RightAligned);
+		}
+
+
+
+		// theRenderer->renderStringInScreenSpace("3,.94 pqkWh / 43.50 kWh (9.1%)  |  +47.33 kW / -0.00 W", primaryFont, 14, glm::vec2(10, 10),
+		// 	Rx::TextAlignment::RightAligned);
+
+		// // theRenderer->renderStringInScreenSpace("A    B C", primaryFont, 16, glm::vec2(200, 50));
 
 		Rx::EndFrame(theRenderer);
 
@@ -344,53 +397,6 @@ int main(int argc, char** argv)
 		if(Config::getShowFps())
 		{
 			renderer->SetColour(util::colour::white());
-		}
-
-		Sotv::Render(*gameState, renderDelta, renderer);
-		if((true))
-		{
-			std::string fpsstr = tfm::format("%.2f fps", currentFps);
-
-			renderer->RenderString(fpsstr, primaryFont, 12.0, Math::Vector2(5, 5));
-
-			auto psys = gameState->playerStation->powerSystem;
-			auto lss = gameState->playerStation->lifeSupportSystem;
-
-			double stor = Units::convertJoulesToWattHours(psys->getTotalStorageInJoules());
-			double cap = Units::convertJoulesToWattHours(psys->getTotalCapacityInJoules());
-			double prod = psys->getTotalProductionInWatts();
-
-			double percentage = (stor / cap) * 100.0;
-
-			// divide stor and cap by system voltage to get a number in amp-hours.
-			// we divide by 3600 to convert from amp-seconds to amp-hours
-
-			auto str = tfm::format("%s / %s (%.1f%%)  |  +%s / -%s", Units::formatWithUnits(stor, 2, "Wh"),
-				Units::formatWithUnits(cap, 2, "Wh"), percentage,
-				Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
-
-			renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, 5));
-
-
-			size_t ofs = 5;
-
-			#if 1
-			for(auto batt : psys->storage)
-			{
-				double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
-				double cap = Units::convertJoulesToWattHours(batt->getCapacityInJoules());
-
-				auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
-					Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
-
-				renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, ofs += 15));
-			}
-			#endif
-
-			str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
-				Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
-
-			renderer->RenderStringRightAligned(str, primaryFont, 14, Math::Vector2(5, ofs += 15));
 		}
 
 
@@ -454,5 +460,30 @@ int main(int argc, char** argv)
 	SDL_DestroyWindow(theRenderer->window->sdlWin);
 	SDL_Quit();
 
+
+	if((true))
+	{
+		prof::printResults();
+	}
+
+
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

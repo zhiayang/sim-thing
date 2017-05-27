@@ -24,6 +24,13 @@
 
 namespace Rx
 {
+	enum class TextAlignment
+	{
+		Invalid,
+		LeftAligned,
+		RightAligned
+	};
+
 	struct Texture;
 
 	struct Window
@@ -132,9 +139,13 @@ namespace Rx
 			std::vector<glm::vec2> uvs);
 
 		// screenspace takes pixel positions
-		// glspace takes 0-1 positions
-		void renderStringInScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos);
-		void renderStringInGLSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos);
+		// normalisedscreenspace takes 0-1 positions
+		void renderStringInScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos,
+			TextAlignment align = TextAlignment::LeftAligned);
+
+		void renderStringInNormalisedScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos,
+			TextAlignment align = TextAlignment::LeftAligned);
+
 
 
 

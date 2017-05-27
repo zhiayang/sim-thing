@@ -103,7 +103,7 @@ namespace Rx
 		glLoadIdentity();
 
 		double resscale = this->_resolutionScale;
-		glViewport(0, (int) (this->_height * resscale), (int) (this->_width * resscale), (int) (this->_height * resscale));
+		glViewport(0, /*(int) (this->_height * resscale)*/ 0, (int) (this->_width * resscale), (int) (this->_height * resscale));
 
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
@@ -129,18 +129,29 @@ namespace Rx
 		this->renderList.push_back(rc);
 	}
 
-	void Renderer::renderStringInScreenSpace(std::string str, Rx::Font* font, float size, glm::vec2 pos)
+	void Renderer::renderStringInNormalisedScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos, TextAlignment align)
 	{
-		uint32_t* text = 0;
-		size_t length = 0;
+		pos.x *= this->_width;
+		pos.y *= this->_height;
+
+		this->renderStringInScreenSpace(txt, font, size, pos);
+	}
+
+	void Renderer::renderStringInScreenSpace(std::string str, Rx::Font* font, float size, glm::vec2 pos, TextAlignment align)
+	{
+		bool rightAlign = (align == TextAlignment::RightAligned);
+
+		std::vector<uint32_t> codepoints;
 		{
-			length = utf8toutf32(str.c_str(), str.size(), nullptr, 0, 0) / 4;
-			text = new uint32_t[length];
+			auto p = prof::Profile("utf conversion");
+			size_t length = utf8toutf32(str.c_str(), str.size(), nullptr, 0, 0) / 4;
+			codepoints.resize(length);
 
 			int32_t errs = 0;
-			utf8toutf32(str.c_str(), str.size(), text, length * 4, &errs);
+			utf8toutf32(str.c_str(), str.size(), &codepoints[0], length * 4, &errs);
 			assert(errs == UTF8_ERR_NONE);
 		}
+
 
 
 		// todo: this produces one rendercommand per character,
@@ -148,18 +159,26 @@ namespace Rx
 
 		// do the magic
 
-		double xPos = glm::round(pos).x;
-		double yPos = glm::round(pos).y;
 		float scale = size / (float) font->pixelSize;
+		double xPos = glm::round(pos).x;
+
+		// (0, 0) in font-space is the bottom left, because :shrug:, so flip it.
+		double yPos = glm::round(pos).y + (scale * font->ascent);
 
 		glm::vec4 cliprect;
 		{
+			auto p = prof::Profile("cliprect-ing");
+
 			double x0 = xPos;
 			double y0 = yPos + (scale * font->descent);
 
 			double advx = 0;
-			for(size_t i = 0; i < length; i++)
-				advx += scale * font->getGlyphMetrics(text[i]).xAdvance;
+			for(size_t i = 0; i < codepoints.size(); i++)
+				advx += scale * font->getGlyphMetrics(codepoints[i]).xAdvance;
+
+			// if we're right-aligned, move the xpos all the way to just before the last char
+			if(rightAlign)
+				xPos = this->_width - xPos - scale * font->getGlyphMetrics(codepoints.back()).xAdvance;
 
 			double advy = scale * font->ascent;
 
@@ -170,30 +189,26 @@ namespace Rx
 		}
 
 
-		double initXPos = xPos;
-		for(size_t i = 0; i < length; i++)
+
+		for(size_t i = 0; i < codepoints.size(); i++)
 		{
-			if(text[i] < ' ')
+			// if we're right aligned, flip the sequence of iteration.
+			uint32_t codepoint = (rightAlign ? codepoints[codepoints.size() - i - 1] : codepoints[i]);
+
+			if(codepoint < ' ')
 			{
-				if(text[i] == '\n')
+				if(codepoint == '\n')
 				{
 					// line height is just the pixel height; increment
-					yPos += font->pixelSize;
-					continue;
-				}
-				else if(text[i] == '\r')
-				{
-					xPos = initXPos;
+					yPos += (rightAlign ? -1 : 1) * font->pixelSize;
 					continue;
 				}
 			}
 			else
 			{
-				auto gpos = font->getGlyphMetrics(text[i]);
-				auto width = scale * gpos.xAdvance;
+				auto gpos = font->getGlyphMetrics(codepoint);
 
-				xPos += width;
-				if(text[i] != ' ')
+				if(codepoint != ' ')
 				{
 					RenderCommand rc;
 
@@ -204,79 +219,30 @@ namespace Rx
 					rc.textureToBind = font->glTextureID;
 
 					// fill it up.
-					auto pos = glm::vec2(xPos, yPos - gpos.descent * scale);
-					fprintf(stderr, "(%c) -- A: %.1f, B: %.1f\n", text[i], yPos, (yPos - gpos.descent * scale));
+					auto pos = glm::vec2(round(xPos), round(yPos));
 
-					glm::vec2 x0y0 = glm::round(pos + (gpos.vertices[0] * scale));
-					glm::vec2 x1y0 = glm::round(pos + (gpos.vertices[1] * scale));
-					glm::vec2 x1y1 = glm::round(pos + (gpos.vertices[2] * scale));
-					glm::vec2 x0y1 = glm::round(pos + (gpos.vertices[3] * scale));
-
-					rc.vertices.push_back(glm::vec4(x0y0, 0, 1));
-					rc.vertices.push_back(glm::vec4(x0y1, 0, 1));
-					rc.vertices.push_back(glm::vec4(x1y0, 0, 1));
-					rc.vertices.push_back(glm::vec4(x1y1, 0, 1));
-					rc.vertices.push_back(glm::vec4(x1y0, 0, 1));
-					rc.vertices.push_back(glm::vec4(x0y1, 0, 1));
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y0), 0, 1)));
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y1), 0, 1)));
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y0), 0, 1)));
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y1), 0, 1)));
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y0), 0, 1)));
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y1), 0, 1)));
 
 					rc.uvs = {
-								gpos.uvs[0],
-								gpos.uvs[3],
-								gpos.uvs[1],
-								gpos.uvs[2],
-								gpos.uvs[1],
-								gpos.uvs[3]
+								glm::vec2(gpos.u0, gpos.v0),
+								glm::vec2(gpos.u0, gpos.v1),
+								glm::vec2(gpos.u1, gpos.v0),
+								glm::vec2(gpos.u1, gpos.v1),
+								glm::vec2(gpos.u1, gpos.v0),
+								glm::vec2(gpos.u0, gpos.v1)
 							};
 
 					this->renderList.push_back(rc);
 				}
+
+				xPos += (rightAlign ? -1 : 1) * scale * gpos.xAdvance;
 			}
 		}
-
-
-
-
-
-
-
-
-
-		#if 0
-		auto gpos = getGlyphPosition(font, 'R');
-		RenderCommand rc;
-
-		rc.type = RenderCommand::CommandType::RenderText;
-
-		rc.dimensions = 2;
-		rc.isInScreenSpace = true;
-
-		// make pixel-perfect using glm::round (ie. don't have floating-point coords, since we're using a 1:1 mapping to pixels
-		// on screen with vertex coords). openGL does weird rendering things with non-aligned coords, apparently. looks fugly otherwise.
-		float scale = size / (float) font->pixelSize;
-		glm::vec2 x0y0 = glm::round(pos + (gpos.vertices[0] * scale));
-		glm::vec2 x1y0 = glm::round(pos + (gpos.vertices[1] * scale));
-		glm::vec2 x1y1 = glm::round(pos + (gpos.vertices[2] * scale));
-		glm::vec2 x0y1 = glm::round(pos + (gpos.vertices[3] * scale));
-
-		rc.vertices.push_back(glm::vec4(x0y0, 0, 1));
-		rc.vertices.push_back(glm::vec4(x0y1, 0, 1));
-		rc.vertices.push_back(glm::vec4(x1y0, 0, 1));
-		rc.vertices.push_back(glm::vec4(x1y1, 0, 1));
-		rc.vertices.push_back(glm::vec4(x1y0, 0, 1));
-		rc.vertices.push_back(glm::vec4(x0y1, 0, 1));
-
-		rc.uvs = {
-					gpos.uvs[0],
-					gpos.uvs[3],
-					gpos.uvs[1],
-					gpos.uvs[2],
-					gpos.uvs[1],
-					gpos.uvs[3]
-				};
-
-		rc.textureToBind = font->glTextureID;
-		this->renderList.push_back(rc);
-		#endif
 	}
 
 
@@ -292,20 +258,30 @@ namespace Rx
 
 	void Renderer::renderAll()
 	{
-		gl::glEnable(gl::GL_DEPTH_TEST);
-		gl::glDepthFunc(gl::GL_LESS);
-
 		glClearColor(this->clearColour.fr, this->clearColour.fg, this->clearColour.fb, this->clearColour.fa);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+		// the respective shaders will use these.
 		glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
 		glUniformMatrix4fv(this->mvpMatrixId, 1, GL_FALSE, glm::value_ptr(mvp));
 
 		glm::mat4 orthoProj = glm::ortho(0.0, this->_width, this->_height, 0.0);
 		glUniformMatrix4fv(this->orthoProjectionMatrixId, 1, GL_FALSE, glm::value_ptr(orthoProj));
 
+
 		double rscale = this->_resolutionScale;
 		glViewport(0, 0, (int) (this->_width * rscale), (int) (this->_height * rscale));
+
+
+		static GLuint uvBuffer = -1;
+		static GLuint vertBuffer = -1;
+		static GLuint colourBuffer = -1;
+
+		if(uvBuffer == (GLuint) -1)		glGenBuffers(1, &uvBuffer);
+		if(vertBuffer == (GLuint) -1)	glGenBuffers(1, &vertBuffer);
+		if(colourBuffer == (GLuint) -1)	glGenBuffers(1, &colourBuffer);
+
 
 		for(auto rc : this->renderList)
 		{
@@ -327,14 +303,9 @@ namespace Rx
 
 					glUseProgram(this->mainShaderProgram);
 
-					GLuint uvBuffer = -1;
-					GLuint vertBuffer = -1;
-					GLuint colourBuffer = -1;
-
 					glEnableVertexAttribArray(0);
 					{
 						// we always have vertices
-						glGenBuffers(1, &vertBuffer);
 						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
 							GL_STATIC_DRAW);
@@ -356,7 +327,6 @@ namespace Rx
 					{
 						glEnableVertexAttribArray(1);
 
-						glGenBuffers(1, &colourBuffer);
 						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
 						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(glm::vec4), &rc.colours[0],
 							GL_STATIC_DRAW);
@@ -379,7 +349,6 @@ namespace Rx
 
 						glEnableVertexAttribArray(1);
 
-						glGenBuffers(1, &uvBuffer);
 						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
 						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0],
 							GL_STATIC_DRAW);
@@ -401,10 +370,6 @@ namespace Rx
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 
-					glDeleteBuffers(1, &uvBuffer);
-					glDeleteBuffers(1, &vertBuffer);
-					glDeleteBuffers(1, &colourBuffer);
-
 					if(rc.textureToBind != -1)
 						GL::popTextureBinding();
 
@@ -413,13 +378,9 @@ namespace Rx
 				case CType::RenderText: {
 					glUseProgram(this->textShaderProgram);
 
-					GLuint uvBuffer = -1;
-					GLuint vertBuffer = -1;
-
 					glEnableVertexAttribArray(0);
 					{
 						// we always have vertices
-						glGenBuffers(1, &vertBuffer);
 						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
 							GL_STATIC_DRAW);
@@ -441,7 +402,6 @@ namespace Rx
 						GL::pushTextureBinding(rc.textureToBind);
 						assert(rc.uvs.size() > 0);
 
-						glGenBuffers(1, &uvBuffer);
 						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
 						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0],
 							GL_STATIC_DRAW);
@@ -463,8 +423,6 @@ namespace Rx
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 
-					glDeleteBuffers(1, &uvBuffer);
-					glDeleteBuffers(1, &vertBuffer);
 
 					GL::popTextureBinding();
 
