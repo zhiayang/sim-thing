@@ -36,7 +36,7 @@ namespace Rx
 
 
 		// identity matrix.
-		this->setCamera(cam);
+		this->updateCamera(cam);
 		this->projectionMatrix = glm::perspective(fov, width / height, near, far);
 
 		this->clearColour = clearCol;
@@ -97,10 +97,34 @@ namespace Rx
 
 	// misc shit
 
-	void Renderer::setCamera(Camera cam)
+	glm::vec3 Camera::front() const
+	{
+		return glm::normalise(glm::vec3(
+			cos(glm::radians(this->pitch)) * cos(glm::radians(this->yaw)),
+			sin(glm::radians(this->pitch)),
+			cos(glm::radians(this->pitch)) * sin(glm::radians(this->yaw)))
+		);
+	}
+
+	glm::vec3 Camera::right() const
+	{
+		return glm::normalize(glm::cross(this->front(), glm::vec3(0, 1, 0)));
+	}
+
+	glm::vec3 Camera::up() const
+	{
+		return glm::normalise(glm::vec3(
+			sin(glm::radians(this->roll)),
+			cos(glm::radians(this->roll)),
+			0.0
+		));
+	}
+
+
+	void Renderer::updateCamera(const Camera& cam)
 	{
 		this->camera = cam;
-		this->cameraMatrix = glm::lookAt(cam.position, cam.lookingAt, cam.rotation);
+		this->cameraMatrix = glm::lookAt(cam.position, cam.position + cam.front(), cam.up());
 	}
 
 	Camera Renderer::getCamera()
@@ -325,20 +349,22 @@ namespace Rx
 					// fill it up.
 					auto pos = glm::vec2(round(xPos), round(yPos));
 
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y0), 0, 1)));
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y0), 0, 1)));	// 3
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y1), 0, 1)));	// 2
+					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y0), 0, 1)));	// 1
+
 					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y1), 0, 1)));
 					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y0), 0, 1)));
 					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y1), 0, 1)));
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y0), 0, 1)));
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y1), 0, 1)));
 
 					rc.uvs = {
-								glm::vec2(gpos.u0, gpos.v0),
+								glm::vec2(gpos.u1, gpos.v0),	// 3
+								glm::vec2(gpos.u0, gpos.v1),	// 2
+								glm::vec2(gpos.u0, gpos.v0),	// 1
+
 								glm::vec2(gpos.u0, gpos.v1),
 								glm::vec2(gpos.u1, gpos.v0),
-								glm::vec2(gpos.u1, gpos.v1),
-								glm::vec2(gpos.u1, gpos.v0),
-								glm::vec2(gpos.u0, gpos.v1)
+								glm::vec2(gpos.u1, gpos.v1)
 							};
 
 					this->renderList.push_back(rc);
@@ -457,7 +483,7 @@ namespace Rx
 			// do the lights
 			if(rc.type == CType::RenderColouredVertices || rc.type == CType::RenderTexturedVertices)
 			{
-				// everything needs at least one vertex; get the first one as a reference.
+				// everything has at least one vertex; get the first one as a reference.
 				assert(rc.vertices.size() > 0);
 				glm::vec3 vert = rc.vertices[0];
 
@@ -523,7 +549,7 @@ namespace Rx
 
 				case CType::RenderColouredVertices: {
 
-					glUseProgram(this->colourShaderProgram.progId);
+					this->colourShaderProgram.use();
 
 					glUniformMatrix4fv(this->modelMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
 					glUniformMatrix4fv(this->viewMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
@@ -596,7 +622,7 @@ namespace Rx
 
 				case CType::RenderTexturedVertices: {
 
-					glUseProgram(this->textureShaderProgram.progId);
+					this->textureShaderProgram.use();
 
 					glUniformMatrix4fv(this->modelMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
 					glUniformMatrix4fv(this->viewMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
@@ -672,10 +698,10 @@ namespace Rx
 
 				case CType::RenderText: {
 
-					glUseProgram(this->textShaderProgram.progId);
+					this->textShaderProgram.use();
 
 					glm::mat4 orthoProj = glm::ortho(0.0, this->_width, this->_height, 0.0);
-					glUniformMatrix4fv(this->orthoProjectionMatrixId, 1, GL_FALSE, glm::value_ptr(orthoProj));
+					glUniformMatrix4fv(this->textShaderProgram.getUniform("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(orthoProj));
 
 					glEnableVertexAttribArray(0);
 					{

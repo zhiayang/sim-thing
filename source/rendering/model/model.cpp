@@ -5,6 +5,8 @@
 #include "model.h"
 #include "utilities.h"
 
+#include "renderer/rx.h"
+
 #include <glm/glm.hpp>
 
 #include <sstream>
@@ -12,16 +14,6 @@
 #include <stx/string_view.hpp>
 
 using namespace AssetLoader;
-
-// fuck this shit.
-namespace glm
-{
-	template <typename T>
-	T normalise(const T& thing)
-	{
-		return glm::normalize(thing);
-	}
-}
 
 
 namespace Rx

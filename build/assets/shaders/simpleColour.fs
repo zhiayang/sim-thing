@@ -34,6 +34,18 @@ struct PointLight
 uniform int pointLightCount;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
 
+
+struct Material
+{
+	vec4 ambientColour;
+	vec4 diffuseColour;
+	vec4 specularColour;
+
+	float shininess;
+};
+
+uniform Material material;
+
 uniform vec3 cameraPosition;
 
 vec4 applyPointLight(PointLight light, vec3 normal, vec3 fragPosition, vec3 viewDirection);
@@ -84,6 +96,7 @@ vec4 applyPointLight(PointLight light, vec3 normal, vec3 fragPosition, vec3 view
 
 	return (diffuse + specular) * light.intensity * atten;
 }
+
 
 
 

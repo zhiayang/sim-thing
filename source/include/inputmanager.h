@@ -10,9 +10,11 @@
 
 #include <SDL2/SDL.h>
 
+#include <glm/vec2.hpp>
+
 namespace Input
 {
-	enum class Keys
+	enum class Key
 	{
 		INVALID,
 
@@ -68,13 +70,19 @@ namespace Input
 
 		Space,
 
+
+
+		MouseL,
+		MouseR,
+		MouseMiddle,
+
 		NUM_KEYS,
 	};
 
-	Keys FromSDL(uint32_t sdlKeycode);
-	uint32_t ToSDL(Keys key);
+	Key FromSDL(uint32_t sdlKeycode);
+	uint32_t ToSDL(Key key);
 
-	constexpr size_t NUM_KEYS = (size_t) Keys::NUM_KEYS;
+	constexpr size_t NUM_KEYS = (size_t) Key::NUM_KEYS;
 
 	enum class HandlerKind
 	{
@@ -92,14 +100,21 @@ namespace Input
 
 	struct State
 	{
+		glm::vec2 mouseDelta;
+		glm::vec2 mousePosition;
+
 		std::bitset<NUM_KEYS> keys;
 
-		std::unordered_map<Keys, std::vector<std::tuple<id_t, HandlerKind, int, std::function<bool(State*, Keys)>>>> handlers;
+		std::unordered_map<Key, std::vector<std::tuple<id_t, HandlerKind, int, std::function<bool(State*, Key, double)>>>> handlers;
 	};
 
-	void HandleInput(State* inputState, SDL_Event* e);
+	void handleKeyInput(State* inputState, SDL_Event* e);
+	void handleMouseInput(State* inputState, SDL_Event* e);
 
-	bool testKey(State* state, Keys k);
+	bool testKey(State* state, Key k);
+
+	void Update(State* inputState, double delta);
+
 
 	// returns a unique ID that can be used to remove the handler later.
 	// handlers with higher priorities are fired first.
@@ -107,8 +122,11 @@ namespace Input
 	// handler spec: returns a bool that determines if the key event was handled
 	// if true, then the key is *not* passed on; if false, then subsequent handlers are fired.
 
-	id_t addHandler(State* state, Keys k, int priority, std::function<bool(State*, Keys)> handler, HandlerKind kind);
-	void removeHandler(State* state, Keys k, id_t handler);
+	id_t addKeyHandler(State* state, Key k, int priority, std::function<bool(State*, Key, double)> handler, HandlerKind kind);
+	void removeKeyHandler(State* state, Key k, id_t handler);
+
+	glm::vec2 getMousePos(State* state);
+	glm::vec2 getMouseChange(State* state);
 }
 
 

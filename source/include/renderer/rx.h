@@ -15,6 +15,7 @@
 #include <glbinding/gl/types.h>
 
 #include <glm/mat4x4.hpp>
+#include <glm/trigonometric.hpp>
 
 #include "utilities.h"
 #include "assetloader.h"
@@ -25,6 +26,17 @@
 #include "renderer/shaders.h"
 #include "renderer/lighting.h"
 #include "renderer/rendercommand.h"
+
+
+// fuck this shit.
+namespace glm
+{
+	template <typename T>
+	T normalise(const T& thing)
+	{
+		return glm::normalize(thing);
+	}
+}
 
 namespace Rx
 {
@@ -39,8 +51,14 @@ namespace Rx
 	struct Camera
 	{
 		glm::vec3 position;
-		glm::vec3 lookingAt;
-		glm::vec3 rotation;
+
+		glm::vec3 front() const;
+		glm::vec3 right() const;
+		glm::vec3 up() const;
+
+		float pitch = 0;
+		float roll = 0;
+		float yaw = 0;
 	};
 
 	struct Renderer
@@ -90,8 +108,7 @@ namespace Rx
 
 		void renderModel(Model* model, glm::mat4 transform, glm::vec4 col);
 
-
-		void setCamera(Camera cam);
+		void updateCamera(const Camera& cam);
 		Camera getCamera();
 
 

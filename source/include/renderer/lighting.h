@@ -17,6 +17,19 @@
 
 namespace Rx
 {
+	struct Material
+	{
+		Material() { }
+		Material(glm::vec4 amb, glm::vec4 dif, glm::vec4 spc, float s)
+			: ambientColour(amb), diffuseColour(dif), specularColour(spc), shine(s) { }
+
+		glm::vec4 ambientColour;
+		glm::vec4 diffuseColour;
+		glm::vec4 specularColour;
+
+		float shine = 0;
+	};
+
 	struct PointLight
 	{
 		PointLight(glm::vec3 p, glm::vec4 dc, glm::vec4 sc, float i, float c, float l, float q)

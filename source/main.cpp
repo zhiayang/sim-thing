@@ -43,9 +43,10 @@ namespace Rx
 		while(SDL_PollEvent(&event))
 		{
 			if(event.type == SDL_KEYUP || event.type == SDL_KEYDOWN)
-				Input::HandleInput(&gameState->inputState, &event);
+				Input::handleKeyInput(&gameState->inputState, &event);
 
-			// ImGui_ImplSdl_ProcessEvent(&event);
+			else if(event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN)
+				Input::handleMouseInput(&gameState->inputState, &event);
 
 			if(event.type == SDL_QUIT)
 			{
@@ -146,7 +147,7 @@ int main(int argc, char** argv)
 	double renderDelta = 0;
 
 
-	Input::addHandler(&gameState->inputState, Input::Keys::Space, 0, [](Input::State* s, Input::Keys k) -> bool {
+	Input::addKeyHandler(&gameState->inputState, Input::Key::Space, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		LOG("Life Support: %s", gameState->playerStation->lifeSupportSystem->toggle() ? "on" : "off");
 		return true;
@@ -172,13 +173,11 @@ int main(int argc, char** argv)
 		int sx = dx / rx;
 		int sy = dy / ry;
 
-		assert(sx == sy);
+		assert(sx == sy && "vertical and horizontal display scaling values do not match");
 
 
 		Rx::Camera cam;
 		cam.position = glm::vec3(2.5, 0.7, 0.6);
-		cam.rotation = glm::vec3(0, 1, 0);
-		cam.lookingAt = glm::vec3(0);
 
 		// setup the renderer. there's many parameters here...
 		theRenderer = new Rx::Renderer(window, glcontext,
@@ -191,7 +190,7 @@ int main(int argc, char** argv)
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.1);
+		theRenderer->setAmbientLighting(util::colour::white(), 0.3);
 		theRenderer->addPointLight(Rx::PointLight(glm::vec3(8, 0, 0), util::colour::white(), util::colour::white(),
 			1.0, 1.0, 0.022, 0.0019));
 
@@ -202,63 +201,61 @@ int main(int argc, char** argv)
 	}
 
 
-	Input::addHandler(&gameState->inputState, Input::Keys::W, 0, [](Input::State* s, Input::Keys k) -> bool {
+	Input::addKeyHandler(&gameState->inputState, Input::Key::W, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position.x += 0.1;
-		theRenderer->setCamera(cam);
+		cam.position += cam.front() * 0.01f;
+		theRenderer->updateCamera(cam);
 
 		return true;
 
 	}, Input::HandlerKind::WhileDown);
 
-	Input::addHandler(&gameState->inputState, Input::Keys::S, 0, [](Input::State* s, Input::Keys k) -> bool {
+	Input::addKeyHandler(&gameState->inputState, Input::Key::S, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position.x -= 0.1;
-		theRenderer->setCamera(cam);
+		cam.position -= cam.front() * 0.01f;
+		theRenderer->updateCamera(cam);
 
 		return true;
 
 	}, Input::HandlerKind::WhileDown);
 
-
-
-	Input::addHandler(&gameState->inputState, Input::Keys::A, 0, [](Input::State* s, Input::Keys k) -> bool {
+	Input::addKeyHandler(&gameState->inputState, Input::Key::A, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position.z -= 0.1;
-		theRenderer->setCamera(cam);
+		cam.position -= cam.right() * 0.01f;
+		theRenderer->updateCamera(cam);
 
 		return true;
 
 	}, Input::HandlerKind::WhileDown);
 
-	Input::addHandler(&gameState->inputState, Input::Keys::D, 0, [](Input::State* s, Input::Keys k) -> bool {
+	Input::addKeyHandler(&gameState->inputState, Input::Key::D, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position.z += 0.1;
-		theRenderer->setCamera(cam);
+		cam.position += cam.right() * 0.01f;
+		theRenderer->updateCamera(cam);
 
 		return true;
 
 	}, Input::HandlerKind::WhileDown);
 
-	Input::addHandler(&gameState->inputState, Input::Keys::Q, 0, [](Input::State* s, Input::Keys k) -> bool {
+	Input::addKeyHandler(&gameState->inputState, Input::Key::ShiftL, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position.y -= 0.1;
-		theRenderer->setCamera(cam);
+		cam.position.y += 0.01;
+		theRenderer->updateCamera(cam);
 
 		return true;
 
 	}, Input::HandlerKind::WhileDown);
 
-	Input::addHandler(&gameState->inputState, Input::Keys::E, 0, [](Input::State* s, Input::Keys k) -> bool {
+	Input::addKeyHandler(&gameState->inputState, Input::Key::SuperL, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position.y += 0.1;
-		theRenderer->setCamera(cam);
+		cam.position.y -= 0.01;
+		theRenderer->updateCamera(cam);
 
 		return true;
 
@@ -267,7 +264,7 @@ int main(int argc, char** argv)
 
 
 	// auto model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"), 1.0 / 20000.0);
-	Rx::Model* cube = Rx::Model::getUnitCube();
+	// Rx::Model* cube = Rx::Model::getUnitCube();
 	// cube = model;
 
 
@@ -296,8 +293,31 @@ int main(int argc, char** argv)
 			{
 				// we tell them that 50 ms has passed, when in actual fact only 1 ms has passed.
 				// we still do the same number of updates per second.
+
+				// this requires that we can update at arbitrary deltas, but since we're not doing any real physics,
+				// i don't foresee this being a problem.
+
 				Sotv::Update(*gameState, fixedDeltaTimeNs * timeSpeedupFactor);
 				accumulator -= fixedDeltaTimeNs;
+
+
+				// update the camera based on the mouse, for now.
+				{
+					bool invert = true;
+
+					double sensitivity = 0.5;
+					auto md = Input::getMouseChange(&gameState->inputState);
+					auto cam = theRenderer->getCamera();
+
+					// fprintf(stderr, "delta = (%.0f, %.0f)\n", md.x, md.y);
+					cam.pitch = glm::clamp(cam.pitch + md.y * sensitivity * (invert ? -1 : 1), -89.4, +89.4);
+					cam.yaw += md.x * sensitivity;
+
+					theRenderer->updateCamera(cam);
+
+
+					Input::Update(&gameState->inputState, fixedDeltaTimeNs * timeSpeedupFactor);
+				}
 			}
 		}
 
@@ -310,8 +330,8 @@ int main(int argc, char** argv)
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
 
-		theRenderer->renderModel(cube, glm::mat4(), glm::vec4(0.24, 0.59, 0.77, 1.0));
-		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		theRenderer->renderModel(Rx::Model::getUnitCube(), glm::mat4(), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		theRenderer->renderModel(Rx::Model::getUnitCube(), glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, 0, 2)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 
 		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), glm::vec3(0, 20, 0)), util::colour::white());
@@ -321,7 +341,11 @@ int main(int argc, char** argv)
 
 		if((true))
 		{
-			std::string fpsstr = tfm::format("%.2f fps", currentFps);
+			std::string fpsstr = tfm::format("%.2f fps / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (%.0f, %.0f)", currentFps,
+				theRenderer->getCamera().position.x, theRenderer->getCamera().position.y, theRenderer->getCamera().position.z,
+				Input::getMousePos(&gameState->inputState).x, Input::getMousePos(&gameState->inputState).y,
+				theRenderer->getCamera().pitch, theRenderer->getCamera().yaw);
+
 			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
 
 			auto psys = gameState->playerStation->powerSystem;

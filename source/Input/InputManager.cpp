@@ -10,108 +10,228 @@
 
 namespace Input
 {
-	void HandleInput(State* inputState, SDL_Event* e)
+	void handleKeyInput(State* inputState, SDL_Event* e)
 	{
 		assert(e->type == SDL_KEYDOWN || e->type == SDL_KEYUP);
-		Keys k = FromSDL(e->key.keysym.sym);
+		if(e->key.repeat)
+			return;
 
-		assert(k < Keys::NUM_KEYS);
-
-		bool prev = inputState->keys.test((size_t) k);
-		if(k != Keys::INVALID)
 		{
-			if(e->type == SDL_KEYDOWN)
-				inputState->keys.set((size_t) k);
+			Key k = FromSDL(e->key.keysym.sym);
 
-			else if(e->type == SDL_KEYUP)
-				inputState->keys.reset((size_t) k);
-		}
+			assert(k < Key::NUM_KEYS);
 
-		bool down = inputState->keys.test((size_t) k);
+			bool prev = inputState->keys.test((size_t) k);
+			if(k != Key::INVALID)
+			{
+				if(e->type == SDL_KEYDOWN)
+					inputState->keys.set((size_t) k);
 
-		// ok, fire all the handlers
-		// it's already sorted by priority.
-		for(auto handler : inputState->handlers[k])
-		{
-			bool result = false;
+				else if(e->type == SDL_KEYUP)
+					inputState->keys.reset((size_t) k);
+			}
 
-			// do the while things
-			if(std::get<1>(handler) == HandlerKind::WhileDown && down)
-				result = std::get<3>(handler)(inputState, k);
+			bool down = inputState->keys.test((size_t) k);
 
-			else if(std::get<1>(handler) == HandlerKind::WhileUp && !down)
-				result = std::get<3>(handler)(inputState, k);
+			// ok, fire all the handlers
+			// it's already sorted by priority.
+			for(auto handler : inputState->handlers[k])
+			{
+				bool result = false;
 
-			// do the press things
-			else if(std::get<1>(handler) == HandlerKind::PressDown && !prev && down)
-				result = std::get<3>(handler)(inputState, k);
+				// do the while things
+				if(std::get<1>(handler) == HandlerKind::WhileDown && down)
+					result = std::get<3>(handler)(inputState, k, 0);
 
-			else if(std::get<1>(handler) == HandlerKind::PressUp && prev && !down)
-				result = std::get<3>(handler)(inputState, k);
+				else if(std::get<1>(handler) == HandlerKind::WhileUp && !down)
+					result = std::get<3>(handler)(inputState, k, 0);
 
-			if(result) break;
+				// do the press things
+				else if(std::get<1>(handler) == HandlerKind::PressDown && !prev && down)
+					result = std::get<3>(handler)(inputState, k, 0);
+
+				else if(std::get<1>(handler) == HandlerKind::PressUp && prev && !down)
+					result = std::get<3>(handler)(inputState, k, 0);
+
+				if(result) break;
+			}
 		}
 	}
 
-	Keys FromSDL(uint32_t sdlKeycode)
+	void handleMouseInput(State* inputState, SDL_Event* e)
+	{
+		if(e->type == SDL_MOUSEBUTTONUP || e->type == SDL_MOUSEBUTTONDOWN)
+		{
+			// mouse buttons
+			Key k = Key::INVALID;
+			switch(e->button.button)
+			{
+				case SDL_BUTTON_LEFT:	k = Key::MouseL; break;
+				case SDL_BUTTON_RIGHT:	k = Key::MouseR; break;
+				case SDL_BUTTON_MIDDLE:	k = Key::MouseMiddle; break;
+				default:				WARN("invalid mouse button pressed");
+			}
+
+			bool prev = inputState->keys.test((size_t) k);
+			if(k != Key::INVALID)
+			{
+				if(e->type == SDL_MOUSEBUTTONDOWN)
+					inputState->keys.set((size_t) k);
+
+				else if(e->type == SDL_MOUSEBUTTONUP)
+					inputState->keys.reset((size_t) k);
+			}
+
+			bool down = inputState->keys.test((size_t) k);
+
+			// fire all the handlers
+			for(auto handler : inputState->handlers[k])
+			{
+				bool result = false;
+
+				// do the while things
+				if(std::get<1>(handler) == HandlerKind::WhileDown && down)
+					result = std::get<3>(handler)(inputState, k, 0);
+
+				else if(std::get<1>(handler) == HandlerKind::WhileUp && !down)
+					result = std::get<3>(handler)(inputState, k, 0);
+
+				// do the press things
+				else if(std::get<1>(handler) == HandlerKind::PressDown && !prev && down)
+					result = std::get<3>(handler)(inputState, k, 0);
+
+				else if(std::get<1>(handler) == HandlerKind::PressUp && prev && !down)
+					result = std::get<3>(handler)(inputState, k, 0);
+
+				if(result) break;
+			}
+		}
+		else
+		{
+			assert(e->type == SDL_MOUSEMOTION);
+
+			auto old = inputState->mousePosition;
+
+			inputState->mousePosition = glm::vec2(e->motion.x, e->motion.y);
+			inputState->mouseDelta = inputState->mousePosition - old;
+		}
+	}
+
+	glm::vec2 getMousePos(State* state)
+	{
+		return state->mousePosition;
+	}
+
+	glm::vec2 getMouseChange(State* state)
+	{
+		return state->mouseDelta;
+	}
+
+	void Update(State* st, double delta)
+	{
+		// no choice but to loop through all the handlers
+		for(auto key : st->handlers)
+		{
+			for(auto handler : key.second)
+			{
+				bool down = testKey(st, key.first);
+				bool result = false;
+
+				if(std::get<1>(handler) == HandlerKind::WhileDown && down)
+					result = std::get<3>(handler)(st, key.first, delta);
+
+				else if(std::get<1>(handler) == HandlerKind::WhileUp && !down)
+					result = std::get<3>(handler)(st, key.first, delta);
+			}
+		}
+
+		int mx = 0;
+		int my = 0;
+
+		SDL_GetMouseState(&mx, &my);
+		if(glm::vec2(mx, my) == st->mousePosition)
+			st->mouseDelta = glm::vec2(0);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	Key FromSDL(uint32_t sdlKeycode)
 	{
 		switch(sdlKeycode)
 		{
-			case  SDLK_a:		return Keys::A;
-			case  SDLK_b:		return Keys::B;
-			case  SDLK_c:		return Keys::C;
-			case  SDLK_d:		return Keys::D;
-			case  SDLK_e:		return Keys::E;
-			case  SDLK_f:		return Keys::F;
-			case  SDLK_g:		return Keys::G;
-			case  SDLK_h:		return Keys::H;
-			case  SDLK_j:		return Keys::J;
-			case  SDLK_k:		return Keys::K;
-			case  SDLK_l:		return Keys::L;
-			case  SDLK_m:		return Keys::M;
-			case  SDLK_n:		return Keys::N;
-			case  SDLK_o:		return Keys::O;
-			case  SDLK_p:		return Keys::P;
-			case  SDLK_q:		return Keys::Q;
-			case  SDLK_r:		return Keys::R;
-			case  SDLK_s:		return Keys::S;
-			case  SDLK_t:		return Keys::T;
-			case  SDLK_u:		return Keys::U;
-			case  SDLK_v:		return Keys::V;
-			case  SDLK_w:		return Keys::W;
-			case  SDLK_x:		return Keys::X;
-			case  SDLK_y:		return Keys::Y;
-			case  SDLK_z:		return Keys::Z;
+			case  SDLK_a:		return Key::A;
+			case  SDLK_b:		return Key::B;
+			case  SDLK_c:		return Key::C;
+			case  SDLK_d:		return Key::D;
+			case  SDLK_e:		return Key::E;
+			case  SDLK_f:		return Key::F;
+			case  SDLK_g:		return Key::G;
+			case  SDLK_h:		return Key::H;
+			case  SDLK_j:		return Key::J;
+			case  SDLK_k:		return Key::K;
+			case  SDLK_l:		return Key::L;
+			case  SDLK_m:		return Key::M;
+			case  SDLK_n:		return Key::N;
+			case  SDLK_o:		return Key::O;
+			case  SDLK_p:		return Key::P;
+			case  SDLK_q:		return Key::Q;
+			case  SDLK_r:		return Key::R;
+			case  SDLK_s:		return Key::S;
+			case  SDLK_t:		return Key::T;
+			case  SDLK_u:		return Key::U;
+			case  SDLK_v:		return Key::V;
+			case  SDLK_w:		return Key::W;
+			case  SDLK_x:		return Key::X;
+			case  SDLK_y:		return Key::Y;
+			case  SDLK_z:		return Key::Z;
 
-			case  SDLK_0:		return Keys::Zero;
-			case  SDLK_1:		return Keys::One;
-			case  SDLK_2:		return Keys::Two;
-			case  SDLK_3:		return Keys::Three;
-			case  SDLK_4:		return Keys::Four;
-			case  SDLK_5:		return Keys::Five;
-			case  SDLK_6:		return Keys::Six;
-			case  SDLK_7:		return Keys::Seven;
-			case  SDLK_8:		return Keys::Eight;
-			case  SDLK_9:		return Keys::Nine;
+			case  SDLK_0:		return Key::Zero;
+			case  SDLK_1:		return Key::One;
+			case  SDLK_2:		return Key::Two;
+			case  SDLK_3:		return Key::Three;
+			case  SDLK_4:		return Key::Four;
+			case  SDLK_5:		return Key::Five;
+			case  SDLK_6:		return Key::Six;
+			case  SDLK_7:		return Key::Seven;
+			case  SDLK_8:		return Key::Eight;
+			case  SDLK_9:		return Key::Nine;
 
-			case  SDLK_ESCAPE:	return Keys::Escape;
-			case  SDLK_LGUI:	return Keys::SuperL;
-			case  SDLK_RGUI:	return Keys::SuperR;
-			case  SDLK_LCTRL:	return Keys::ControlL;
-			case  SDLK_RCTRL:	return Keys::ControlR;
-			case  SDLK_LALT:	return Keys::AltL;
-			case  SDLK_RALT:	return Keys::AltR;
-			case  SDLK_LSHIFT:	return Keys::ShiftL;
-			case  SDLK_RSHIFT:	return Keys::ShiftR;
-			case  SDLK_SPACE:	return Keys::Space;
+			case  SDLK_ESCAPE:	return Key::Escape;
+			case  SDLK_LGUI:	return Key::SuperL;
+			case  SDLK_RGUI:	return Key::SuperR;
+			case  SDLK_LCTRL:	return Key::ControlL;
+			case  SDLK_RCTRL:	return Key::ControlR;
+			case  SDLK_LALT:	return Key::AltL;
+			case  SDLK_RALT:	return Key::AltR;
+			case  SDLK_LSHIFT:	return Key::ShiftL;
+			case  SDLK_RSHIFT:	return Key::ShiftR;
+			case  SDLK_SPACE:	return Key::Space;
 
 			default:
 				LOG("Fed invalid SDL keycode into %s", __PRETTY_FUNCTION__);
-				return Keys::INVALID;
+				return Key::INVALID;
 		}
 	}
 
-	uint32_t ToSDL(Keys key)
+	uint32_t ToSDL(Key key)
 	{
 		return (uint32_t) key;
 	}
@@ -119,14 +239,14 @@ namespace Input
 
 
 
-	bool testKey(State* state, Keys k)
+	bool testKey(State* state, Key k)
 	{
 		return state->keys.test((size_t) k);
 	}
 
 
-	using HF_t = std::function<bool(State*, Keys)>;
-	id_t addHandler(State* state, Keys key, int priority, HF_t handler, HandlerKind kind)
+	using HF_t = std::function<bool(State*, Key, double)>;
+	id_t addKeyHandler(State* state, Key key, int priority, HF_t handler, HandlerKind kind)
 	{
 		static id_t uniqueID = 0;
 		id_t id = uniqueID++;
@@ -143,7 +263,7 @@ namespace Input
 		return id;
 	}
 
-	void removeHandler(State* state, Keys k, id_t id)
+	void removeKeyHandler(State* state, Key k, id_t id)
 	{
 		if(state->handlers.find(k) != state->handlers.end())
 		{
