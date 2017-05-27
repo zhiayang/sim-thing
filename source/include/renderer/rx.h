@@ -60,8 +60,11 @@ namespace Rx
 			Invalid,
 			Clear,
 
-			RenderVerticesFilled,
-			RenderVerticesWireframe,
+			RenderColouredVerticesFilled,
+			RenderColouredVerticesWireframe,
+
+			RenderTexturedVerticesFilled,
+			RenderTexturedVerticesWireframe,
 
 			RenderText,
 		};
@@ -105,8 +108,8 @@ namespace Rx
 
 	struct Renderer
 	{
-		Renderer(Window* win, SDL_GLContext glc, util::colour clearColour, glm::mat4 camera, gl::GLuint mainShaderProg,
-			gl::GLuint textShaderProg, double fov, double width, double height, double resscale, double near, double far);
+		Renderer(Window* win, SDL_GLContext glc, util::colour clearColour, glm::mat4 camera, gl::GLuint textureShaderProg,
+			gl::GLuint colourShaderProg, gl::GLuint textShaderProg, double fov, double width, double height, double resscale, double near, double far);
 
 		void clearRenderList();
 		void renderAll();
@@ -135,8 +138,8 @@ namespace Rx
 
 		void clearScreen(util::colour colour);
 
-		void renderVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals,
-			std::vector<glm::vec2> uvs);
+		void renderTexturedVertices(std::vector<glm::vec3> verts, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals);
+		void renderColouredVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals);
 
 		// screenspace takes pixel positions
 		// normalisedscreenspace takes 0-1 positions
@@ -168,9 +171,12 @@ namespace Rx
 			double _height = 0;
 			double _resolutionScale = 0;
 
-			gl::GLuint mainShaderProgram = -1;
+			gl::GLuint textureShaderProgram = -1;
+			gl::GLuint colourShaderProgram = -1;
 			gl::GLuint textShaderProgram = -1;
-			gl::GLuint mvpMatrixId = -1;
+
+			gl::GLuint mvpMatrixId_textureShader = -1;
+			gl::GLuint mvpMatrixId_colourShader = -1;
 
 			gl::GLuint orthoProjectionMatrixId = -1;
 	};

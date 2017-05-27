@@ -156,10 +156,12 @@ int main(int argc, char** argv)
 	// Rx::Model* model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"));
 
 
-	auto progId = AssetLoader::compileAndLinkGLShaderProgram("shaders/simplevert.vert", "shaders/simplefrag.frag");
+	auto textureProgId = AssetLoader::compileAndLinkGLShaderProgram("shaders/simpleTexture.vert", "shaders/simpleTexture.frag");
+	auto colourProgId = AssetLoader::compileAndLinkGLShaderProgram("shaders/simpleColour.vert", "shaders/simpleColour.frag");
 	auto textProgId = AssetLoader::compileAndLinkGLShaderProgram("shaders/textShader.vert", "shaders/textShader.frag");
 
-	assert(progId >= 0);
+	assert(textureProgId >= 0);
+	assert(colourProgId >= 0);
 	assert(textProgId >= 0);
 
 	// camera matrix: camera at [ 0, 3, 7 ], looking at [ 0, 0, 0 ], rotated right-side up
@@ -177,8 +179,8 @@ int main(int argc, char** argv)
 		assert(sx == sy);
 
 		theRenderer = new Rx::Renderer(window, glcontext, util::colour(25, 25, 25, 255),
-			glm::lookAt(glm::vec3(0, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), progId, textProgId, glm::radians(70.0f),
-			rx, ry, sx, 0.001, 1000);
+			glm::lookAt(glm::vec3(0, 3, 7), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), textureProgId, colourProgId, textProgId,
+			glm::radians(70.0f), rx, ry, sx, 0.001, 1000);
 	}
 
 
@@ -300,7 +302,7 @@ int main(int argc, char** argv)
 
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
-		if((true))
+		if((false))
 		{
 			std::string fpsstr = tfm::format("%.2f fps", currentFps);
 
@@ -346,7 +348,7 @@ int main(int argc, char** argv)
 			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), Rx::TextAlignment::RightAligned);
 		}
 
-
+		theRenderer->renderColouredVertices(vertices, colours, { });
 
 		// theRenderer->renderStringInScreenSpace("3,.94 pqkWh / 43.50 kWh (9.1%)  |  +47.33 kW / -0.00 W", primaryFont, 14, glm::vec2(10, 10),
 		// 	Rx::TextAlignment::RightAligned);

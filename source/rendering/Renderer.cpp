@@ -20,8 +20,9 @@ using namespace gl;
 
 namespace Rx
 {
-	Renderer::Renderer(Window* win, SDL_GLContext glc, util::colour clearCol, glm::mat4 camera, gl::GLuint mainShaderProg,
-			gl::GLuint textShaderProg, double fov, double width, double height, double resscale, double near, double far)
+	Renderer::Renderer(Window* win, SDL_GLContext glc, util::colour clearCol, glm::mat4 camera, gl::GLuint textureShaderProg,
+		gl::GLuint colourShaderProg, gl::GLuint textShaderProg, double fov, double width, double height, double resscale,
+		double near, double far)
 	{
 		assert(win);
 		this->window = win;
@@ -43,18 +44,29 @@ namespace Rx
 
 		this->_resolutionScale = resscale;
 
-		this->mainShaderProgram = mainShaderProg;
+		this->textureShaderProgram = textureShaderProg;
+		this->colourShaderProgram = colourShaderProg;
 		this->textShaderProgram = textShaderProg;
 
-		this->mvpMatrixId = glGetUniformLocation(this->mainShaderProgram, "modelViewProjectionMatrix");
+
+		// change to the program for a bit, so we can cache the uniform location.
+		glUseProgram(this->textureShaderProgram);
+		this->mvpMatrixId_textureShader = glGetUniformLocation(this->textureShaderProgram, "modelViewProjectionMatrix");
+
+		glUseProgram(this->colourShaderProgram);
+		this->mvpMatrixId_colourShader = glGetUniformLocation(this->colourShaderProgram, "modelViewProjectionMatrix");
+
+		glUseProgram(this->textShaderProgram);
 		this->orthoProjectionMatrixId = glGetUniformLocation(this->textShaderProgram, "projectionMatrix");
+
+		glUseProgram(0);
+
+
 
 		glDisable(GL_CULL_FACE);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-
 
 		// bind permanently...?
 		gl::GLuint vertexArrayID;
@@ -113,15 +125,14 @@ namespace Rx
 
 
 
-	void Renderer::renderVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals,
-		std::vector<glm::vec2> uvs)
+	void Renderer::renderColouredVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals)
 	{
 		RenderCommand rc;
-		rc.type		= RenderCommand::CommandType::RenderVerticesFilled;
+		rc.type		= RenderCommand::CommandType::RenderColouredVerticesFilled;
 		rc.vertices	= verts;
 		rc.colours	= colours;
 		rc.normals	= normals;
-		rc.uvs		= uvs;
+		rc.uvs		= { };
 
 		rc.dimensions = 3;
 		rc.isInScreenSpace = false;
@@ -262,14 +273,6 @@ namespace Rx
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-		// the respective shaders will use these.
-		glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
-		glUniformMatrix4fv(this->mvpMatrixId, 1, GL_FALSE, glm::value_ptr(mvp));
-
-		glm::mat4 orthoProj = glm::ortho(0.0, this->_width, this->_height, 0.0);
-		glUniformMatrix4fv(this->orthoProjectionMatrixId, 1, GL_FALSE, glm::value_ptr(orthoProj));
-
-
 		double rscale = this->_resolutionScale;
 		glViewport(0, 0, (int) (this->_width * rscale), (int) (this->_height * rscale));
 
@@ -298,10 +301,14 @@ namespace Rx
 
 				} break;
 
-				case CType::RenderVerticesFilled:	// fallthrough
-				case CType::RenderVerticesWireframe: {
+				case CType::RenderColouredVerticesFilled:	// fallthrough
+				case CType::RenderColouredVerticesWireframe: {
 
-					glUseProgram(this->mainShaderProgram);
+					glUseProgram(this->colourShaderProgram);
+
+					glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
+					glUniformMatrix4fv(this->mvpMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(mvp));
+
 
 					glEnableVertexAttribArray(0);
 					{
@@ -323,7 +330,7 @@ namespace Rx
 					}
 
 					// if we have colours:
-					if(rc.colours.size() > 0)
+					assert(rc.colours.size() > 0);
 					{
 						glEnableVertexAttribArray(1);
 
@@ -342,7 +349,46 @@ namespace Rx
 							(void*) 0	// array buffer offset
 						);
 					}
-					else if(rc.textureToBind != -1)
+
+					glDrawArrays(rc.type == CType::RenderColouredVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
+
+					glDisableVertexAttribArray(0);
+					glDisableVertexAttribArray(1);
+
+				} break;
+
+
+
+
+
+				case CType::RenderTexturedVerticesFilled:	// fallthrough
+				case CType::RenderTexturedVerticesWireframe: {
+
+					glUseProgram(this->textureShaderProgram);
+
+					glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
+					glUniformMatrix4fv(this->mvpMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(mvp));
+
+					glEnableVertexAttribArray(0);
+					{
+						// we always have vertices
+						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
+							GL_STATIC_DRAW);
+
+						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
+
+						glVertexAttribPointer(
+							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
+							3,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+
+					assert(rc.textureToBind != -1);
 					{
 						GL::pushTextureBinding(rc.textureToBind);
 						assert(rc.uvs.size() > 0);
@@ -365,18 +411,20 @@ namespace Rx
 						);
 					}
 
-					glDrawArrays(rc.type == CType::RenderVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
+					glDrawArrays(rc.type == CType::RenderColouredVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 
-					if(rc.textureToBind != -1)
-						GL::popTextureBinding();
-
 				} break;
+
+
 
 				case CType::RenderText: {
 					glUseProgram(this->textShaderProgram);
+
+					glm::mat4 orthoProj = glm::ortho(0.0, this->_width, this->_height, 0.0);
+					glUniformMatrix4fv(this->orthoProjectionMatrixId, 1, GL_FALSE, glm::value_ptr(orthoProj));
 
 					glEnableVertexAttribArray(0);
 					{
