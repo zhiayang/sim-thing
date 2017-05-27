@@ -61,17 +61,18 @@ vec4 applyPointLight(PointLight light, vec3 normal, vec3 fragPosition, vec3 view
 {
 	vec3 lightDir = normalize(light.position - fragPosition);
 
-	// Diffuse shading
+	// Diffuse lighting
 	float diff = max(dot(normal, lightDir), 0.0);
 
-	// // Specular shading
-	// vec3 reflectDir = reflect(-1 * lightDir, normal);
-	// float spec = pow(max(dot(viewDirection, reflectDir), 0.0), material.shininess);
+	// Specular lighting
+	vec3 reflectDir = reflect(-1 * lightDir, normal);
+	float spec = pow(max(dot(viewDirection, reflectDir), 0.0), 32/* material.shininess */);
 
 	// Attenuation
 	float dist = length(light.position - fragPosition);
 
-	float attenuation = 1.0 / (light.constantFactor + light.linearFactor * dist + light.quadFactor * (dist * dist));
+	float _att = 1.0 / (light.constantFactor + light.linearFactor * dist + light.quadFactor * (dist * dist));
+	vec4 atten = vec4(_att, _att, _att, 1.0);
 
 	// Combine results
 	// vec3 ambient = light.ambient;// * vec3(texture(material.diffuse, TexCoords));
@@ -79,11 +80,9 @@ vec4 applyPointLight(PointLight light, vec3 normal, vec3 fragPosition, vec3 view
 	// vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
 
 	vec4 diffuse = light.diffuseColour * diff;
+	vec4 specular = light.specularColour * 0.5 * spec;
 
-	diffuse *= vec4(vec3(attenuation), 1.0);
-	// specular *= attenuation;
-
-	return diffuse * light.intensity;
+	return (diffuse + specular) * light.intensity * atten;
 }
 
 

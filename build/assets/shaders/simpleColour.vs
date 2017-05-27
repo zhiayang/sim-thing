@@ -25,6 +25,6 @@ void main()
 
 	fragmentColour = vertexColour;
 	fragmentNormal = vertexNormal;
-	fragmentPosition = -vec3(modelMatrix * vec4(vertexPosition, 1.0));
+	fragmentPosition = vec3(modelMatrix * vec4(vertexPosition, 1.0));
 }
 

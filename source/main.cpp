@@ -176,13 +176,13 @@ int main(int argc, char** argv)
 
 
 		Rx::Camera cam;
-		cam.position = glm::vec3(4, 2, 4);
+		cam.position = glm::vec3(2.5, 0.7, 0.6);
 		cam.rotation = glm::vec3(0, 1, 0);
 		cam.lookingAt = glm::vec3(0);
 
 		// setup the renderer. there's many parameters here...
 		theRenderer = new Rx::Renderer(window, glcontext,
-			util::colour(25, 25, 25, 255),			// clear colour
+			util::colour(3, 3, 3, 255),			// clear colour
 			cam,									// camera
 			textureProg, colourProg, textProg,		// shader programs for textured objects, coloured objects, and text.
 			glm::radians(70.0f),					// FOV, 70 degrees
@@ -191,12 +191,12 @@ int main(int argc, char** argv)
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
-		theRenderer->addPointLight(Rx::PointLight(glm::vec3(0, 10, 0), util::colour::white(), util::colour::white(),
-			1.0, 1.0, 0.045, 0.0075));
+		theRenderer->setAmbientLighting(util::colour::white(), 0.1);
+		theRenderer->addPointLight(Rx::PointLight(glm::vec3(8, 0, 0), util::colour::white(), util::colour::white(),
+			1.0, 1.0, 0.022, 0.0019));
 
-		theRenderer->addPointLight(Rx::PointLight(glm::vec3(10, 0, 0), util::colour::white(), util::colour::white(),
-			1.0, 1.0, 0.045, 0.0075));
+		// theRenderer->addPointLight(Rx::PointLight(glm::vec3(10, 0, 0), util::colour::white(), util::colour::white(),
+		// 	1.0, 1.0, 0.045, 0.0075));
 
 		// theRenderer->addPointLight(Rx::PointLight(glm::vec3(15, 0, 0), util::colour::white(), 1.0));
 	}
@@ -311,6 +311,9 @@ int main(int argc, char** argv)
 		Sotv::Render(*gameState, renderDelta, theRenderer);
 
 		theRenderer->renderModel(cube, glm::mat4(), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, 0, 2)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+
 		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), glm::vec3(0, 20, 0)), util::colour::white());
 
 

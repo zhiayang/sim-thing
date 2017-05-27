@@ -484,12 +484,6 @@ namespace Rx
 				size_t ctr = 0;
 				for(auto light : lights)
 				{
-					// setup the uniforms.
-					// printf("lighting\n");
-
-
-					// printf("get location for prog %d (pos = %d)\n", prog, getLightUniforms(light, prog, ctr, "position"));
-
 					std::string arraypre = "pointLights[" + std::to_string(ctr) + "].";
 
 					glUniform3fv(shaderProg->getUniform(arraypre + "position"), 1, glm::value_ptr(light.position));
