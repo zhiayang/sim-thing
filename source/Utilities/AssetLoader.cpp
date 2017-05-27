@@ -53,12 +53,12 @@ namespace AssetLoader
 
 
 		// check.
-		if(ext == "png")		ass->type = AssetType::ImagePNG;
-		else if(ext == "dds")	ass->type = AssetType::ImageDDS;
-		else if(ext == "vert")	ass->type = AssetType::ShaderVert;
-		else if(ext == "frag")	ass->type = AssetType::ShaderFrag;
-		else if(ext == "obj")	ass->type = AssetType::ModelOBJ;
-		else					ass->type = AssetType::Unknown;
+		if(ext == "png")						ass->type = AssetType::ImagePNG;
+		else if(ext == "dds")					ass->type = AssetType::ImageDDS;
+		else if(ext == "vert" || ext == "vs")	ass->type = AssetType::ShaderVert;
+		else if(ext == "frag" || ext == "fs")	ass->type = AssetType::ShaderFrag;
+		else if(ext == "obj")					ass->type = AssetType::ModelOBJ;
+		else									ass->type = AssetType::Unknown;
 
 		LOG("Loaded asset '%s'", path);
 		return ass;

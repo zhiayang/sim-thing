@@ -1,25 +1,24 @@
-// Shaders.cpp
+// ShaderProgram.cpp
 // Copyright (c) 2014 - 2016, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
-#include <stdint.h>
+#include "utilities.h"
+#include "assetloader.h"
+#include "renderer/shaders.h"
 
 #include <glbinding/gl/gl.h>
 
-#include "utilities.h"
-#include "assetloader.h"
+using namespace AssetLoader;
 
-namespace AssetLoader
+namespace Rx
 {
-	gl::GLuint compileAndLinkGLShaderProgram(std::string vertexPath, std::string fragmentPath)
+	static gl::GLuint compileAndLinkGLShaderProgram(std::string vertexPath, std::string fragmentPath)
 	{
 		using namespace gl;
 
 		GLuint vShaderID = glCreateShader(GL_VERTEX_SHADER);
 		GLuint fShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 		GLuint progID = glCreateProgram();
-
-
 
 		{
 			Asset* vsAsset = AssetLoader::Load(vertexPath.c_str());
@@ -98,7 +97,65 @@ namespace AssetLoader
 
 		return progID;
 	}
+
+
+
+	ShaderProgram::ShaderProgram(std::string name) : ShaderProgram(name + ".vs", name + ".fs") { }
+
+	ShaderProgram::ShaderProgram(std::string vertpath, std::string fragpath)
+	{
+		using namespace gl;
+		this->name = vertpath.substr(0, vertpath.find_last_of('.'));
+
+		this->progId = compileAndLinkGLShaderProgram("shaders/" + vertpath, "shaders/" + fragpath);
+		assert(this->progId >= 0);
+
+		// enumerate all uniforms in the shader prog, to cache their locations
+		GLint activeUniforms = 0;
+		glGetProgramiv(this->progId, GL_ACTIVE_UNIFORMS, &activeUniforms);
+		this->use();
+
+		LOG("Caching %d uniform locations in shader program '%s'", activeUniforms, this->name.c_str());
+		for(int unf = 0; unf < activeUniforms; unf++)
+		{
+			char* namebuf = new char[512];
+			GLsizei length = 0;
+			glGetActiveUniformName(this->progId, (GLuint) unf, 512, &length, namebuf);
+
+			auto name = std::string(namebuf, length);
+			delete[] namebuf;
+
+			GLuint loc = glGetUniformLocation(this->progId, name.c_str());
+			this->uniformLocations[name] = loc;
+
+			LOG("Uniform '%s' = %d", name.c_str(), loc);
+		}
+	}
+
+	gl::GLuint ShaderProgram::getUniform(std::string name)
+	{
+		if(this->uniformLocations.find(name) == this->uniformLocations.end())
+			ERROR("No such uniform named '%s' in shader program '%s'", name.c_str(), this->name.c_str());
+
+		return this->uniformLocations[name];
+	}
+
+	void ShaderProgram::use()
+	{
+		gl::glUseProgram(this->progId);
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -93,6 +93,8 @@ namespace util
 			return *this;
 		}
 
+		operator glm::vec4() const { return this->toGL(); }
+
 		colour(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) : r(red), g(green), b(blue), a(alpha)
 		{
 			fr = (1.0f / 255.0f) * r;
@@ -139,7 +141,7 @@ namespace util
 			return (r << 24) | (g << 16) | (b << 8) | a;
 		}
 
-		glm::vec4 toGL()
+		glm::vec4 toGL() const
 		{
 			return glm::vec4(this->fr, this->fg, this->fb, this->fa);
 		}

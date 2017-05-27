@@ -28,7 +28,8 @@ namespace Rx
 {
 	// given 4 vertices, returns 6 vertices which are the triangles of the quad.
 	static Model::Face triangulateQuadFace(Model::Face face);
-	static void loadWavefrontOBJIntoModel(Asset* asset, Model* model);
+	static glm::vec3 calculateNormalForFace(Model::Face face);
+	static void loadWavefrontOBJIntoModel(Asset* asset, Model* model, double scale);
 
 	Model::Model()
 	{
@@ -37,14 +38,14 @@ namespace Rx
 	}
 
 
-	Model* loadModelFromAsset(Asset* asset)
+	Model* loadModelFromAsset(Asset* asset, double scale)
 	{
 		Model* model = new Model();
 
 		switch(asset->type)
 		{
 			case AssetType::ModelOBJ: {
-				loadWavefrontOBJIntoModel(asset, model);
+				loadWavefrontOBJIntoModel(asset, model, scale);
 			} break;
 
 			default:
@@ -58,7 +59,7 @@ namespace Rx
 
 
 
-	static void loadWavefrontOBJIntoModel(Asset* ass, Model* mdl)
+	static void loadWavefrontOBJIntoModel(Asset* ass, Model* mdl, double scale)
 	{
 		// split into lines
 		std::vector<stx::string_view> lines;
@@ -220,7 +221,7 @@ namespace Rx
 
 			Face face;
 			for(auto vi : iface.vertexIndices)
-				face.vertices.push_back(vertices[vi - 1] / 1000.0f);
+				face.vertices.push_back(vertices[vi - 1] * (float) scale);
 
 			for(auto ni : iface.normalIndices)
 				face.normals.push_back(normals[ni - 1]);
@@ -232,12 +233,11 @@ namespace Rx
 			if(face.vertices.size() != 3 && face.vertices.size() != 4)
 				ERROR("Unsupported OBJ file with '%zu' vertices per face; only triangles (3) or quads (4) are supported", face.vertices.size());
 
-			// mdl->faces.push_back(face);
 			if(face.vertices.size() == 4)
-				mdl->faces.push_back(triangulateQuadFace(face));
+				face = triangulateQuadFace(face);
 
-			else
-				mdl->faces.push_back(face);
+			face.faceNormal = calculateNormalForFace(face);
+			mdl->faces.push_back(face);
 		}
 	}
 
@@ -295,12 +295,27 @@ namespace Rx
 		ret.normals = norms;
 		ret.uvs = uvs;
 
+		ret.faceNormal = calculateNormalForFace(ret);
+
 		return ret;
 	}
 
 
 
+	static glm::vec3 calculateNormalForFace(Model::Face face)
+	{
+		// note: there's an implicit understanding here. if we're given a quad face, then the normal of
+		// that quad face should equal the normal of the 2 triangles, since they must lie in the same plane.
 
+		if(face.vertices.size() == 4)
+			face = triangulateQuadFace(face);
+
+		auto a = face.vertices[0];
+		auto b = face.vertices[1];
+		auto c = face.vertices[2];
+
+		return glm::normalise(glm::cross(b - a, c - a));
+	}
 
 
 
@@ -309,7 +324,6 @@ namespace Rx
 	{
 		Model* ret = new Model();
 		ret->name = "unit_cube";
-
 
 		Face top;
 		{
@@ -367,7 +381,16 @@ namespace Rx
 		ret->faces.push_back(back);
 
 		for(auto& face : ret->faces)
+		{
 			face = triangulateQuadFace(face);
+			face.faceNormal = calculateNormalForFace(face);
+
+			// LOG("normal = (%f, %f, %f)\n", face.faceNormal.x, face.faceNormal.y, face.faceNormal.z);
+
+			// insert what is basically 6 copies of the same normal, since it's a cube.
+			face.normals.clear();
+			face.normals.insert(face.normals.begin(), face.vertices.size(), face.faceNormal);
+		}
 
 		return ret;
 	}

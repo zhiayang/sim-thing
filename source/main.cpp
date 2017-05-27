@@ -154,16 +154,11 @@ int main(int argc, char** argv)
 	}, Input::HandlerKind::PressDown);
 
 
-	Rx::Model* model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"));
 
 
-	auto textureProgId = AssetLoader::compileAndLinkGLShaderProgram("shaders/simpleTexture.vert", "shaders/simpleTexture.frag");
-	auto colourProgId = AssetLoader::compileAndLinkGLShaderProgram("shaders/simpleColour.vert", "shaders/simpleColour.frag");
-	auto textProgId = AssetLoader::compileAndLinkGLShaderProgram("shaders/textShader.vert", "shaders/textShader.frag");
-
-	assert(textureProgId >= 0);
-	assert(colourProgId >= 0);
-	assert(textProgId >= 0);
+	auto textureProg = Rx::ShaderProgram("simpleTexture");
+	auto colourProg = Rx::ShaderProgram("simpleColour");
+	auto textProg = Rx::ShaderProgram("textShader");
 
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
@@ -179,90 +174,101 @@ int main(int argc, char** argv)
 
 		assert(sx == sy);
 
-		theRenderer = new Rx::Renderer(window, glcontext, util::colour(25, 25, 25, 255),
-			glm::lookAt(glm::vec3(70, 30, 70), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)), textureProgId, colourProgId, textProgId,
-			glm::radians(70.0f), rx, ry, sx, 0.001, 1000);
+
+		Rx::Camera cam;
+		cam.position = glm::vec3(4, 2, 4);
+		cam.rotation = glm::vec3(0, 1, 0);
+		cam.lookingAt = glm::vec3(0);
+
+		// setup the renderer. there's many parameters here...
+		theRenderer = new Rx::Renderer(window, glcontext,
+			util::colour(25, 25, 25, 255),			// clear colour
+			cam,									// camera
+			textureProg, colourProg, textProg,		// shader programs for textured objects, coloured objects, and text.
+			glm::radians(70.0f),					// FOV, 70 degrees
+			rx, ry, sx,								// window res (x, y), and scale (2 for retina, 1 for normal)
+			0.001, 1000								// near plane, far plane
+		);
+
+		// position, colour, intensity
+		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
+		theRenderer->addPointLight(Rx::PointLight(glm::vec3(0, 10, 0), util::colour::white(), util::colour::white(),
+			1.0, 1.0, 0.045, 0.0075));
+
+		theRenderer->addPointLight(Rx::PointLight(glm::vec3(10, 0, 0), util::colour::white(), util::colour::white(),
+			1.0, 1.0, 0.045, 0.0075));
+
+		// theRenderer->addPointLight(Rx::PointLight(glm::vec3(15, 0, 0), util::colour::white(), 1.0));
 	}
 
 
-	std::vector<glm::vec3> vertices = {
-		{ -1.0f,-1.0f,-1.0f, },
-		{ -1.0f,-1.0f, 1.0f, },
-		{ -1.0f, 1.0f, 1.0f, },
-		{  1.0f, 1.0f,-1.0f, },
-		{ -1.0f,-1.0f,-1.0f, },
-		{ -1.0f, 1.0f,-1.0f, },
-		{  1.0f,-1.0f, 1.0f, },
-		{ -1.0f,-1.0f,-1.0f, },
-		{  1.0f,-1.0f,-1.0f, },
-		{  1.0f, 1.0f,-1.0f, },
-		{  1.0f,-1.0f,-1.0f, },
-		{ -1.0f,-1.0f,-1.0f, },
-		{ -1.0f,-1.0f,-1.0f, },
-		{ -1.0f, 1.0f, 1.0f, },
-		{ -1.0f, 1.0f,-1.0f, },
-		{  1.0f,-1.0f, 1.0f, },
-		{ -1.0f,-1.0f, 1.0f, },
-		{ -1.0f,-1.0f,-1.0f, },
-		{ -1.0f, 1.0f, 1.0f, },
-		{ -1.0f,-1.0f, 1.0f, },
-		{  1.0f,-1.0f, 1.0f, },
-		{  1.0f, 1.0f, 1.0f, },
-		{  1.0f,-1.0f,-1.0f, },
-		{  1.0f, 1.0f,-1.0f, },
-		{  1.0f,-1.0f,-1.0f, },
-		{  1.0f, 1.0f, 1.0f, },
-		{  1.0f,-1.0f, 1.0f, },
-		{  1.0f, 1.0f, 1.0f, },
-		{  1.0f, 1.0f,-1.0f, },
-		{ -1.0f, 1.0f,-1.0f, },
-		{  1.0f, 1.0f, 1.0f, },
-		{ -1.0f, 1.0f,-1.0f, },
-		{ -1.0f, 1.0f, 1.0f, },
-		{  1.0f, 1.0f, 1.0f, },
-		{ -1.0f, 1.0f, 1.0f, },
-		{  1.0f,-1.0f, 1.0f },
-	};
+	Input::addHandler(&gameState->inputState, Input::Keys::W, 0, [](Input::State* s, Input::Keys k) -> bool {
 
-	// One color for each vertex. They were generated randomly.
-	std::vector<glm::vec4> colours = {
-		{ 0.583f, 0.771f, 0.014f, 1.0f },
-		{ 0.609f, 0.115f, 0.436f, 1.0f },
-		{ 0.327f, 0.483f, 0.844f, 1.0f },
-		{ 0.822f, 0.569f, 0.201f, 1.0f },
-		{ 0.435f, 0.602f, 0.223f, 1.0f },
-		{ 0.310f, 0.747f, 0.185f, 1.0f },
-		{ 0.597f, 0.770f, 0.761f, 1.0f },
-		{ 0.559f, 0.436f, 0.730f, 1.0f },
-		{ 0.359f, 0.583f, 0.152f, 1.0f },
-		{ 0.483f, 0.596f, 0.789f, 1.0f },
-		{ 0.559f, 0.861f, 0.639f, 1.0f },
-		{ 0.195f, 0.548f, 0.859f, 1.0f },
-		{ 0.014f, 0.184f, 0.576f, 1.0f },
-		{ 0.771f, 0.328f, 0.970f, 1.0f },
-		{ 0.406f, 0.615f, 0.116f, 1.0f },
-		{ 0.676f, 0.977f, 0.133f, 1.0f },
-		{ 0.971f, 0.572f, 0.833f, 1.0f },
-		{ 0.140f, 0.616f, 0.489f, 1.0f },
-		{ 0.997f, 0.513f, 0.064f, 1.0f },
-		{ 0.945f, 0.719f, 0.592f, 1.0f },
-		{ 0.543f, 0.021f, 0.978f, 1.0f },
-		{ 0.279f, 0.317f, 0.505f, 1.0f },
-		{ 0.167f, 0.620f, 0.077f, 1.0f },
-		{ 0.347f, 0.857f, 0.137f, 1.0f },
-		{ 0.055f, 0.953f, 0.042f, 1.0f },
-		{ 0.714f, 0.505f, 0.345f, 1.0f },
-		{ 0.783f, 0.290f, 0.734f, 1.0f },
-		{ 0.722f, 0.645f, 0.174f, 1.0f },
-		{ 0.302f, 0.455f, 0.848f, 1.0f },
-		{ 0.225f, 0.587f, 0.040f, 1.0f },
-		{ 0.517f, 0.713f, 0.338f, 1.0f },
-		{ 0.053f, 0.959f, 0.120f, 1.0f },
-		{ 0.393f, 0.621f, 0.362f, 1.0f },
-		{ 0.673f, 0.211f, 0.457f, 1.0f },
-		{ 0.820f, 0.883f, 0.371f, 1.0f },
-		{ 0.982f, 0.099f, 0.879f, 1.0f }
-	};
+		auto cam = theRenderer->getCamera();
+		cam.position.x += 0.1;
+		theRenderer->setCamera(cam);
+
+		return true;
+
+	}, Input::HandlerKind::WhileDown);
+
+	Input::addHandler(&gameState->inputState, Input::Keys::S, 0, [](Input::State* s, Input::Keys k) -> bool {
+
+		auto cam = theRenderer->getCamera();
+		cam.position.x -= 0.1;
+		theRenderer->setCamera(cam);
+
+		return true;
+
+	}, Input::HandlerKind::WhileDown);
+
+
+
+	Input::addHandler(&gameState->inputState, Input::Keys::A, 0, [](Input::State* s, Input::Keys k) -> bool {
+
+		auto cam = theRenderer->getCamera();
+		cam.position.z -= 0.1;
+		theRenderer->setCamera(cam);
+
+		return true;
+
+	}, Input::HandlerKind::WhileDown);
+
+	Input::addHandler(&gameState->inputState, Input::Keys::D, 0, [](Input::State* s, Input::Keys k) -> bool {
+
+		auto cam = theRenderer->getCamera();
+		cam.position.z += 0.1;
+		theRenderer->setCamera(cam);
+
+		return true;
+
+	}, Input::HandlerKind::WhileDown);
+
+	Input::addHandler(&gameState->inputState, Input::Keys::Q, 0, [](Input::State* s, Input::Keys k) -> bool {
+
+		auto cam = theRenderer->getCamera();
+		cam.position.y -= 0.1;
+		theRenderer->setCamera(cam);
+
+		return true;
+
+	}, Input::HandlerKind::WhileDown);
+
+	Input::addHandler(&gameState->inputState, Input::Keys::E, 0, [](Input::State* s, Input::Keys k) -> bool {
+
+		auto cam = theRenderer->getCamera();
+		cam.position.y += 0.1;
+		theRenderer->setCamera(cam);
+
+		return true;
+
+	}, Input::HandlerKind::WhileDown);
+
+
+
+	// auto model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"), 1.0 / 20000.0);
+	Rx::Model* cube = Rx::Model::getUnitCube();
+	// cube = model;
 
 
 
@@ -304,9 +310,10 @@ int main(int argc, char** argv)
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
 
-		// theRenderer->renderModel(model, glm::mat4(1.0));
-		theRenderer->renderModel(Rx::Model::getUnitCube(), glm::scale(glm::mat4(1.0), glm::vec3(10.0)));
-		// theRenderer->renderColouredVertices(vertices, colours, { });
+		theRenderer->renderModel(cube, glm::mat4(), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), glm::vec3(0, 20, 0)), util::colour::white());
+
+
 
 
 		if((true))

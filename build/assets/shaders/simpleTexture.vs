@@ -1,3 +1,7 @@
+// simpleTexture.vert
+// Copyright (c) 2014 - 2016, zhiayang@gmail.com
+// Licensed under the Apache License Version 2.0.
+
 #version 330 core
 
 // Input vertex data, different for all executions of this shader.
@@ -9,13 +13,14 @@ layout(location = 2) in vec4 vertexColour;
 out vec2 fragmentUV;
 out vec4 fragmentColour;
 
-// Values that stay constant for the whole mesh.
-uniform mat4 modelViewProjectionMatrix;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projMatrix;
 
 void main()
 {
 	// Output position of the vertex, in clip space : MVP * position
-	gl_Position = modelViewProjectionMatrix * vec4(vertexPosition_modelspace, 1);
+	gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(vertexPosition_modelspace, 1);
 
 	fragmentUV = vertexUV;
 	fragmentColour = vertexColour;

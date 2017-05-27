@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <glm/fwd.hpp>
+#include <glm/vec3.hpp>
 
 #include "assetloader.h"
 
@@ -22,6 +23,8 @@ namespace Rx
 			std::vector<glm::vec3> vertices;
 			std::vector<glm::vec3> normals;
 			std::vector<glm::vec2> uvs;
+
+			glm::vec3 faceNormal;
 		};
 
 		Model();
@@ -34,7 +37,7 @@ namespace Rx
 		static Model* getUnitCube();
 	};
 
-	Model* loadModelFromAsset(AssetLoader::Asset* asset);
+	Model* loadModelFromAsset(AssetLoader::Asset* asset, double scale);
 }
 
 

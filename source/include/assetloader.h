@@ -36,7 +36,4 @@ namespace AssetLoader
 	std::string getResourcePath();
 	Asset* Load(const char* path);
 	void Unload(Asset* asset);
-
-
-	gl::GLuint compileAndLinkGLShaderProgram(std::string vertexPath, std::string fragmentPath);
 }

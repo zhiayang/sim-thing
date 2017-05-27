@@ -2,6 +2,9 @@
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
+#include <unordered_map>
+#include <algorithm>
+
 #include "model.h"
 #include "glwrapper.h"
 #include "renderer/rx.h"
@@ -14,16 +17,18 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
 #include <glm/gtx/string_cast.hpp>
 
 using namespace gl;
 
+#define MAX_POINT_LIGHTS 16
+
 namespace Rx
 {
-	Renderer::Renderer(Window* win, SDL_GLContext glc, util::colour clearCol, glm::mat4 camera, gl::GLuint textureShaderProg,
-		gl::GLuint colourShaderProg, gl::GLuint textShaderProg, double fov, double width, double height, double resscale,
-		double near, double far)
+	Renderer::Renderer(Window* win, SDL_GLContext glc, util::colour clearCol, Camera cam, ShaderProgram textureShaderProg,
+		ShaderProgram colourShaderProg, ShaderProgram textShaderProg, double fov, double width, double height, double resscale,
+		double near, double far) :
+		textureShaderProgram(textureShaderProg), colourShaderProgram(colourShaderProg), textShaderProgram(textShaderProg)
 	{
 		assert(win);
 		this->window = win;
@@ -31,7 +36,7 @@ namespace Rx
 
 
 		// identity matrix.
-		this->cameraMatrix = camera;
+		this->setCamera(cam);
 		this->projectionMatrix = glm::perspective(fov, width / height, near, far);
 
 		this->clearColour = clearCol;
@@ -45,23 +50,23 @@ namespace Rx
 
 		this->_resolutionScale = resscale;
 
-		this->textureShaderProgram = textureShaderProg;
-		this->colourShaderProgram = colourShaderProg;
-		this->textShaderProgram = textShaderProg;
-
-
 		// change to the program for a bit, so we can cache the uniform location.
-		glUseProgram(this->textureShaderProgram);
-		this->mvpMatrixId_textureShader = glGetUniformLocation(this->textureShaderProgram, "modelViewProjectionMatrix");
+		glUseProgram(this->textureShaderProgram.progId);
+		this->modelMatrixId_textureShader = glGetUniformLocation(this->textureShaderProgram.progId, "modelMatrix");
+		this->viewMatrixId_textureShader = glGetUniformLocation(this->textureShaderProgram.progId, "viewMatrix");
+		this->projMatrixId_textureShader = glGetUniformLocation(this->textureShaderProgram.progId, "projMatrix");
 
-		glUseProgram(this->colourShaderProgram);
-		this->mvpMatrixId_colourShader = glGetUniformLocation(this->colourShaderProgram, "modelViewProjectionMatrix");
+		glUseProgram(this->colourShaderProgram.progId);
+		this->modelMatrixId_colourShader = glGetUniformLocation(this->colourShaderProgram.progId, "modelMatrix");
+		this->viewMatrixId_colourShader = glGetUniformLocation(this->colourShaderProgram.progId, "viewMatrix");
+		this->projMatrixId_colourShader = glGetUniformLocation(this->colourShaderProgram.progId, "projMatrix");
 
-		glUseProgram(this->textShaderProgram);
-		this->orthoProjectionMatrixId = glGetUniformLocation(this->textShaderProgram, "projectionMatrix");
+		glUseProgram(this->textShaderProgram.progId);
+		this->orthoProjectionMatrixId = glGetUniformLocation(this->textShaderProgram.progId, "projectionMatrix");
 
 
-		glDisable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -79,6 +84,28 @@ namespace Rx
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
+
+
+
+
+		this->setAmbientLighting(glm::vec4(1.0), 0.2);
+	}
+
+
+
+
+
+	// misc shit
+
+	void Renderer::setCamera(Camera cam)
+	{
+		this->camera = cam;
+		this->cameraMatrix = glm::lookAt(cam.position, cam.lookingAt, cam.rotation);
+	}
+
+	Camera Renderer::getCamera()
+	{
+		return this->camera;
 	}
 
 	void Renderer::clearRenderList()
@@ -90,7 +117,7 @@ namespace Rx
 	{
 		RenderCommand rc;
 		rc.type = RenderCommand::CommandType::Clear;
-		rc.colours.push_back(colour.toGL());
+		rc.colours.push_back(colour);
 
 		this->renderList.push_back(rc);
 	}
@@ -113,7 +140,7 @@ namespace Rx
 		glLoadIdentity();
 
 		double resscale = this->_resolutionScale;
-		glViewport(0, /*(int) (this->_height * resscale)*/ 0, (int) (this->_width * resscale), (int) (this->_height * resscale));
+		glViewport(0, 0, (int) (this->_width * resscale), (int) (this->_height * resscale));
 
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
@@ -123,14 +150,84 @@ namespace Rx
 
 
 
+
+
+
+
+
+
+	// lighting
+
+	void Renderer::setAmbientLighting(glm::vec4 colour, float intensity)
+	{
+		glUseProgram(this->colourShaderProgram.progId);
+		auto colourLoc = glGetUniformLocation(this->colourShaderProgram.progId, "ambientLightColour");
+		auto intensityLoc = glGetUniformLocation(this->colourShaderProgram.progId, "ambientLightIntensity");
+
+		glUniform4fv(colourLoc, 1, glm::value_ptr(colour));
+		glUniform1f(intensityLoc, intensity);
+
+		// done
+	}
+
+	void Renderer::addPointLight(Rx::PointLight light)
+	{
+		light.intensity = glm::clamp(light.intensity, 0.0f, 1.0f);
+
+		// cache the uniform locations
+		auto prog = this->colourShaderProgram.progId;
+		glUseProgram(prog);
+		for(size_t ctr = 0; ctr < MAX_POINT_LIGHTS; ctr++)
+		{
+			GLuint position = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].position").c_str());
+			GLuint intensity = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].intensity").c_str());
+			GLuint diffColour = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].diffuseColour").c_str());
+			GLuint specColour = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].specularColour").c_str());
+			GLuint constant = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].constantFactor").c_str());
+			GLuint linear = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].linearFactor").c_str());
+			GLuint quad = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].quadFactor").c_str());
+
+			assert(position != (GLuint) -1);
+			assert(intensity != (GLuint) -1);
+			assert(diffColour != (GLuint) -1);
+			assert(specColour != (GLuint) -1);
+			assert(constant != (GLuint) -1);
+			assert(linear != (GLuint) -1);
+			assert(quad != (GLuint) -1);
+
+			// light.uniformLocations[prog] = { position, intensity, diffColour, specColour, constant, linear, quad };
+			// printf("set location for prog %d (pos = %d)\n", prog, position);
+		}
+
+		this->pointLights.push_back(light);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// render things
+
 	void Renderer::renderColouredVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals)
 	{
 		RenderCommand rc;
-		rc.type		= RenderCommand::CommandType::RenderColouredVerticesFilled;
-		rc.vertices	= verts;
-		rc.colours	= colours;
-		rc.normals	= normals;
-		rc.uvs		= { };
+		rc.type			= RenderCommand::CommandType::RenderColouredVertices;
+		rc.wireframe	= false;
+		rc.vertices		= verts;
+		rc.colours		= colours;
+		rc.normals		= normals;
+		rc.uvs			= { };
 
 		rc.dimensions = 3;
 		rc.isInScreenSpace = false;
@@ -219,6 +316,7 @@ namespace Rx
 					RenderCommand rc;
 
 					rc.type = RenderCommand::CommandType::RenderText;
+					rc.wireframe = false;
 
 					rc.dimensions = 2;
 					rc.isInScreenSpace = true;
@@ -257,11 +355,11 @@ namespace Rx
 
 
 
-	void Renderer::renderModel(Model* model, glm::mat4 transform)
+	void Renderer::renderModel(Model* model, glm::mat4 transform, glm::vec4 col)
 	{
 		RenderCommand rc;
 
-		rc.type = RenderCommand::CommandType::RenderColouredVerticesFilled;
+		rc.type = RenderCommand::CommandType::RenderColouredVertices;
 
 		rc.dimensions = 3;
 		rc.isInScreenSpace = false;
@@ -272,12 +370,14 @@ namespace Rx
 		{
 			for(auto v : face.vertices)
 			{
-				auto v4 = glm::vec4(v, 1.0);
-				rc.vertices.push_back(v4 * transform);
+				rc.vertices.push_back(transform * glm::vec4(v, 1.0));
 
-				rc.colours.push_back(glm::vec4(0.24, 0.59, 0.77, 1.0));
+				// rc.colours.push_back(glm::vec4(0.24, 0.59, 0.77, 1.0));
+				rc.colours.push_back(col);
 				// rc.colours.push_back(glm::vec4(util::colour::random().toGL()));
 			}
+			for(auto n : face.normals)
+				rc.normals.push_back(n);
 		}
 
 		this->renderList.push_back(rc);
@@ -317,6 +417,7 @@ namespace Rx
 
 
 
+	// main render pusher
 
 	void Renderer::renderAll()
 	{
@@ -331,14 +432,89 @@ namespace Rx
 		static GLuint uvBuffer = -1;
 		static GLuint vertBuffer = -1;
 		static GLuint colourBuffer = -1;
+		static GLuint normalBuffer = -1;
 
 		if(uvBuffer == (GLuint) -1)		glGenBuffers(1, &uvBuffer);
 		if(vertBuffer == (GLuint) -1)	glGenBuffers(1, &vertBuffer);
 		if(colourBuffer == (GLuint) -1)	glGenBuffers(1, &colourBuffer);
+		if(normalBuffer == (GLuint) -1)	glGenBuffers(1, &normalBuffer);
+
+
+
+		// render a cube at every point light
+		for(auto pl : this->pointLights)
+		{
+			this->renderModel(Model::getUnitCube(), glm::translate(glm::scale(glm::mat4(), glm::vec3(0.2)), pl.position),
+				util::colour::white());
+		}
+
 
 		for(auto rc : this->renderList)
 		{
 			using CType = RenderCommand::CommandType;
+
+
+			// do the lights
+			if(rc.type == CType::RenderColouredVertices || rc.type == CType::RenderTexturedVertices)
+			{
+				// everything needs at least one vertex; get the first one as a reference.
+				assert(rc.vertices.size() > 0);
+				glm::vec3 vert = rc.vertices[0];
+
+				// sort by distance, take the first N only.
+				std::vector<PointLight> lights(this->pointLights.begin(), this->pointLights.end());
+				std::sort(lights.begin(), lights.end(), [vert](const PointLight& a, const PointLight& b) -> bool {
+					return glm::distance(vert, a.position) < glm::distance(vert, b.position);
+				});
+
+				if(lights.size() > MAX_POINT_LIGHTS)
+					lights.erase(lights.begin() + MAX_POINT_LIGHTS, lights.end());
+
+
+				ShaderProgram* shaderProg = 0;
+				if(rc.type == CType::RenderColouredVertices)
+					shaderProg = &this->colourShaderProgram;
+
+				else if(rc.type == CType::RenderTexturedVertices)
+					shaderProg = &this->textureShaderProgram;
+
+				assert(shaderProg);
+				shaderProg->use();
+
+				size_t ctr = 0;
+				for(auto light : lights)
+				{
+					// setup the uniforms.
+					// printf("lighting\n");
+
+
+					// printf("get location for prog %d (pos = %d)\n", prog, getLightUniforms(light, prog, ctr, "position"));
+
+					std::string arraypre = "pointLights[" + std::to_string(ctr) + "].";
+
+					glUniform3fv(shaderProg->getUniform(arraypre + "position"), 1, glm::value_ptr(light.position));
+					glUniform1f(shaderProg->getUniform(arraypre + "intensity"), light.intensity);
+
+					glUniform4fv(shaderProg->getUniform(arraypre + "diffuseColour"), 1, glm::value_ptr(light.diffuseColour));
+					glUniform4fv(shaderProg->getUniform(arraypre + "specularColour"), 1, glm::value_ptr(light.specularColour));
+
+					glUniform1f(shaderProg->getUniform(arraypre + "constantFactor"), light.constantFactor);
+					glUniform1f(shaderProg->getUniform(arraypre + "linearFactor"), light.linearFactor);
+					glUniform1f(shaderProg->getUniform(arraypre + "quadFactor"), light.quadFactor);
+
+					ctr++;
+				}
+
+				auto loc = shaderProg->getUniform("pointLightCount");
+				glUniform1i(loc, (int) ctr);
+
+				loc = shaderProg->getUniform("cameraPosition");
+				glUniform3fv(loc, 1, glm::value_ptr(this->camera.position));
+			}
+
+
+
+
 			switch(rc.type)
 			{
 				case CType::Clear: {
@@ -351,14 +527,13 @@ namespace Rx
 
 				} break;
 
-				case CType::RenderColouredVerticesFilled:	// fallthrough
-				case CType::RenderColouredVerticesWireframe: {
+				case CType::RenderColouredVertices: {
 
-					glUseProgram(this->colourShaderProgram);
+					glUseProgram(this->colourShaderProgram.progId);
 
-					glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
-					glUniformMatrix4fv(this->mvpMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(mvp));
-
+					glUniformMatrix4fv(this->modelMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
+					glUniformMatrix4fv(this->viewMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
+					glUniformMatrix4fv(this->projMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
 
 					glEnableVertexAttribArray(0);
 					{
@@ -368,7 +543,7 @@ namespace Rx
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
-							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
+							0,			// location
 							3,			// size
 							GL_FLOAT,	// type
 							GL_FALSE,	// normalized?
@@ -387,7 +562,7 @@ namespace Rx
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
-							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
+							1,			// location
 							4,			// size
 							GL_FLOAT,	// type
 							GL_FALSE,	// normalized?
@@ -396,24 +571,43 @@ namespace Rx
 						);
 					}
 
-					glDrawArrays(rc.type == CType::RenderColouredVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
+					// if we have normals:
+					if(rc.normals.size() > 0)
+					{
+						glEnableVertexAttribArray(2);
+
+						glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.normals.size() * sizeof(glm::vec3), &rc.normals[0],
+							GL_STATIC_DRAW);
+
+						glVertexAttribPointer(
+							2,			// location
+							3,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+
+					glDrawArrays(rc.wireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
+					glDisableVertexAttribArray(2);
 
 				} break;
 
 
 
+				case CType::RenderTexturedVertices: {
 
+					glUseProgram(this->textureShaderProgram.progId);
 
-				case CType::RenderTexturedVerticesFilled:	// fallthrough
-				case CType::RenderTexturedVerticesWireframe: {
+					glUniformMatrix4fv(this->modelMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
+					glUniformMatrix4fv(this->viewMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
+					glUniformMatrix4fv(this->projMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
 
-					glUseProgram(this->textureShaderProgram);
-
-					glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
-					glUniformMatrix4fv(this->mvpMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(mvp));
 
 					glEnableVertexAttribArray(0);
 					{
@@ -423,7 +617,7 @@ namespace Rx
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
-							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
+							0,			// location
 							3,			// size
 							GL_FLOAT,	// type
 							GL_FALSE,	// normalized?
@@ -444,7 +638,7 @@ namespace Rx
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
-							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
+							1,			// location
 							2,			// size
 							GL_FLOAT,	// type
 							GL_FALSE,	// normalized?
@@ -453,10 +647,30 @@ namespace Rx
 						);
 					}
 
-					glDrawArrays(rc.type == CType::RenderColouredVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
+					// if we have normals:
+					if(rc.normals.size() > 0)
+					{
+						glEnableVertexAttribArray(2);
+
+						glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.normals.size() * sizeof(glm::vec3), &rc.normals[0],
+							GL_STATIC_DRAW);
+
+						glVertexAttribPointer(
+							2,			// location
+							3,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+
+					glDrawArrays(rc.wireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
+					glDisableVertexAttribArray(2);
 
 				} break;
 
@@ -464,7 +678,7 @@ namespace Rx
 
 				case CType::RenderText: {
 
-					glUseProgram(this->textShaderProgram);
+					glUseProgram(this->textShaderProgram.progId);
 
 					glm::mat4 orthoProj = glm::ortho(0.0, this->_width, this->_height, 0.0);
 					glUniformMatrix4fv(this->orthoProjectionMatrixId, 1, GL_FALSE, glm::value_ptr(orthoProj));
@@ -477,7 +691,7 @@ namespace Rx
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
-							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
+							0,			// location
 							3,			// size
 							GL_FLOAT,	// type
 							GL_FALSE,	// normalized?
@@ -497,7 +711,7 @@ namespace Rx
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
-							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
+							1,			// location
 							2,			// size
 							GL_FLOAT,	// type
 							GL_FALSE,	// normalized?
