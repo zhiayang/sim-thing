@@ -59,9 +59,6 @@ namespace Rx
 		glUseProgram(this->textShaderProgram);
 		this->orthoProjectionMatrixId = glGetUniformLocation(this->textShaderProgram, "projectionMatrix");
 
-		glUseProgram(0);
-
-
 
 		glDisable(GL_CULL_FACE);
 
@@ -154,7 +151,6 @@ namespace Rx
 
 		std::vector<uint32_t> codepoints;
 		{
-			auto p = prof::Profile("utf conversion");
 			size_t length = utf8toutf32(str.c_str(), str.size(), nullptr, 0, 0) / 4;
 			codepoints.resize(length);
 
@@ -178,8 +174,6 @@ namespace Rx
 
 		glm::vec4 cliprect;
 		{
-			auto p = prof::Profile("cliprect-ing");
-
 			double x0 = xPos;
 			double y0 = yPos + (scale * font->descent);
 
@@ -272,19 +266,18 @@ namespace Rx
 		glClearColor(this->clearColour.fr, this->clearColour.fg, this->clearColour.fb, this->clearColour.fa);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
 		double rscale = this->_resolutionScale;
 		glViewport(0, 0, (int) (this->_width * rscale), (int) (this->_height * rscale));
 
+		// this->renderList.clear();
 
-		static GLuint uvBuffer = -1;
-		static GLuint vertBuffer = -1;
-		static GLuint colourBuffer = -1;
+		// static GLuint uvBuffer = -1;
+		// static GLuint vertBuffer = -1;
+		// static GLuint colourBuffer = -1;
 
-		if(uvBuffer == (GLuint) -1)		glGenBuffers(1, &uvBuffer);
-		if(vertBuffer == (GLuint) -1)	glGenBuffers(1, &vertBuffer);
-		if(colourBuffer == (GLuint) -1)	glGenBuffers(1, &colourBuffer);
-
+		// if(uvBuffer == (GLuint) -1)		glGenBuffers(1, &uvBuffer);
+		// if(vertBuffer == (GLuint) -1)	glGenBuffers(1, &vertBuffer);
+		// if(colourBuffer == (GLuint) -1)	glGenBuffers(1, &colourBuffer);
 
 		for(auto rc : this->renderList)
 		{
@@ -304,6 +297,11 @@ namespace Rx
 				case CType::RenderColouredVerticesFilled:	// fallthrough
 				case CType::RenderColouredVerticesWireframe: {
 
+					GLuint vertBuffer = -1;
+					GLuint colourBuffer = -1;
+					glGenBuffers(1, &vertBuffer);
+					glGenBuffers(1, &colourBuffer);
+
 					glUseProgram(this->colourShaderProgram);
 
 					glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
@@ -316,8 +314,6 @@ namespace Rx
 						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
 							GL_STATIC_DRAW);
-
-						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 
 						glVertexAttribPointer(
 							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
@@ -338,8 +334,6 @@ namespace Rx
 						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(glm::vec4), &rc.colours[0],
 							GL_STATIC_DRAW);
 
-						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
-
 						glVertexAttribPointer(
 							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
 							4,			// size
@@ -351,6 +345,9 @@ namespace Rx
 					}
 
 					glDrawArrays(rc.type == CType::RenderColouredVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
+
+					glDeleteBuffers(1, &vertBuffer);
+					glDeleteBuffers(1, &colourBuffer);
 
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
@@ -364,6 +361,11 @@ namespace Rx
 				case CType::RenderTexturedVerticesFilled:	// fallthrough
 				case CType::RenderTexturedVerticesWireframe: {
 
+					GLuint vertBuffer = -1;
+					GLuint uvBuffer = -1;
+					glGenBuffers(1, &vertBuffer);
+					glGenBuffers(1, &uvBuffer);
+
 					glUseProgram(this->textureShaderProgram);
 
 					glm::mat4 mvp = this->projectionMatrix * this->cameraMatrix * glm::mat4(1.0);
@@ -375,8 +377,6 @@ namespace Rx
 						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
 							GL_STATIC_DRAW);
-
-						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 
 						glVertexAttribPointer(
 							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
@@ -399,8 +399,6 @@ namespace Rx
 						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0],
 							GL_STATIC_DRAW);
 
-						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-
 						glVertexAttribPointer(
 							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
 							2,			// size
@@ -413,6 +411,9 @@ namespace Rx
 
 					glDrawArrays(rc.type == CType::RenderColouredVerticesWireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
+					glDeleteBuffers(1, &vertBuffer);
+					glDeleteBuffers(1, &uvBuffer);
+
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 
@@ -421,6 +422,12 @@ namespace Rx
 
 
 				case CType::RenderText: {
+
+					GLuint vertBuffer = -1;
+					GLuint uvBuffer = -1;
+					glGenBuffers(1, &vertBuffer);
+					glGenBuffers(1, &uvBuffer);
+
 					glUseProgram(this->textShaderProgram);
 
 					glm::mat4 orthoProj = glm::ortho(0.0, this->_width, this->_height, 0.0);
@@ -433,8 +440,6 @@ namespace Rx
 						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
 							GL_STATIC_DRAW);
 
-						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-
 						glVertexAttribPointer(
 							0,			// attribute. No particular reason for 0, but must match the layout in the shader.
 							3,			// size
@@ -445,16 +450,16 @@ namespace Rx
 						);
 					}
 
+					// GL::pushTextureBinding(rc.textureToBind);
+
+					glBindTexture(GL_TEXTURE_2D, rc.textureToBind);
 					glEnableVertexAttribArray(1);
 					{
-						GL::pushTextureBinding(rc.textureToBind);
 						assert(rc.uvs.size() > 0);
 
 						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
 						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0],
 							GL_STATIC_DRAW);
-
-						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
 
 						glVertexAttribPointer(
 							1,			// attribute. No particular reason for 1, but must match the layout in the shader.
@@ -468,11 +473,13 @@ namespace Rx
 
 					glDrawArrays(GL_TRIANGLES, 0, rc.vertices.size());
 
+					glDeleteBuffers(1, &vertBuffer);
+					glDeleteBuffers(1, &uvBuffer);
+
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 
-
-					GL::popTextureBinding();
+					// GL::popTextureBinding();
 
 				} break;
 
@@ -539,69 +546,7 @@ namespace Rx
 
 	void EndFrame(Rx::Renderer* renderer)
 	{
-		#if 0
-		// call back to opengl
-		glViewport(0, 0, (int) ImGui::GetIO().DisplaySize.x, (int) ImGui::GetIO().DisplaySize.y);
-		glClearColor(renderer->clearColour.fr, renderer->clearColour.fg, renderer->clearColour.fb, renderer->clearColour.fa);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		// this doesn't draw anything to the screen, since our "renderdrawlistfn" is 0
-		ImGui::Render();
-
-
-
-		// do it ourselves, here.
-		{
-			ImDrawData* dd = ImGui::GetDrawData();
-
-			int fb_w = 0;
-			int fb_h = 0;
-
-			SetupOpenGL2D(dd, &fb_w, &fb_h);
-
-			// idk if we need to change the order of drawing.
-			// the way this is set up we can't interweave.
-
-			// do ours first, as I get the feeling we want windows to be on top
-			glDisable(GL_SCISSOR_TEST);
-
-			// renderer->RenderAll();
-
-
-			// then render imgui
-			RenderImGui(dd, fb_h);
-
-
-
-			// finish
-			FinishOpenGL2D();
-		}
-		#endif
-
-		// glViewport(0, 0, (int) ImGui::GetIO().DisplaySize.x, (int) ImGui::GetIO().DisplaySize.y);
-
 		renderer->renderAll();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		// swap.
 		SDL_GL_SwapWindow(renderer->window->sdlWin);
 	}
 

@@ -144,14 +144,9 @@ namespace Rx
         font->ascent = ascent * stbtt_ScaleForPixelHeight(&font->fontInfo, font->pixelSize);
         font->descent = descent * stbtt_ScaleForPixelHeight(&font->fontInfo, font->pixelSize);
 
-
-
 		// pre-generate glyph positions
 		for(uint32_t ch = firstChar; ch < firstChar + numChars; ch++)
-		{
-			// font->
-		}
-
+			font->getGlyphMetrics(ch);
 
 		fontMap[tup] = font;
 		return font;

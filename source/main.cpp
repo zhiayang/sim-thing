@@ -302,11 +302,18 @@ int main(int argc, char** argv)
 
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
-		if((false))
-		{
-			std::string fpsstr = tfm::format("%.2f fps", currentFps);
+		theRenderer->renderColouredVertices(vertices, colours, { });
 
-			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
+		std::string fpsstr = tfm::format("%.2f fps", currentFps);
+		theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 14, glm::vec2(10, 10));
+		theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 14, glm::vec2(10, 25));
+		theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 14, glm::vec2(10, 40));
+		theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 14, glm::vec2(10, 55));
+
+		if((true))
+		{
+			// std::string fpsstr = tfm::format("%.2f fps", currentFps);
+			// theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
 
 			auto psys = gameState->playerStation->powerSystem;
 			auto lss = gameState->playerStation->lifeSupportSystem;
@@ -329,7 +336,6 @@ int main(int argc, char** argv)
 
 			size_t ofs = 5;
 
-			#if 1
 			for(auto batt : psys->storage)
 			{
 				double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
@@ -340,20 +346,12 @@ int main(int argc, char** argv)
 
 				theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), Rx::TextAlignment::RightAligned);
 			}
-			#endif
 
 			str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
 				Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
 
 			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), Rx::TextAlignment::RightAligned);
 		}
-
-		theRenderer->renderColouredVertices(vertices, colours, { });
-
-		// theRenderer->renderStringInScreenSpace("3,.94 pqkWh / 43.50 kWh (9.1%)  |  +47.33 kW / -0.00 W", primaryFont, 14, glm::vec2(10, 10),
-		// 	Rx::TextAlignment::RightAligned);
-
-		// // theRenderer->renderStringInScreenSpace("A    B C", primaryFont, 16, glm::vec2(200, 50));
 
 		Rx::EndFrame(theRenderer);
 
@@ -376,59 +374,6 @@ int main(int argc, char** argv)
 
 
 
-
-
-
-
-
-
-		#if 0
-
-
-
-		Rx::PreFrame(renderer);
-		Rx::BeginFrame(renderer);
-
-		ImGui::PushFont(menlo);
-		ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-
-
-
-
-
-		if(Config::getShowFps())
-		{
-			renderer->SetColour(util::colour::white());
-		}
-
-
-
-		{
-			// gl::glVertexPointer(3, gl::GL_DOUBLE, 0, vertices);
-			// gl::glColorPointer(4, gl::GL_DOUBLE, 0, colours);
-			// gl::glNormalPointer(gl::GL_DOUBLE, 0, normals);
-
-			// gl::glDrawElements(gl::GL_TRIANGLES, 60, gl::GL_UNSIGNED_BYTE, (void*) indices);
-			// gl::glLoadIdentity();
-		}
-
-
-
-
-		// ImGui::ShowStyleEditor();
-		// ImGui::ShowTestWindow();
-
-
-
-
-		ImGui::PopFont();
-		Rx::EndFrame(renderer);
-
-
-
-		#endif
-
-
 		// more fps computation
 		{
 			double end = util::Time::ns();
@@ -438,12 +383,13 @@ int main(int argc, char** argv)
 			{
 				double toWait = targetFrameTimeNs - frameTime;
 
-				if(toWait >= 500)
+				if(toWait >= 1000 * 1000)
 				{
+					fprintf(stderr, "fps = %.1f // %.2f ns\n", currentFps, toWait);
 					struct timespec ts;
 					ts.tv_nsec = toWait;
 
-					nanosleep(&ts, 0);
+					// nanosleep(&ts, 0);
 				}
 				else
 				{
@@ -455,19 +401,14 @@ int main(int argc, char** argv)
 		}
 	}
 
+	// prof::printResults();
+
 	// Cleanup
 	// ImGui_ImplSdl_Shutdown();
 
 	SDL_GL_DeleteContext(glcontext);
 	SDL_DestroyWindow(theRenderer->window->sdlWin);
 	SDL_Quit();
-
-
-	if((true))
-	{
-		prof::printResults();
-	}
-
 
 	return 0;
 }

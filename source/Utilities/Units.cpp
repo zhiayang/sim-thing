@@ -18,6 +18,8 @@ namespace Units
 
 	std::string formatWithUnits(double number, int prec, std::string unit)
 	{
+		// auto p = prof::Profile("units");
+
 		if(number == 0)
 			return tfm::format("%.*f %s", prec, number, unit);
 
