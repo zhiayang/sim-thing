@@ -47,6 +47,7 @@ uniform float ambientLightIntensity;
 // point lighting
 vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec2 fragUV)
 {
+	vec4 result = vec4(0);
 	for(int i = 0; i < pointLightCount; i++)
 	{
 		vec3 lightDir = normalize(pointLights[i].position - fragPosition);
@@ -68,8 +69,10 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec2 f
 		vec4 diffuse = pointLights[i].diffuseColour * diff * texture(material.diffuseTexture, fragUV);
 		vec4 specular = pointLights[i].specularColour * 0.5 * spec * texture(material.specularTexture, fragUV);
 
-		return (diffuse + specular) * pointLights[i].intensity * atten;
+		result += (diffuse + specular) * pointLights[i].intensity * atten;
 	}
+
+	return result;
 }
 
 
