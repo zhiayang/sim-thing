@@ -3,7 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #version 330 core
-#include "lighting.inc"
+#pragma include "lighting.inc"
 
 in vec4 fragmentColour;
 in vec3 fragmentNormal;

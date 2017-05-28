@@ -58,9 +58,12 @@ namespace Rx
 			size_t linenum = 1;
 			for(auto line : lines)
 			{
-				if(line.find("#include ") == 0)
+				if(line.find("#pragma include ") == 0)
 				{
-					line.remove_prefix(strlen("#include "));
+					line.remove_prefix(strlen("#pragma include "));
+					while(!line.empty() && line.front() == ' ')
+						line.remove_prefix(1);
+
 					if(line.empty() || line[0] != '"')
 					{
 						ERROR("Syntax error while preprocessing %s shader %s:%zu: malformed include directive, missing opening ' \
