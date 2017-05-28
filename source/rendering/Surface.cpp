@@ -14,6 +14,14 @@ namespace Rx
 	{
 	}
 
+	Surface::Surface(uint8_t* bytes, size_t w, size_t h, ImageFormat format)
+	{
+		this->data = bytes;
+		this->width = w;
+		this->height = h;
+		this->format = format;
+	}
+
 	Surface::Surface(AssetLoader::Asset* ass)
 	{
 		using namespace AssetLoader;

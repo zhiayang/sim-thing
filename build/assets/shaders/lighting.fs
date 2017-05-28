@@ -17,18 +17,35 @@ struct PointLight
 	float quadFactor;
 };
 
-// lighting nonsense
-uniform vec4 ambientLightColour;
-uniform float ambientLightIntensity;
-
 #define MAX_POINT_LIGHTS 16
 uniform int pointLightCount;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
 
 
+struct Material
+{
+	vec4 ambientColour;
+
+	vec4 diffuseColour;
+	vec4 specularColour;
+
+	sampler2D diffuseTexture;
+	sampler2D specularTexture;
+
+	float shine;
+};
+
+uniform Material material;
+
+
+// lighting nonsense
+uniform vec4 ambientLightColour;
+uniform float ambientLightIntensity;
+
+
 
 // point lighting
-vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection)
+vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec2 fragUV)
 {
 	for(int i = 0; i < pointLightCount; i++)
 	{
@@ -39,7 +56,7 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection)
 
 		// Specular lighting
 		vec3 reflectDir = reflect(-1 * lightDir, normal);
-		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), 32/* material.shininess */);
+		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), material.shine);
 
 		// Attenuation
 		float dist = length(pointLights[i].position - fragPosition);
@@ -48,16 +65,16 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection)
 		vec4 atten = vec4(_att, _att, _att, 1.0);
 
 		// Combine results
-		// vec3 ambient = pointLights[i].ambient;// * vec3(texture(material.diffuse, TexCoords));
-		// vec3 diffuse = pointLights[i].diffuse * diff;// * vec3(texture(material.diffuse, TexCoords));
-		// vec3 specular = pointLights[i].specular * spec * vec3(texture(material.specular, TexCoords));
-
-		vec4 diffuse = pointLights[i].diffuseColour * diff;
-		vec4 specular = pointLights[i].specularColour * 0.5 * spec;
+		vec4 diffuse = pointLights[i].diffuseColour * diff * texture(material.diffuseTexture, fragUV);
+		vec4 specular = pointLights[i].specularColour * 0.5 * spec * texture(material.specularTexture, fragUV);
 
 		return (diffuse + specular) * pointLights[i].intensity * atten;
 	}
 }
+
+
+
+
 
 
 

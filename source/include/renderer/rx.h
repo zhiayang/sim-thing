@@ -42,6 +42,7 @@ namespace Rx
 {
 	struct Model;
 	struct Mesh;
+	struct Material;
 
 	enum class TextAlignment
 	{
@@ -70,7 +71,9 @@ namespace Rx
 			double near, double far);
 
 		void clearRenderList();
+
 		void renderAll();
+		std::vector<PointLight> sortAndUpdatePointLights(RenderCommand rc, glm::vec3 reference);
 
 		void setCamera(glm::mat4 cameraViewMatrix);
 		glm::mat4 getCameraViewMatrix();
@@ -108,8 +111,8 @@ namespace Rx
 		void renderStringInNormalisedScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos,
 			TextAlignment align = TextAlignment::LeftAligned);
 
-		void renderMesh(const Mesh& mesh, glm::mat4 transform, glm::vec4 col);
-		void renderModel(const Model& model, glm::mat4 transform, glm::vec4 col);
+		void renderMesh(const Mesh& mesh, const Material& mat, glm::mat4 transform);
+		void renderModel(const Model& model, glm::mat4 transform);
 
 		void updateCamera(const Camera& cam);
 		Camera getCamera();
@@ -138,6 +141,8 @@ namespace Rx
 			double _width = 0;
 			double _height = 0;
 			double _resolutionScale = 0;
+
+			Texture* placeholderTexture = 0;
 
 			ShaderProgram textureShaderProgram;
 			ShaderProgram colourShaderProgram;

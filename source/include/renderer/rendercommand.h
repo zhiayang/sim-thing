@@ -12,6 +12,8 @@
 #include <glm/vec4.hpp>
 #include <glbinding/gl/types.h>
 
+#include "renderer/model.h"
+
 namespace Rx
 {
 	struct RenderCommand
@@ -27,32 +29,9 @@ namespace Rx
 			RenderText,
 		};
 
-		RenderCommand() { }
-		RenderCommand(const RenderCommand& o)
-		{
-			this->type			= o.type;
-			this->uvs			= o.uvs;
-			this->colours		= o.colours;
-			this->normals		= o.normals;
-			this->vertices		= o.vertices;
-			this->wireframe		= o.wireframe;
-			this->dimensions	= o.dimensions;
-			this->textureToBind	= o.textureToBind;
-		}
+		RenderCommand();
 
-		RenderCommand& operator = (const RenderCommand& o)
-		{
-			this->type			= o.type;
-			this->uvs			= o.uvs;
-			this->colours		= o.colours;
-			this->normals		= o.normals;
-			this->vertices		= o.vertices;
-			this->wireframe		= o.wireframe;
-			this->dimensions	= o.dimensions;
-			this->textureToBind	= o.textureToBind;
-
-			return *this;
-		}
+		id_t id;
 
 		bool wireframe = false;
 
@@ -60,6 +39,8 @@ namespace Rx
 		bool isInScreenSpace = false;
 		gl::GLuint textureToBind = -1;
 		CommandType type = CommandType::Invalid;
+
+		Material material;
 
 		std::vector<glm::vec2> uvs;
 		std::vector<glm::vec4> colours;

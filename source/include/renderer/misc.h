@@ -47,9 +47,12 @@ namespace Rx
 	{
 		Surface(std::string path);
 		Surface(AssetLoader::Asset* ass);
+		Surface(uint8_t* bytes, size_t width, size_t height, ImageFormat format);
 		~Surface();
 
 		uint8_t* data = 0;
+		size_t length = 0;
+
 		size_t width = 0;
 		size_t height = 0;
 

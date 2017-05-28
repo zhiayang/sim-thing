@@ -3,7 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #version 330 core
-#pragma include "lighting.inc"
+#pragma include "lighting.fs"
 
 in vec4 fragmentColour;
 in vec3 fragmentNormal;
@@ -12,36 +12,17 @@ in vec3 fragmentPosition;
 // Ouput data
 out vec4 colour;
 
-struct Material
-{
-	vec4 ambientColour;
-
-	bool isTextured;
-
-	vec4 diffuseColour;
-	vec4 specularColour;
-
-	sampler2D diffuseTexture;
-	sampler2D specularTexture;
-
-	float shininess;
-};
-
-uniform Material material;
 uniform vec3 cameraPosition;
 
 // it's here so we know how to call it.
-vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection);
+vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec2 fragUV);
 
 void main()
 {
 	vec3 viewDirection = normalize(cameraPosition - fragmentPosition);
 	vec4 base = ambientLightColour * ambientLightIntensity;
 
-	base += applyPointLights(normalize(fragmentNormal), fragmentPosition, viewDirection);
-
-	// for(int i = 0; i < pointLightCount; i++)
-	// 	base += applyPointLight(pointLights[i], normalize(fragmentNormal), fragmentPosition, viewDirection);
+	base += applyPointLights(normalize(fragmentNormal), fragmentPosition, viewDirection, vec2(1, 1));
 
 	colour = base * fragmentColour;
 }

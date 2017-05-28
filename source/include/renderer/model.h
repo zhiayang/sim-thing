@@ -32,10 +32,12 @@ namespace Rx
 	{
 		Material() { }
 		Material(glm::vec4 amb, glm::vec4 dif, glm::vec4 spc, float s)
-			: ambientColour(amb), diffuseColour(dif), specularColour(spc), shine(s) { }
+			: hasValue(true), ambientColour(amb), diffuseColour(dif), specularColour(spc), shine(s) { }
 
 		Material(glm::vec4 amb, Texture* diffuse, Texture* specular, float s)
-			: ambientColour(amb), diffuseMap(diffuse), specularMap(specular), shine(s) { }
+			: hasValue(true), ambientColour(amb), diffuseMap(diffuse), specularMap(specular), shine(s) { }
+
+		bool hasValue = false;
 
 		glm::vec4 ambientColour;
 		float shine = 0;
@@ -71,9 +73,20 @@ namespace Rx
 		id_t id;
 
 		std::vector<std::pair<Mesh, Material>> objects;
+
+		static Model fromMesh(Mesh mesh, Material mat);
 	};
 
+
+	// given 4 vertices, returns 6 vertices which are the triangles of the quad.
+	Face triangulateQuadFace(Face face);
+	glm::vec3 calculateNormalForFace(Face face);
+
 	Model loadModelFromAsset(AssetLoader::Asset* asset, double scale);
+
+
+	// obj files
+	Model loadModelFromWavefrontOBJ(AssetLoader::Asset* asset, double scale);
 }
 
 

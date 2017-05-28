@@ -73,10 +73,11 @@ namespace Rx
 		glPushMatrix();
 		glLoadIdentity();
 
-
-
-
 		this->setAmbientLighting(glm::vec4(1.0), 0.2);
+
+		// one completely white pixel.
+		static uint8_t white[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
+		this->placeholderTexture = new Texture(new Surface(white, 1, 1, ImageFormat::RGBA), this);
 	}
 
 
@@ -84,6 +85,11 @@ namespace Rx
 
 
 	// misc shit
+	RenderCommand::RenderCommand()
+	{
+		static id_t __id = 1;
+		this->id = __id++;
+	}
 
 	glm::vec3 Camera::front() const
 	{
@@ -194,7 +200,6 @@ namespace Rx
 
 	void Renderer::addPointLight(Rx::PointLight light)
 	{
-		light.intensity = glm::clamp(light.intensity, 0.0f, 1.0f);
 		this->pointLights.push_back(light);
 	}
 
@@ -353,33 +358,35 @@ namespace Rx
 
 
 
-	void Renderer::renderMesh(const Mesh& mesh, glm::mat4 transform, glm::vec4 col)
+	void Renderer::renderMesh(const Mesh& mesh, const Material& m, glm::mat4 transform)
 	{
+		Material mat = m;
 		RenderCommand rc;
 
-		rc.type = RenderCommand::CommandType::RenderTexturedVertices;
-
-		static Surface* surf = new Surface("textures/box.png");
-		static Texture* text = new Texture(surf, this);
+		// if(!mat.diffuseMap)
+		// {
+		// 	mat.diffuseMap = this->placeholderTexture;
+		// 	rc.type = RenderCommand::CommandType::RenderColouredVertices;
+		// }
+		// else
+		// {
+			rc.type = RenderCommand::CommandType::RenderTexturedVertices;
+		// }
 
 		rc.dimensions = 3;
 		rc.isInScreenSpace = false;
-		rc.textureToBind = text->glTextureID;
+		rc.material = mat;
 
 		if(mesh.faces.empty())
 			ERROR("mesh (id %zu) needs at least one face", mesh.id);
 
-		int i = 0;
 		for(auto face : mesh.faces)
 		{
 			if(face.vertices.empty())
 				ERROR("face needs at least one vertex");
 
 			for(auto v : face.vertices)
-			{
 				rc.vertices.push_back(transform * glm::vec4(v, 1.0));
-				rc.colours.push_back(col);
-			}
 
 			for(auto t : face.uvs)
 				rc.uvs.push_back(t);
@@ -387,17 +394,18 @@ namespace Rx
 			for(auto n : face.normals)
 				rc.normals.push_back(n);
 
-			i++;
+			// add some white colours
+			rc.colours.insert(rc.colours.begin(), rc.vertices.size(), glm::vec4(1, 1, 1, 1));
 		}
 
 		this->renderList.push_back(rc);
 	}
 
 
-	void Renderer::renderModel(const Model& model, glm::mat4 transform, glm::vec4 col)
+	void Renderer::renderModel(const Model& model, glm::mat4 transform)
 	{
 		for(auto mesh : model.objects)
-			this->renderMesh(mesh.first, transform, col);
+			this->renderMesh(mesh.first, mesh.second, transform);
 	}
 
 
@@ -429,6 +437,57 @@ namespace Rx
 
 
 
+
+
+
+
+
+	std::vector<PointLight> Renderer::sortAndUpdatePointLights(RenderCommand rc, glm::vec3 vert)
+	{
+		using CType = RenderCommand::CommandType;
+
+		// sort by distance, take the first N only.
+		std::vector<PointLight> lights(this->pointLights.begin(), this->pointLights.end());
+		std::sort(lights.begin(), lights.end(), [vert](const PointLight& a, const PointLight& b) -> bool {
+			return glm::distance(vert, a.position) < glm::distance(vert, b.position);
+		});
+
+		if(lights.size() > MAX_POINT_LIGHTS)
+			lights.erase(lights.begin() + MAX_POINT_LIGHTS, lights.end());
+
+		ShaderProgram* shaderProg = 0;
+		if(rc.type == CType::RenderColouredVertices)
+			shaderProg = &this->colourShaderProgram;
+
+		else if(rc.type == CType::RenderTexturedVertices)
+			shaderProg = &this->textureShaderProgram;
+
+		assert(shaderProg);
+		shaderProg->use();
+
+		size_t ctr = 0;
+		for(auto light : lights)
+		{
+			std::string arraypre = "pointLights[" + std::to_string(ctr) + "].";
+
+			glUniform3fv(shaderProg->getUniform(arraypre + "position"), 1, glm::value_ptr(light.position));
+			glUniform1f(shaderProg->getUniform(arraypre + "intensity"), light.intensity);
+
+			glUniform4fv(shaderProg->getUniform(arraypre + "diffuseColour"), 1, glm::value_ptr(light.diffuseColour));
+			glUniform4fv(shaderProg->getUniform(arraypre + "specularColour"), 1, glm::value_ptr(light.specularColour));
+
+			glUniform1f(shaderProg->getUniform(arraypre + "constantFactor"), light.constantFactor);
+			glUniform1f(shaderProg->getUniform(arraypre + "linearFactor"), light.linearFactor);
+			glUniform1f(shaderProg->getUniform(arraypre + "quadFactor"), light.quadFactor);
+
+			ctr++;
+		}
+
+		glUniform1i(shaderProg->getUniform("pointLightCount"), (int) ctr);
+		glUniform3fv(shaderProg->getUniform("cameraPosition"), 1, glm::value_ptr(this->camera.position));
+
+		return lights;
+	}
 
 
 
@@ -476,8 +535,8 @@ namespace Rx
 		// render a cube at every point light
 		// for(auto pl : this->pointLights)
 		// {
-		// 	this->renderMesh(Mesh::getUnitCube(), glm::translate(glm::scale(glm::mat4(), glm::vec3(0.2)), pl.position),
-		// 		util::colour::white());
+		// 	this->renderMesh(Mesh::getUnitCube(), Material(util::colour::red(), this->placeholderTexture, this->placeholderTexture, 0),
+		// 		glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), pl.position));
 		// }
 
 
@@ -485,57 +544,14 @@ namespace Rx
 		{
 			using CType = RenderCommand::CommandType;
 
-
-			// do the lights
+			// sort the lights by distance
 			if(rc.type == CType::RenderColouredVertices || rc.type == CType::RenderTexturedVertices)
 			{
 				// everything has at least one vertex; get the first one as a reference.
 				assert(rc.vertices.size() > 0);
 				glm::vec3 vert = rc.vertices[0];
 
-				// sort by distance, take the first N only.
-				std::vector<PointLight> lights(this->pointLights.begin(), this->pointLights.end());
-				std::sort(lights.begin(), lights.end(), [vert](const PointLight& a, const PointLight& b) -> bool {
-					return glm::distance(vert, a.position) < glm::distance(vert, b.position);
-				});
-
-				if(lights.size() > MAX_POINT_LIGHTS)
-					lights.erase(lights.begin() + MAX_POINT_LIGHTS, lights.end());
-
-
-				ShaderProgram* shaderProg = 0;
-				if(rc.type == CType::RenderColouredVertices)
-					shaderProg = &this->colourShaderProgram;
-
-				else if(rc.type == CType::RenderTexturedVertices)
-					shaderProg = &this->textureShaderProgram;
-
-				assert(shaderProg);
-				shaderProg->use();
-
-				size_t ctr = 0;
-				for(auto light : lights)
-				{
-					std::string arraypre = "pointLights[" + std::to_string(ctr) + "].";
-
-					glUniform3fv(shaderProg->getUniform(arraypre + "position"), 1, glm::value_ptr(light.position));
-					glUniform1f(shaderProg->getUniform(arraypre + "intensity"), light.intensity);
-
-					glUniform4fv(shaderProg->getUniform(arraypre + "diffuseColour"), 1, glm::value_ptr(light.diffuseColour));
-					glUniform4fv(shaderProg->getUniform(arraypre + "specularColour"), 1, glm::value_ptr(light.specularColour));
-
-					glUniform1f(shaderProg->getUniform(arraypre + "constantFactor"), light.constantFactor);
-					glUniform1f(shaderProg->getUniform(arraypre + "linearFactor"), light.linearFactor);
-					glUniform1f(shaderProg->getUniform(arraypre + "quadFactor"), light.quadFactor);
-
-					ctr++;
-				}
-
-				auto loc = shaderProg->getUniform("pointLightCount");
-				glUniform1i(loc, (int) ctr);
-
-				loc = shaderProg->getUniform("cameraPosition");
-				glUniform3fv(loc, 1, glm::value_ptr(this->camera.position));
+				this->sortAndUpdatePointLights(rc, vert);
 			}
 
 
@@ -555,11 +571,12 @@ namespace Rx
 
 				case CType::RenderColouredVertices: {
 
-					this->colourShaderProgram.use();
+					auto& sprog = this->colourShaderProgram;
+					sprog.use();
 
-					auto modelLoc = this->colourShaderProgram.getUniform("modelMatrix");
-					auto viewLoc = this->colourShaderProgram.getUniform("viewMatrix");
-					auto projLoc = this->colourShaderProgram.getUniform("projMatrix");
+					auto modelLoc = sprog.getUniform("modelMatrix");
+					auto viewLoc = sprog.getUniform("viewMatrix");
+					auto projLoc = sprog.getUniform("projMatrix");
 
 					glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
 					glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
@@ -582,7 +599,7 @@ namespace Rx
 						);
 					}
 
-					// if we have colours:
+					// we must have colours
 					assert(rc.colours.size() > 0);
 					{
 						glEnableVertexAttribArray(1);
@@ -620,6 +637,44 @@ namespace Rx
 						);
 					}
 
+					// if we have a material
+					if(rc.material.hasValue)
+					{
+						auto& mat = rc.material;
+						glUniform1f(sprog.getUniform("material.shine"), mat.shine);
+
+						// set the colours
+						glUniform4fv(sprog.getUniform("material.ambientColour"), 1, glm::value_ptr(mat.ambientColour));
+						glUniform4fv(sprog.getUniform("material.diffuseColour"), 1, glm::value_ptr(mat.diffuseColour));
+						glUniform4fv(sprog.getUniform("material.specularColour"), 1, glm::value_ptr(mat.specularColour));
+					}
+					else
+					{
+						// setup default material, which allows us to continue using the vertex colours.
+						glUniform1f(sprog.getUniform("material.shine"), 32.0f);
+
+						// set the colours
+						glUniform4fv(sprog.getUniform("material.ambientColour"), 1, glm::value_ptr(glm::vec4(1.0)));
+						glUniform4fv(sprog.getUniform("material.diffuseColour"), 1, glm::value_ptr(glm::vec4(1.0)));
+						glUniform4fv(sprog.getUniform("material.specularColour"), 1, glm::value_ptr(glm::vec4(1.0)));
+					}
+
+
+					{
+						// i presume this sets which texture unit to use
+						glUniform1i(sprog.getUniform("material.diffuseTexture"), 0);
+						glUniform1i(sprog.getUniform("material.specularTexture"), 1);
+
+						// use the placeholder white texture
+						glActiveTexture(GL_TEXTURE1);
+						glBindTexture(GL_TEXTURE_2D, this->placeholderTexture->glTextureID);
+
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, this->placeholderTexture->glTextureID);
+					}
+
+
+
 					glDrawArrays(rc.wireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
 					glDisableVertexAttribArray(0);
@@ -630,13 +685,22 @@ namespace Rx
 
 
 
+
+
+
+
+
+
+
+
 				case CType::RenderTexturedVertices: {
 
-					this->textureShaderProgram.use();
+					auto& sprog = this->textureShaderProgram;
+					sprog.use();
 
-					auto modelLoc = this->textureShaderProgram.getUniform("modelMatrix");
-					auto viewLoc = this->textureShaderProgram.getUniform("viewMatrix");
-					auto projLoc = this->textureShaderProgram.getUniform("projMatrix");
+					auto modelLoc = sprog.getUniform("modelMatrix");
+					auto viewLoc = sprog.getUniform("viewMatrix");
+					auto projLoc = sprog.getUniform("projMatrix");
 
 					glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
 					glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
@@ -659,8 +723,9 @@ namespace Rx
 						);
 					}
 
-					// if we have colours:
-					if(rc.colours.size() > 0)
+					// we still need to upload a bunch of white colours, so our texture doesn't get multiplied by 0 and disappear
+					// this should be handled by the mesh-maker, because it's not performant to do this every frame
+					assert(rc.colours.size() > 0);
 					{
 						glEnableVertexAttribArray(1);
 
@@ -679,7 +744,7 @@ namespace Rx
 					}
 
 					// if we have normals:
-					if(rc.normals.size() > 0)
+					assert(rc.normals.size() > 0);
 					{
 						glEnableVertexAttribArray(2);
 
@@ -697,12 +762,9 @@ namespace Rx
 						);
 					}
 
-					// uvs
-					assert(rc.textureToBind != (GLuint) -1);
+					// uvs. the texture we're using depends on whether we have a material or not (see below)
+					assert(rc.uvs.size() > 0);
 					{
-						GL::pushTextureBinding(rc.textureToBind);
-						assert(rc.uvs.size() > 0);
-
 						glEnableVertexAttribArray(3);
 
 						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
@@ -718,6 +780,36 @@ namespace Rx
 							(void*) 0	// array buffer offset
 						);
 					}
+
+
+					auto& mat = rc.material;
+					{
+						// i presume this sets which texture unit to use
+						glUniform1i(sprog.getUniform("material.diffuseTexture"), 0);
+						glUniform1i(sprog.getUniform("material.specularTexture"), 1);
+
+						glUniform1f(sprog.getUniform("material.shine"), mat.hasValue ? mat.shine : 32.0f);
+
+						if(!mat.hasValue) assert(rc.textureToBind != (GLuint) -1);
+
+						// diffuse map is compulsory
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, mat.hasValue ? mat.diffuseMap->glTextureID : rc.textureToBind);
+
+						// specular is not
+						if(mat.specularMap != 0)
+							glActiveTexture(GL_TEXTURE1), glBindTexture(GL_TEXTURE_2D, mat.specularMap->glTextureID);
+
+						glActiveTexture(GL_TEXTURE0);
+
+						// set the colours so that multiplying by them does nothing.
+						glUniform4fv(sprog.getUniform("material.ambientColour"), 1, glm::value_ptr(glm::vec4(1.0)));
+						glUniform4fv(sprog.getUniform("material.diffuseColour"), 1, glm::value_ptr(glm::vec4(1.0)));
+						glUniform4fv(sprog.getUniform("material.specularColour"), 1, glm::value_ptr(glm::vec4(1.0)));
+					}
+
+
+
 
 					glDrawArrays(rc.wireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
