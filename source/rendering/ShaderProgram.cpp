@@ -11,6 +11,8 @@
 
 using namespace AssetLoader;
 
+#define DUMP_UNIFORM_LOCATIONS 0
+
 namespace Rx
 {
 	static std::vector<stx::string_view> splitString(const char* str, size_t length)
@@ -225,7 +227,8 @@ namespace Rx
 			GLuint loc = glGetUniformLocation(this->progId, name.c_str());
 			this->uniformLocations[name] = loc;
 
-			LOG("Uniform '%s' = %d", name.c_str(), loc);
+			if(DUMP_UNIFORM_LOCATIONS)
+				LOG("Uniform '%s' = %d", name.c_str(), loc);
 		}
 		LOG("Cached %d uniform locations in shader program '%s'\n", activeUniforms, this->name.c_str());
 	}

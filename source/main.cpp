@@ -177,7 +177,9 @@ int main(int argc, char** argv)
 
 
 		Rx::Camera cam;
-		cam.position = glm::vec3(2.5, 0.7, 0.6);
+		cam.position = glm::vec3(0, 1, 2);
+		cam.yaw = -90;
+		cam.pitch = -20;
 
 		// setup the renderer. there's many parameters here...
 		theRenderer = new Rx::Renderer(window, glcontext,
@@ -190,8 +192,8 @@ int main(int argc, char** argv)
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.7);
-		theRenderer->addPointLight(Rx::PointLight(glm::vec3(8, 0, 0), util::colour::white(), util::colour::white(),
+		theRenderer->setAmbientLighting(util::colour::white(), 0.3);
+		theRenderer->addPointLight(Rx::PointLight(glm::vec3(0, 2, 8), util::colour::white(), util::colour::white(),
 			1.0, 1.0, 0.022, 0.0019));
 	}
 
@@ -340,8 +342,9 @@ int main(int argc, char** argv)
 
 		// theRenderer->renderMesh(Rx::Mesh::getUnitCube(), glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 
-		theRenderer->renderModel(model, glm::translate(glm::mat4(), glm::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
-		theRenderer->renderMesh(Rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderModel(model, glm::translate(glm::mat4(), glm::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
+		// theRenderer->renderMesh(Rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		theRenderer->renderMesh(Rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec4(1.0));
 
 		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, 0, 2)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), glm::vec3(0, 20, 0)), util::colour::white());
@@ -351,10 +354,10 @@ int main(int argc, char** argv)
 
 		if((true))
 		{
-			std::string fpsstr = tfm::format("%.2f fps / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (%.0f, %.0f)", currentFps,
+			std::string fpsstr = tfm::format("%.2f fps / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)", currentFps,
 				theRenderer->getCamera().position.x, theRenderer->getCamera().position.y, theRenderer->getCamera().position.z,
 				Input::getMousePos(&gameState->inputState).x, Input::getMousePos(&gameState->inputState).y,
-				theRenderer->getCamera().pitch, theRenderer->getCamera().yaw);
+				theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
 
 			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
 

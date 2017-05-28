@@ -172,45 +172,29 @@ namespace Rx
 
 	void Renderer::setAmbientLighting(glm::vec4 colour, float intensity)
 	{
-		glUseProgram(this->colourShaderProgram.progId);
-		auto colourLoc = glGetUniformLocation(this->colourShaderProgram.progId, "ambientLightColour");
-		auto intensityLoc = glGetUniformLocation(this->colourShaderProgram.progId, "ambientLightIntensity");
+		// set for both
+		this->colourShaderProgram.use();
+		{
+			auto colourLoc = this->colourShaderProgram.getUniform("ambientLightColour");
+			auto intensityLoc = this->colourShaderProgram.getUniform("ambientLightIntensity");
 
-		glUniform4fv(colourLoc, 1, glm::value_ptr(colour));
-		glUniform1f(intensityLoc, intensity);
+			glUniform4fv(colourLoc, 1, glm::value_ptr(colour));
+			glUniform1f(intensityLoc, intensity);
+		}
 
-		// done
+		this->textureShaderProgram.use();
+		{
+			auto colourLoc = this->textureShaderProgram.getUniform("ambientLightColour");
+			auto intensityLoc = this->textureShaderProgram.getUniform("ambientLightIntensity");
+
+			glUniform4fv(colourLoc, 1, glm::value_ptr(colour));
+			glUniform1f(intensityLoc, intensity);
+		}
 	}
 
 	void Renderer::addPointLight(Rx::PointLight light)
 	{
 		light.intensity = glm::clamp(light.intensity, 0.0f, 1.0f);
-
-		// cache the uniform locations
-		auto prog = this->colourShaderProgram.progId;
-		glUseProgram(prog);
-		for(size_t ctr = 0; ctr < MAX_POINT_LIGHTS; ctr++)
-		{
-			GLuint position = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].position").c_str());
-			GLuint intensity = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].intensity").c_str());
-			GLuint diffColour = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].diffuseColour").c_str());
-			GLuint specColour = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].specularColour").c_str());
-			GLuint constant = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].constantFactor").c_str());
-			GLuint linear = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].linearFactor").c_str());
-			GLuint quad = glGetUniformLocation(prog, ("pointLights[" + std::to_string(ctr) + "].quadFactor").c_str());
-
-			assert(position != (GLuint) -1);
-			assert(intensity != (GLuint) -1);
-			assert(diffColour != (GLuint) -1);
-			assert(specColour != (GLuint) -1);
-			assert(constant != (GLuint) -1);
-			assert(linear != (GLuint) -1);
-			assert(quad != (GLuint) -1);
-
-			// light.uniformLocations[prog] = { position, intensity, diffColour, specColour, constant, linear, quad };
-			// printf("set location for prog %d (pos = %d)\n", prog, position);
-		}
-
 		this->pointLights.push_back(light);
 	}
 
@@ -373,15 +357,19 @@ namespace Rx
 	{
 		RenderCommand rc;
 
-		rc.type = RenderCommand::CommandType::RenderColouredVertices;
+		rc.type = RenderCommand::CommandType::RenderTexturedVertices;
+
+		static Surface* surf = new Surface("textures/box.png");
+		static Texture* text = new Texture(surf, this);
 
 		rc.dimensions = 3;
 		rc.isInScreenSpace = false;
-		rc.textureToBind = -1;
+		rc.textureToBind = text->glTextureID;
 
 		if(mesh.faces.empty())
 			ERROR("mesh (id %zu) needs at least one face", mesh.id);
 
+		int i = 0;
 		for(auto face : mesh.faces)
 		{
 			if(face.vertices.empty())
@@ -390,13 +378,16 @@ namespace Rx
 			for(auto v : face.vertices)
 			{
 				rc.vertices.push_back(transform * glm::vec4(v, 1.0));
-
-				// rc.colours.push_back(glm::vec4(0.24, 0.59, 0.77, 1.0));
 				rc.colours.push_back(col);
-				// rc.colours.push_back(glm::vec4(util::colour::random().toGL()));
 			}
+
+			for(auto t : face.uvs)
+				rc.uvs.push_back(t);
+
 			for(auto n : face.normals)
 				rc.normals.push_back(n);
+
+			i++;
 		}
 
 		this->renderList.push_back(rc);
@@ -483,11 +474,11 @@ namespace Rx
 
 
 		// render a cube at every point light
-		for(auto pl : this->pointLights)
-		{
-			this->renderMesh(Mesh::getUnitCube(), glm::translate(glm::scale(glm::mat4(), glm::vec3(0.2)), pl.position),
-				util::colour::white());
-		}
+		// for(auto pl : this->pointLights)
+		// {
+		// 	this->renderMesh(Mesh::getUnitCube(), glm::translate(glm::scale(glm::mat4(), glm::vec3(0.2)), pl.position),
+		// 		util::colour::white());
+		// }
 
 
 		for(auto rc : this->renderList)

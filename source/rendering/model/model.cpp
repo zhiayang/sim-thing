@@ -366,50 +366,50 @@ namespace Rx
 
 		Face top;
 		{
-			top.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));
-			top.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));
-			top.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));
-			top.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));
+			top.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));		top.uvs.push_back(glm::vec2(0.0, 1.0));
+			top.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));		top.uvs.push_back(glm::vec2(1.0, 1.0));
+			top.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));		top.uvs.push_back(glm::vec2(1.0, 0.0));
+			top.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));		top.uvs.push_back(glm::vec2(0.0, 0.0));
 		}
 
 		Face bottom;
 		{
-			bottom.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));
-			bottom.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));
-			bottom.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));
-			bottom.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));
+			bottom.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));	bottom.uvs.push_back(glm::vec2(0.0, 0.0));
+			bottom.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));	bottom.uvs.push_back(glm::vec2(1.0, 0.0));
+			bottom.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));	bottom.uvs.push_back(glm::vec2(1.0, 1.0));
+			bottom.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));	bottom.uvs.push_back(glm::vec2(0.0, 1.0));
 		}
 
 		Face left;
 		{
-			left.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));
-			left.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));
-			left.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));
-			left.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));
+			left.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));	left.uvs.push_back(glm::vec2(1.0, 0.0));
+			left.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));	left.uvs.push_back(glm::vec2(1.0, 1.0));
+			left.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));	left.uvs.push_back(glm::vec2(0.0, 1.0));
+			left.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));		left.uvs.push_back(glm::vec2(0.0, 0.0));
 		}
 
 		Face right;
 		{
-			right.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));
-			right.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));
-			right.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));
-			right.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));
+			right.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));	right.uvs.push_back(glm::vec2(0.0, 0.0));
+			right.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));		right.uvs.push_back(glm::vec2(1.0, 0.0));
+			right.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));	right.uvs.push_back(glm::vec2(1.0, 1.0));
+			right.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));	right.uvs.push_back(glm::vec2(0.0, 1.0));
 		}
 
 		Face front;
 		{
-			front.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));
-			front.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));
-			front.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));
-			front.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));
+			front.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));		front.uvs.push_back(glm::vec2(0.0, 0.0));
+			front.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));	front.uvs.push_back(glm::vec2(1.0, 0.0));
+			front.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));	front.uvs.push_back(glm::vec2(1.0, 1.0));
+			front.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));	front.uvs.push_back(glm::vec2(0.0, 1.0));
 		}
 
 		Face back;
 		{
-			back.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));
-			back.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));
-			back.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));
-			back.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));
+			back.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));		back.uvs.push_back(glm::vec2(0.0, 0.0));
+			back.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));	back.uvs.push_back(glm::vec2(0.0, 1.0));
+			back.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));	back.uvs.push_back(glm::vec2(1.0, 1.0));
+			back.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));	back.uvs.push_back(glm::vec2(1.0, 0.0));
 		}
 
 		ret.faces.push_back(top);

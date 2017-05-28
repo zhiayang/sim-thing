@@ -110,12 +110,23 @@ namespace Input
 		}
 		else
 		{
-			assert(e->type == SDL_MOUSEMOTION);
+			static bool firstMouse = true;
+			if(!firstMouse)
+			{
+				assert(e->type == SDL_MOUSEMOTION);
 
-			auto old = inputState->mousePosition;
+				auto old = inputState->mousePosition;
 
-			inputState->mousePosition = glm::vec2(e->motion.x, e->motion.y);
-			inputState->mouseDelta = inputState->mousePosition - old;
+				inputState->mousePosition = glm::vec2(e->motion.x, e->motion.y);
+				inputState->mouseDelta = inputState->mousePosition - old;
+			}
+			else
+			{
+				inputState->mousePosition = glm::vec2(e->motion.x, e->motion.y);
+				inputState->mouseDelta = glm::vec2(0);
+			}
+
+			firstMouse = false;
 		}
 	}
 
