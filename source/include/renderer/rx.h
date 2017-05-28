@@ -41,6 +41,8 @@ namespace glm
 namespace Rx
 {
 	struct Model;
+	struct Mesh;
+
 	enum class TextAlignment
 	{
 		Invalid,
@@ -106,7 +108,8 @@ namespace Rx
 		void renderStringInNormalisedScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos,
 			TextAlignment align = TextAlignment::LeftAligned);
 
-		void renderModel(Model* model, glm::mat4 transform, glm::vec4 col);
+		void renderMesh(const Mesh& mesh, glm::mat4 transform, glm::vec4 col);
+		void renderModel(const Model& model, glm::mat4 transform, glm::vec4 col);
 
 		void updateCamera(const Camera& cam);
 		Camera getCamera();

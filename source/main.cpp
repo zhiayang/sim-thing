@@ -12,8 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "renderer/rx.h"
-
-#include "model.h"
+#include "renderer/model.h"
 
 #include "config.h"
 #include "tinyformat.h"
@@ -55,13 +54,6 @@ namespace Rx
 			else if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
 			{
 				assert(theRenderer);
-				// auto sdlw = theRenderer->window->sdlWin;
-
-				// int w = 0;
-				// int h = 0;
-				// SDL_GetWindowSize(sdlw, &w, &h);
-
-				LOG("resize");
 				theRenderer->updateWindowSize(event.window.data1, event.window.data2);
 			}
 		}
@@ -131,30 +123,12 @@ int main(int argc, char** argv)
 
 	auto primaryFont = Rx::getFont("menlo", 64, ' ', 0xFF - ' ', 2, 2);
 
-
-	// initialise some things
-	// todo: this should go into some savefile-parsing system that does the necessary stuff
-	// also should probably be more automatic than this
-	gameState = new Sotv::GameState();
-	gameState->playerStation = Sotv::Station::makeDefaultSpaceStation("");
-
-
 	double accumulator = 0.0;
 	double frameTime = S_TO_NS(0.01667);
 	double currentFps = 0.0;
 
 	double prevTimestamp = util::Time::ns();
 	double renderDelta = 0;
-
-
-	Input::addKeyHandler(&gameState->inputState, Input::Key::Space, 0, [](Input::State* s, Input::Key k, double) -> bool {
-
-		LOG("Life Support: %s", gameState->playerStation->lifeSupportSystem->toggle() ? "on" : "off");
-		return true;
-
-	}, Input::HandlerKind::PressDown);
-
-
 
 
 	auto textureProg = Rx::ShaderProgram("simpleTexture");
@@ -181,30 +155,38 @@ int main(int argc, char** argv)
 
 		// setup the renderer. there's many parameters here...
 		theRenderer = new Rx::Renderer(window, glcontext,
-			util::colour(3, 3, 3, 255),			// clear colour
-			cam,									// camera
-			textureProg, colourProg, textProg,		// shader programs for textured objects, coloured objects, and text.
-			glm::radians(70.0f),					// FOV, 70 degrees
-			rx, ry, sx,								// window res (x, y), and scale (2 for retina, 1 for normal)
-			0.001, 1000								// near plane, far plane
+			util::colour(0.01, 0.01, 0.01),		// clear colour
+			cam,								// camera
+			textureProg, colourProg, textProg,	// shader programs for textured objects, coloured objects, and text.
+			glm::radians(70.0f),				// FOV, 70 degrees
+			rx, ry, sx,							// window res (x, y), and scale (2 for retina, 1 for normal)
+			0.001, 1000							// near plane, far plane
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.3);
+		theRenderer->setAmbientLighting(util::colour::white(), 0.7);
 		theRenderer->addPointLight(Rx::PointLight(glm::vec3(8, 0, 0), util::colour::white(), util::colour::white(),
 			1.0, 1.0, 0.022, 0.0019));
-
-		// theRenderer->addPointLight(Rx::PointLight(glm::vec3(10, 0, 0), util::colour::white(), util::colour::white(),
-		// 	1.0, 1.0, 0.045, 0.0075));
-
-		// theRenderer->addPointLight(Rx::PointLight(glm::vec3(15, 0, 0), util::colour::white(), 1.0));
 	}
 
+
+	// initialise some things
+	// todo: this should go into some savefile-parsing system that does the necessary stuff
+	// also should probably be more automatic than this
+	gameState = new Sotv::GameState();
+	gameState->playerStation = Sotv::Station::makeDefaultSpaceStation("");
+
+	Input::addKeyHandler(&gameState->inputState, Input::Key::Space, 0, [](Input::State* s, Input::Key k, double) -> bool {
+
+		LOG("Life Support: %s", gameState->playerStation->lifeSupportSystem->toggle() ? "on" : "off");
+		return true;
+
+	}, Input::HandlerKind::PressDown);
 
 	Input::addKeyHandler(&gameState->inputState, Input::Key::W, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position += cam.front() * 0.01f;
+		cam.position += cam.front() * 0.005f;
 		theRenderer->updateCamera(cam);
 
 		return true;
@@ -214,7 +196,7 @@ int main(int argc, char** argv)
 	Input::addKeyHandler(&gameState->inputState, Input::Key::S, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position -= cam.front() * 0.01f;
+		cam.position -= cam.front() * 0.005f;
 		theRenderer->updateCamera(cam);
 
 		return true;
@@ -224,7 +206,7 @@ int main(int argc, char** argv)
 	Input::addKeyHandler(&gameState->inputState, Input::Key::A, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position -= cam.right() * 0.01f;
+		cam.position -= cam.right() * 0.005f;
 		theRenderer->updateCamera(cam);
 
 		return true;
@@ -234,7 +216,7 @@ int main(int argc, char** argv)
 	Input::addKeyHandler(&gameState->inputState, Input::Key::D, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position += cam.right() * 0.01f;
+		cam.position += cam.right() * 0.005f;
 		theRenderer->updateCamera(cam);
 
 		return true;
@@ -244,7 +226,7 @@ int main(int argc, char** argv)
 	Input::addKeyHandler(&gameState->inputState, Input::Key::ShiftL, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position.y += 0.01;
+		cam.position.y += 0.005;
 		theRenderer->updateCamera(cam);
 
 		return true;
@@ -254,7 +236,7 @@ int main(int argc, char** argv)
 	Input::addKeyHandler(&gameState->inputState, Input::Key::SuperL, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		auto cam = theRenderer->getCamera();
-		cam.position.y -= 0.01;
+		cam.position.y -= 0.005;
 		theRenderer->updateCamera(cam);
 
 		return true;
@@ -263,7 +245,7 @@ int main(int argc, char** argv)
 
 
 
-	// auto model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"), 1.0 / 20000.0);
+	auto model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"), 1.0 / 20000.0);
 	// Rx::Model* cube = Rx::Model::getUnitCube();
 	// cube = model;
 
@@ -330,10 +312,12 @@ int main(int argc, char** argv)
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
 
-		theRenderer->renderModel(Rx::Model::getUnitCube(), glm::mat4(), glm::vec4(0.24, 0.59, 0.77, 1.0));
-		theRenderer->renderModel(Rx::Model::getUnitCube(), glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
-		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, 0, 2)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderMesh(Rx::Mesh::getUnitCube(), glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 
+		theRenderer->renderModel(model, glm::translate(glm::mat4(), glm::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
+		theRenderer->renderMesh(Rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+
+		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, 0, 2)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), glm::vec3(0, 20, 0)), util::colour::white());
 
 

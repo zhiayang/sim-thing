@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include <SDL2/SDL.h>
+#include <glbinding/gl/types.h>
 
 #include "utilities.h"
 
@@ -18,23 +18,16 @@ namespace AssetLoader
 	struct Asset;
 }
 
+struct SDL_Window;
+
 namespace Rx
 {
 	struct Renderer;
 
 	struct Window
 	{
-		Window(std::string title, int w, int h, bool resizeable) : width(w), height(h)
-		{
-			this->sdlWin = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
-				SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | (resizeable ? SDL_WINDOW_RESIZABLE : 0));
-
-			if(!this->sdlWin) ERROR("Failed to initialise SDL Window! (%dx%d)", w, h);
-
-			LOG("Created new SDL Window with dimensions %dx%d", this->width, this->height);
-		}
-
-		~Window() { SDL_DestroyWindow(this->sdlWin); }
+		Window(std::string title, int w, int h, bool resizeable);
+		~Window();
 		SDL_Window* sdlWin;
 
 		int width;
@@ -43,33 +36,42 @@ namespace Rx
 
 
 
+	enum class ImageFormat
+	{
+		Invalid,
+		RGB,
+		RGBA
+	};
+
 	struct Surface
 	{
 		Surface(std::string path);
 		Surface(AssetLoader::Asset* ass);
 		~Surface();
 
-		SDL_Surface* sdlSurf;
-		AssetLoader::Asset* asset;
+		uint8_t* data = 0;
+		size_t width = 0;
+		size_t height = 0;
 
-
-		private:
-			Surface(SDL_Surface* sdlSurf);
+		ImageFormat format = ImageFormat::Invalid;
 	};
 
 	struct Texture
 	{
+		Texture(Surface* surf, Renderer* rend);
 		Texture(std::string path, Renderer* rend);
 		Texture(AssetLoader::Asset* ass, Renderer* rend);
-		Texture(Surface* surf, Renderer* rend);
 		~Texture();
 
-		SDL_Texture* sdlTexture;
-		uint32_t glTextureID;
-		Surface* surf;
+		gl::GLuint glTextureID;
 
-		uint64_t width;
-		uint64_t height;
+		bool ownSurface = false;
+		Surface* surf = 0;
+
+		uint64_t width = 0;
+		uint64_t height = 0;
+
+		ImageFormat format = ImageFormat::Invalid;
 	};
 }
 

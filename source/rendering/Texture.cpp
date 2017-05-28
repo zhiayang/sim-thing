@@ -17,7 +17,7 @@ namespace Rx
 
 	Texture::Texture(AssetLoader::Asset* ass, Renderer* r) : Texture(new Surface(ass), r)
 	{
-
+		this->ownSurface = true;
 	}
 
 	Texture::Texture(Surface* surf, Renderer*)
@@ -27,8 +27,9 @@ namespace Rx
 
 		this->surf = surf;
 
-		this->width = this->surf->sdlSurf->w;
-		this->height = this->surf->sdlSurf->h;
+		this->width = this->surf->width;
+		this->height = this->surf->height;
+		this->format = this->surf->format;
 
 		// do opengl shit.
 
@@ -36,36 +37,34 @@ namespace Rx
 		GL::pushTextureBinding(this->glTextureID);
 
 		GLenum texmode;
-		if(this->surf->sdlSurf->format->BytesPerPixel == 4)
+		if(this->format == ImageFormat::RGBA)
 		{
 			texmode = GL_RGBA;
 		}
-		else
+		else if(this->format == ImageFormat::RGB)
 		{
 			texmode = GL_RGB;
 		}
+		else
+		{
+			texmode = GL_INVALID_ENUM;
+			ERROR("Unsupported surface format for texture");
+		}
 
-		glTexImage2D(GL_TEXTURE_2D, 0, texmode, this->width, this->height, 0, texmode, GL_UNSIGNED_BYTE, this->surf->sdlSurf->pixels);
+		glTexImage2D(GL_TEXTURE_2D, 0, texmode, this->width, this->height, 0, texmode, GL_UNSIGNED_BYTE, this->surf->data);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		GL::popTextureBinding();
-
-
-		// this is another one of those "retina" hacks.
-		if(ImGui::GetIO().DisplayFramebufferScale.x != 1.0 || ImGui::GetIO().DisplayFramebufferScale.y != 1.0)
-		{
-			// then we report our size as half our actual size.
-			this->width /= 2;
-			this->height /= 2;
-		}
 	}
 
 	Texture::~Texture()
 	{
 		gl::glDeleteTextures(1, &this->glTextureID);
-		delete this->surf;
+
+		if(this->ownSurface)
+			delete this->surf;
 	}
 }
 

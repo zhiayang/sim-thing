@@ -87,7 +87,7 @@ namespace Rx
 				ERROR("Error linking program: '%s'", errmsg);
 			}
 		}
-		LOG("Linked shader program with ID %d\n", progID);
+		LOG("Linked shader program with ID %d", progID);
 
 		glDetachShader(progID, vShaderID);
 		glDetachShader(progID, fShaderID);
@@ -115,7 +115,6 @@ namespace Rx
 		glGetProgramiv(this->progId, GL_ACTIVE_UNIFORMS, &activeUniforms);
 		this->use();
 
-		LOG("Caching %d uniform locations in shader program '%s'", activeUniforms, this->name.c_str());
 		for(int unf = 0; unf < activeUniforms; unf++)
 		{
 			char* namebuf = new char[512];
@@ -130,6 +129,7 @@ namespace Rx
 
 			LOG("Uniform '%s' = %d", name.c_str(), loc);
 		}
+		LOG("Cached %d uniform locations in shader program '%s'\n", activeUniforms, this->name.c_str());
 	}
 
 	gl::GLuint ShaderProgram::getUniform(std::string name)

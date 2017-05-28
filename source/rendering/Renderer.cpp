@@ -5,9 +5,10 @@
 #include <unordered_map>
 #include <algorithm>
 
-#include "model.h"
+
 #include "glwrapper.h"
 #include "renderer/rx.h"
+#include "renderer/model.h"
 
 #include "utf8rewind.h"
 
@@ -67,6 +68,9 @@ namespace Rx
 
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -381,7 +385,7 @@ namespace Rx
 
 
 
-	void Renderer::renderModel(Model* model, glm::mat4 transform, glm::vec4 col)
+	void Renderer::renderMesh(const Mesh& mesh, glm::mat4 transform, glm::vec4 col)
 	{
 		RenderCommand rc;
 
@@ -391,9 +395,14 @@ namespace Rx
 		rc.isInScreenSpace = false;
 		rc.textureToBind = -1;
 
+		if(mesh.faces.empty())
+			ERROR("mesh (id %zu) needs at least one face", mesh.id);
 
-		for(auto face : model->faces)
+		for(auto face : mesh.faces)
 		{
+			if(face.vertices.empty())
+				ERROR("face needs at least one vertex");
+
 			for(auto v : face.vertices)
 			{
 				rc.vertices.push_back(transform * glm::vec4(v, 1.0));
@@ -407,6 +416,13 @@ namespace Rx
 		}
 
 		this->renderList.push_back(rc);
+	}
+
+
+	void Renderer::renderModel(const Model& model, glm::mat4 transform, glm::vec4 col)
+	{
+		for(auto mesh : model.objects)
+			this->renderMesh(mesh.first, transform, col);
 	}
 
 
@@ -447,7 +463,7 @@ namespace Rx
 
 	void Renderer::renderAll()
 	{
-		glClearColor(this->clearColour.fr, this->clearColour.fg, this->clearColour.fb, this->clearColour.fa);
+		glClearColor(this->clearColour.r, this->clearColour.g, this->clearColour.b, this->clearColour.a);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		double rscale = this->_resolutionScale;
@@ -470,7 +486,7 @@ namespace Rx
 		// render a cube at every point light
 		for(auto pl : this->pointLights)
 		{
-			this->renderModel(Model::getUnitCube(), glm::translate(glm::scale(glm::mat4(), glm::vec3(0.2)), pl.position),
+			this->renderMesh(Mesh::getUnitCube(), glm::translate(glm::scale(glm::mat4(), glm::vec3(0.2)), pl.position),
 				util::colour::white());
 		}
 

@@ -8,9 +8,9 @@
 #include <functional>
 #include <unordered_map>
 
-#include <SDL2/SDL.h>
-
 #include <glm/vec2.hpp>
+
+union SDL_Event;
 
 namespace Input
 {

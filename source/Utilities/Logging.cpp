@@ -84,5 +84,7 @@ namespace Logging
 		va_start(ap, fmt);
 		LogGeneric(2, 0, fmt, ap);
 		va_end(ap);
+
+		__builtin_unreachable();
 	}
 }

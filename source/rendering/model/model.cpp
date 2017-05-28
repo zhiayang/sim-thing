@@ -2,10 +2,11 @@
 // Copyright (c) 2014 - 2016, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
-#include "model.h"
+
 #include "utilities.h"
 
 #include "renderer/rx.h"
+#include "renderer/model.h"
 
 #include <glm/glm.hpp>
 
@@ -19,9 +20,15 @@ using namespace AssetLoader;
 namespace Rx
 {
 	// given 4 vertices, returns 6 vertices which are the triangles of the quad.
-	static Model::Face triangulateQuadFace(Model::Face face);
-	static glm::vec3 calculateNormalForFace(Model::Face face);
-	static void loadWavefrontOBJIntoModel(Asset* asset, Model* model, double scale);
+	static Face triangulateQuadFace(Face face);
+	static glm::vec3 calculateNormalForFace(Face face);
+	static Model loadModelFromWavefrontOBJ(Asset* asset, double scale);
+
+	Mesh::Mesh()
+	{
+		static id_t __id = 1;
+		this->id = __id++;
+	}
 
 	Model::Model()
 	{
@@ -29,31 +36,32 @@ namespace Rx
 		this->id = __id++;
 	}
 
-
-	Model* loadModelFromAsset(Asset* asset, double scale)
+	void Model::addMesh(const Mesh& mesh, const Material& mat)
 	{
-		Model* model = new Model();
+		this->objects.push_back(std::make_pair(mesh, mat));
+	}
 
+
+	Model loadModelFromAsset(Asset* asset, double scale)
+	{
 		switch(asset->type)
 		{
-			case AssetType::ModelOBJ: {
-				loadWavefrontOBJIntoModel(asset, model, scale);
-			} break;
+			case AssetType::ModelOBJ:
+				return loadModelFromWavefrontOBJ(asset, scale);
 
 			default:
 				ERROR("Invalid asset to load model from (type %d)", asset->type);
-
 		}
-
-		return model;
 	}
 
 
 
 
-	static void loadWavefrontOBJIntoModel(Asset* ass, Model* mdl, double scale)
+	static Model loadModelFromWavefrontOBJ(Asset* ass, double scale)
 	{
 		// split into lines
+		Model model;
+
 		std::vector<stx::string_view> lines;
 		{
 			auto view = stx::string_view((char*) ass->raw, ass->length);
@@ -99,7 +107,13 @@ namespace Rx
 			std::vector<int64_t> uvIndices;
 		};
 
-		std::vector<IndexedFace> ifaces;
+		struct ObjectGroup
+		{
+			std::string name;
+			std::vector<IndexedFace> ifaces;
+		};
+
+		std::vector<ObjectGroup> objs;
 
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normals;
@@ -177,7 +191,7 @@ namespace Rx
 						iface.uvIndices.push_back(t);
 
 						line.remove_prefix(didread);
-						fprintf(stderr, "face vert %f/%f/%f\n", v, n, t);
+						// fprintf(stderr, "face vert %f/%f/%f\n", v, n, t);
 					}
 					else
 					{
@@ -185,18 +199,34 @@ namespace Rx
 					}
 				}
 
-				fprintf(stderr, "face with %zu verts\n\n", iface.vertexIndices.size());
-				ifaces.push_back(iface);
+				// fprintf(stderr, "face with %zu verts\n\n", iface.vertexIndices.size());
+				if(objs.empty())
+				{
+					LOG("No object group specified for face, assuming default");
+					objs.push_back(ObjectGroup());
+				}
+
+				// LOG("face");
+				objs.back().ifaces.push_back(iface);
 			}
 			else if(line.find("mtllib") == 0 || line.find("usemtl") == 0)
 			{
 				// skip
 				LOG("Ignoring materials in OBJ file");
 			}
-			else if(line.find("o") == 0 || line.find("g") == 0 || line.find("s") == 0)
+			else if(line.find("o") == 0)
+			{
+				// each 'group' would represent a mesh, I guess.
+				// not sure if OBJ files *need* a group...
+
+				ObjectGroup og;
+				og.name = line.substr(2).to_string();
+				objs.push_back(og);
+			}
+			else if(line.find("g") == 0 || line.find("s") == 0)
 			{
 				// ignore groups and shading
-				LOG("Ignoring object groups and shading in OBJ file");
+				LOG("Ingoring polygon groups and shading in OBJ file");
 			}
 			else
 			{
@@ -207,34 +237,51 @@ namespace Rx
 			ln++;
 		}
 
-		for(auto iface : ifaces)
+		size_t faceCount = 0;
+		for(auto obj : objs)
 		{
-			using Face = Model::Face;
+			Mesh mesh;
+			mesh.name = obj.name;
 
-			Face face;
-			for(auto vi : iface.vertexIndices)
-				face.vertices.push_back(vertices[vi - 1] * (float) scale);
+			faceCount += obj.ifaces.size();
 
-			for(auto ni : iface.normalIndices)
-				face.normals.push_back(normals[ni - 1]);
+			for(auto iface : obj.ifaces)
+			{
+				Face face;
+				for(auto vi : iface.vertexIndices)
+					face.vertices.push_back(vertices[vi - 1] * (float) scale);
 
-			for(auto ti : iface.uvIndices)
-				face.uvs.push_back(uvs[ti - 1]);
+				for(auto ni : iface.normalIndices)
+					face.normals.push_back(normals[ni - 1]);
+
+				for(auto ti : iface.uvIndices)
+					face.uvs.push_back(uvs[ti - 1]);
 
 
-			if(face.vertices.size() != 3 && face.vertices.size() != 4)
-				ERROR("Unsupported OBJ file with '%zu' vertices per face; only triangles (3) or quads (4) are supported", face.vertices.size());
+				if(face.vertices.size() != 3 && face.vertices.size() != 4)
+				{
+					ERROR("Unsupported OBJ file with '%zu' vertices per face; only triangles (3) or quads (4) are supported",
+						face.vertices.size());
+				}
 
-			if(face.vertices.size() == 4)
-				face = triangulateQuadFace(face);
+				if(face.vertices.size() == 4)
+					face = triangulateQuadFace(face);
 
-			face.faceNormal = calculateNormalForFace(face);
-			mdl->faces.push_back(face);
+				face.faceNormal = calculateNormalForFace(face);
+
+				mesh.faces.push_back(face);
+			}
+
+			model.addMesh(mesh, Material());
 		}
+
+		LOG("Loaded model with %zu faces", faceCount);
+
+		return model;
 	}
 
 
-	static Model::Face triangulateQuadFace(Model::Face face)
+	static Face triangulateQuadFace(Face face)
 	{
 		std::vector<glm::vec3> verts;
 		std::vector<glm::vec3> norms;
@@ -281,7 +328,7 @@ namespace Rx
 			verts.push_back(c);		uvs.push_back(ct);		norms.push_back(cn);
 		}
 
-		Model::Face ret;
+		Face ret;
 
 		ret.vertices = verts;
 		ret.normals = norms;
@@ -294,7 +341,7 @@ namespace Rx
 
 
 
-	static glm::vec3 calculateNormalForFace(Model::Face face)
+	static glm::vec3 calculateNormalForFace(Face face)
 	{
 		// note: there's an implicit understanding here. if we're given a quad face, then the normal of
 		// that quad face should equal the normal of the 2 triangles, since they must lie in the same plane.
@@ -312,10 +359,10 @@ namespace Rx
 
 
 
-	Model* Model::getUnitCube()
+	Mesh Mesh::getUnitCube()
 	{
-		Model* ret = new Model();
-		ret->name = "unit_cube";
+		Mesh ret;
+		ret.name = "unit_cube";
 
 		Face top;
 		{
@@ -365,14 +412,14 @@ namespace Rx
 			back.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));
 		}
 
-		ret->faces.push_back(top);
-		ret->faces.push_back(bottom);
-		ret->faces.push_back(left);
-		ret->faces.push_back(right);
-		ret->faces.push_back(front);
-		ret->faces.push_back(back);
+		ret.faces.push_back(top);
+		ret.faces.push_back(bottom);
+		ret.faces.push_back(left);
+		ret.faces.push_back(right);
+		ret.faces.push_back(front);
+		ret.faces.push_back(back);
 
-		for(auto& face : ret->faces)
+		for(auto& face : ret.faces)
 		{
 			face = triangulateQuadFace(face);
 			face.faceNormal = calculateNormalForFace(face);

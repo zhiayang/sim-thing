@@ -13,10 +13,10 @@
 #include <glbinding/gl/gl.h>
 
 #define STB_RECT_PACK_IMPLEMENTATION
-#include "stb_pack_rect.h"
+#include "stb/stb_pack_rect.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
+#include "stb/stb_truetype.h"
 
 namespace Rx
 {
@@ -84,8 +84,9 @@ namespace Rx
 		memset(font->atlas, 0, font->atlasWidth * font->atlasHeight);
 
 
-		LOG("Allocated a %s font atlas (%zux%zu) for font '%s'", Units::formatWithUnits(font->atlasWidth * font->atlasHeight, 1, "B").c_str(),
-			font->atlasWidth, font->atlasHeight, name.c_str());
+		LOG("Allocated a %s font atlas (%zux%zu) for font '%s' at size %zupx",
+			Units::formatWithUnits(font->atlasWidth * font->atlasHeight, 1, "B").c_str(), font->atlasWidth, font->atlasHeight,
+			name.c_str(), pixelSize);
 
 
 		stbtt_InitFont(&font->fontInfo, font->ttfBuffer, 0);

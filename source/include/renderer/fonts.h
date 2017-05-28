@@ -15,7 +15,7 @@
 
 #include <glm/mat4x4.hpp>
 
-#include "stb_truetype.h"
+#include "stb/stb_truetype.h"
 
 namespace Rx
 {

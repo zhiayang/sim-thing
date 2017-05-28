@@ -7,8 +7,7 @@
 #include "config.h"
 #include "renderer/rx.h"
 
-#include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_image.h>
+#include <SDL2/SDL.h>
 
 #include <glbinding/gl/gl.h>
 #include <glbinding/Binding.h>
@@ -21,20 +20,8 @@ namespace Rx
 		{
 			auto err = SDL_Init(SDL_INIT_EVERYTHING);
 			if(err)	ERROR("SDL failed to initialise, subsystem flags: %d", SDL_INIT_EVERYTHING);
-
-			// init SDL_Image
-			if(IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG)
-				ERROR("Failed to initialise SDL2_image library");
-
-			TTF_Init();
 		}
 
-
-
-
-
-		// ImGuiIO& io = ImGui::GetIO();
-		// io.DisplaySize = { (float) width, (float) height };
 
 		// Setup window
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -47,9 +34,6 @@ namespace Rx
 		SDL_CaptureMouse((SDL_bool) true);
 		SDL_GL_SetSwapInterval(1);
 
-		SDL_DisplayMode current;
-		SDL_GetCurrentDisplayMode(0, &current);
-
 
 		Rx::Window* window = new Rx::Window("connect", Config::getResX(), Config::getResY(), true);
 		SDL_GLContext glcontext = SDL_GL_CreateContext(window->sdlWin);
@@ -58,10 +42,26 @@ namespace Rx
 
 		glbinding::Binding::initialize();
 
-		// Setup ImGui binding
-		// ImGui_ImplSdl_Init(window->sdlWin);
-
 		return { glcontext, window };
+	}
+
+
+
+
+
+	Window::Window(std::string title, int w, int h, bool resizeable) : width(w), height(h)
+	{
+		this->sdlWin = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
+			SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | (resizeable ? SDL_WINDOW_RESIZABLE : 0));
+
+		if(!this->sdlWin) ERROR("Failed to initialise SDL Window! (%dx%d)", w, h);
+
+		LOG("Created new SDL Window with dimensions %dx%d", this->width, this->height);
+	}
+
+	Window::~Window()
+	{
+		SDL_DestroyWindow(this->sdlWin);
 	}
 }
 
