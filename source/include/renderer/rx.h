@@ -143,17 +143,6 @@ namespace Rx
 			ShaderProgram colourShaderProgram;
 			ShaderProgram textShaderProgram;
 
-			gl::GLuint modelMatrixId_colourShader = -1;
-			gl::GLuint viewMatrixId_colourShader = -1;
-			gl::GLuint projMatrixId_colourShader = -1;
-
-			gl::GLuint modelMatrixId_textureShader = -1;
-			gl::GLuint viewMatrixId_textureShader = -1;
-			gl::GLuint projMatrixId_textureShader = -1;
-
-			gl::GLuint orthoProjectionMatrixId = -1;
-
-
 			std::vector<RenderCommand> renderList;
 	};
 

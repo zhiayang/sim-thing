@@ -7,16 +7,25 @@
 #include <stdint.h>
 
 #include <string>
+#include <vector>
 #include <unordered_map>
 
 #include <glbinding/gl/types.h>
 
 namespace Rx
 {
+	struct ShaderSource
+	{
+		// this is just a reference for us now
+		std::string glslVersion;
+
+		std::string vertexShaderPath;
+		std::string fragmentShaderPath;
+	};
+
 	struct ShaderProgram
 	{
-		ShaderProgram(std::string name);
-		ShaderProgram(std::string vertShaderPath, std::string fragShaderPath);
+		ShaderProgram(std::string shaderName, ShaderSource source);
 
 		void use();
 

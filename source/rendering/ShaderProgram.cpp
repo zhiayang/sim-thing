@@ -6,13 +6,105 @@
 #include "assetloader.h"
 #include "renderer/shaders.h"
 
+#include "stx/string_view.hpp"
 #include <glbinding/gl/gl.h>
 
 using namespace AssetLoader;
 
 namespace Rx
 {
-	static gl::GLuint compileAndLinkGLShaderProgram(std::string vertexPath, std::string fragmentPath)
+	static std::vector<stx::string_view> splitString(const char* str, size_t length)
+	{
+		std::vector<stx::string_view> lines;
+		auto view = stx::string_view(str, length);
+
+		while(true)
+		{
+			size_t ln = view.find("\n");
+
+			if(ln != stx::string_view::npos)
+			{
+				// fuck windows line endings
+				if(view.length() > 1 && view.data()[ln - 1] == '\r')
+				{
+					// don't +1 because we don't want the \n in the line itself
+					lines.push_back(stx::string_view(view.data(), ln - 1));
+				}
+				else
+				{
+					// don't +1 because we don't want the \n in the line itself
+					lines.push_back(stx::string_view(view.data(), ln));
+				}
+
+				// +1 here because we want to remove the \n from the stream.
+				view.remove_prefix(ln + 1);
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		return lines;
+	}
+
+	static std::string loadShaderSource(std::string path, std::string kind)
+	{
+		Asset* shaderAsset = AssetLoader::Load(path.c_str());
+		auto lines = splitString((const char*) shaderAsset->raw, shaderAsset->length);
+
+		std::vector<std::string> finalLines;
+		{
+			size_t linenum = 1;
+			for(auto line : lines)
+			{
+				if(line.find("#include ") == 0)
+				{
+					line.remove_prefix(strlen("#include "));
+					if(line.empty() || line[0] != '"')
+					{
+						ERROR("Syntax error while preprocessing %s shader %s:%zu: malformed include directive, missing opening ' \
+							\"' after #include", kind.c_str(), path.c_str(), linenum);
+					}
+
+					line.remove_prefix(1);
+					if(line.back() != '"')
+					{
+						ERROR("Syntax error while preprocessing %s shader %s:%zu: malformed include directive, missing closing '\"'",
+							kind.c_str(), path.c_str(), linenum);
+					}
+
+					std::string incPath = line.to_string();
+					incPath.pop_back();
+
+					// load the asset, hopefully.
+					Asset* incAsset = AssetLoader::Load(("shaders/" + incPath).c_str());
+					auto inclines = splitString((const char*) incAsset->raw, incAsset->length);
+					{
+						// insert the inc into the vsrc
+						for(auto il : inclines)
+							finalLines.push_back(il.to_string());
+					}
+					AssetLoader::Unload(incAsset);
+				}
+				else
+				{
+					finalLines.push_back(line.to_string());
+				}
+
+				linenum++;
+			}
+		}
+		AssetLoader::Unload(shaderAsset);
+
+		std::string source;
+		for(auto l : finalLines)
+			source += l + "\n";
+
+		return source;
+	}
+
+	static gl::GLuint compileAndLinkGLShaderProgram(ShaderSource source)
 	{
 		using namespace gl;
 
@@ -21,15 +113,16 @@ namespace Rx
 		GLuint progID = glCreateProgram();
 
 		{
-			Asset* vsAsset = AssetLoader::Load(vertexPath.c_str());
-			const char* source = (const char*) vsAsset->raw;
-			glShaderSource(vShaderID, 1, &source, nullptr);
+			std::string vsrc = loadShaderSource(source.vertexShaderPath, "vertex");
+			const char* vstr = vsrc.c_str();
+
+			glShaderSource(vShaderID, 1, &vstr, nullptr);
 			glCompileShader(vShaderID);
 
 			GLint res = 0;
 			int loglen = 0;
 
-			// Check Vertex Shader
+			// Check vertex shader
 			glGetShaderiv(vShaderID, GL_COMPILE_STATUS, &res);
 			glGetShaderiv(vShaderID, GL_INFO_LOG_LENGTH, &loglen);
 
@@ -43,16 +136,20 @@ namespace Rx
 		}
 
 
+
+
+
 		{
-			Asset* fsAsset = AssetLoader::Load(fragmentPath.c_str());
-			const char* source = (const char*) fsAsset->raw;
-			glShaderSource(fShaderID, 1, &source, nullptr);
+			std::string fsrc = loadShaderSource(source.fragmentShaderPath, "fragment");
+			const char* fstr = fsrc.c_str();
+
+			glShaderSource(fShaderID, 1, &fstr, nullptr);
 			glCompileShader(fShaderID);
 
 			GLint res = 0;
 			int loglen = 0;
 
-			// Check Vertex Shader
+			// Check fragment shader
 			glGetShaderiv(fShaderID, GL_COMPILE_STATUS, &res);
 			glGetShaderiv(fShaderID, GL_INFO_LOG_LENGTH, &loglen);
 
@@ -100,14 +197,12 @@ namespace Rx
 
 
 
-	ShaderProgram::ShaderProgram(std::string name) : ShaderProgram(name + ".vs", name + ".fs") { }
-
-	ShaderProgram::ShaderProgram(std::string vertpath, std::string fragpath)
+	ShaderProgram::ShaderProgram(std::string sname, ShaderSource source)
 	{
 		using namespace gl;
-		this->name = vertpath.substr(0, vertpath.find_last_of('.'));
+		this->name = sname;
 
-		this->progId = compileAndLinkGLShaderProgram("shaders/" + vertpath, "shaders/" + fragpath);
+		this->progId = compileAndLinkGLShaderProgram(source);
 		assert(this->progId >= 0);
 
 		// enumerate all uniforms in the shader prog, to cache their locations

@@ -130,10 +130,36 @@ int main(int argc, char** argv)
 	double prevTimestamp = util::Time::ns();
 	double renderDelta = 0;
 
+	// setup the shader... this is more involved than i'd like, but it's more flexible.
+	// sidenote: designated initialisers are amazing, fuck c++ for not having it.
+	// constructors do not replace this, especially since it doesn't have named arguments
+	// .stupid.
 
-	auto textureProg = Rx::ShaderProgram("simpleTexture");
-	auto colourProg = Rx::ShaderProgram("simpleColour");
-	auto textProg = Rx::ShaderProgram("textShader");
+	// 1. simple texture shader
+	auto textureProg = Rx::ShaderProgram("simpleTexture", Rx::ShaderSource {
+
+		.glslVersion = "330 core",
+		.vertexShaderPath = "shaders/simpleTexture.vs",
+		.fragmentShaderPath = "shaders/simpleTexture.fs",
+	});
+
+	// 2. simple colour shader
+	auto colourProg = Rx::ShaderProgram("simpleColour", Rx::ShaderSource {
+
+		.glslVersion = "330 core",
+		.vertexShaderPath = "shaders/simpleColour.vs",
+		.fragmentShaderPath = "shaders/simpleColour.fs",
+	});
+
+	// 3. text shader
+	auto textProg = Rx::ShaderProgram("textShader", Rx::ShaderSource {
+
+		.glslVersion = "330 core",
+		.vertexShaderPath = "shaders/textShader.vs",
+		.fragmentShaderPath = "shaders/textShader.fs",
+	});
+
+
 
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{

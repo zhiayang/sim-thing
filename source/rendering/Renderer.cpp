@@ -48,23 +48,7 @@ namespace Rx
 		this->_near		= near;
 		this->_far		= far;
 
-
 		this->_resolutionScale = resscale;
-
-		// change to the program for a bit, so we can cache the uniform location.
-		glUseProgram(this->textureShaderProgram.progId);
-		this->modelMatrixId_textureShader = glGetUniformLocation(this->textureShaderProgram.progId, "modelMatrix");
-		this->viewMatrixId_textureShader = glGetUniformLocation(this->textureShaderProgram.progId, "viewMatrix");
-		this->projMatrixId_textureShader = glGetUniformLocation(this->textureShaderProgram.progId, "projMatrix");
-
-		glUseProgram(this->colourShaderProgram.progId);
-		this->modelMatrixId_colourShader = glGetUniformLocation(this->colourShaderProgram.progId, "modelMatrix");
-		this->viewMatrixId_colourShader = glGetUniformLocation(this->colourShaderProgram.progId, "viewMatrix");
-		this->projMatrixId_colourShader = glGetUniformLocation(this->colourShaderProgram.progId, "projMatrix");
-
-		glUseProgram(this->textShaderProgram.progId);
-		this->orthoProjectionMatrixId = glGetUniformLocation(this->textShaderProgram.progId, "projectionMatrix");
-
 
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -461,6 +445,21 @@ namespace Rx
 
 	// main render pusher
 
+	/*
+		note about the renderer + shaders:
+
+		if rendering coloured vertices, ie. without textures, the material used will be based on colours.
+		ie. you have ambientColour, diffuseColour, specularColour.
+
+		if rendering textured vertices, then the material used will be based on textures, and we need to upload
+		UV coords to the shader.
+
+		I don't think we'll support textured objects with colour-mats, since you can just use the same texture for the diffuse
+		map. and using textures for colour-verts defeats the purpose (read: keep it simple) of the entire thing.
+
+		so there. mutual exclusion by design.
+	*/
+
 	void Renderer::renderAll()
 	{
 		glClearColor(this->clearColour.r, this->clearColour.g, this->clearColour.b, this->clearColour.a);
@@ -567,9 +566,13 @@ namespace Rx
 
 					this->colourShaderProgram.use();
 
-					glUniformMatrix4fv(this->modelMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
-					glUniformMatrix4fv(this->viewMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
-					glUniformMatrix4fv(this->projMatrixId_colourShader, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
+					auto modelLoc = this->colourShaderProgram.getUniform("modelMatrix");
+					auto viewLoc = this->colourShaderProgram.getUniform("viewMatrix");
+					auto projLoc = this->colourShaderProgram.getUniform("projMatrix");
+
+					glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
+					glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
+					glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
 
 					glEnableVertexAttribArray(0);
 					{
@@ -640,10 +643,13 @@ namespace Rx
 
 					this->textureShaderProgram.use();
 
-					glUniformMatrix4fv(this->modelMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
-					glUniformMatrix4fv(this->viewMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
-					glUniformMatrix4fv(this->projMatrixId_textureShader, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
+					auto modelLoc = this->textureShaderProgram.getUniform("modelMatrix");
+					auto viewLoc = this->textureShaderProgram.getUniform("viewMatrix");
+					auto projLoc = this->textureShaderProgram.getUniform("projMatrix");
 
+					glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
+					glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
+					glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
 
 					glEnableVertexAttribArray(0);
 					{
@@ -662,20 +668,18 @@ namespace Rx
 						);
 					}
 
-					assert(rc.textureToBind != (GLuint) -1);
+					// if we have colours:
+					if(rc.colours.size() > 0)
 					{
-						GL::pushTextureBinding(rc.textureToBind);
-						assert(rc.uvs.size() > 0);
-
 						glEnableVertexAttribArray(1);
 
-						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0],
+						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(glm::vec4), &rc.colours[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
 							1,			// location
-							2,			// size
+							4,			// size
 							GL_FLOAT,	// type
 							GL_FALSE,	// normalized?
 							0,			// stride
@@ -702,11 +706,34 @@ namespace Rx
 						);
 					}
 
+					// uvs
+					assert(rc.textureToBind != (GLuint) -1);
+					{
+						GL::pushTextureBinding(rc.textureToBind);
+						assert(rc.uvs.size() > 0);
+
+						glEnableVertexAttribArray(3);
+
+						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0],
+							GL_STATIC_DRAW);
+
+						glVertexAttribPointer(
+							3,			// location
+							2,			// size
+							GL_FLOAT,	// type
+							GL_FALSE,	// normalized?
+							0,			// stride
+							(void*) 0	// array buffer offset
+						);
+					}
+
 					glDrawArrays(rc.wireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
 
 					glDisableVertexAttribArray(0);
 					glDisableVertexAttribArray(1);
 					glDisableVertexAttribArray(2);
+					glDisableVertexAttribArray(3);
 
 				} break;
 

@@ -34,6 +34,6 @@ namespace AssetLoader
 	};
 
 	std::string getResourcePath();
-	Asset* Load(const char* path);
+	Asset* Load(std::string path);
 	void Unload(Asset* asset);
 }

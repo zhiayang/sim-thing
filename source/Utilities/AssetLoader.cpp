@@ -13,7 +13,7 @@
 
 namespace AssetLoader
 {
-	Asset* Load(const char* path)
+	Asset* Load(std::string path)
 	{
 		std::string binPath = SDL_GetBasePath();
 		assert(!binPath.empty());
@@ -60,7 +60,7 @@ namespace AssetLoader
 		else if(ext == "obj")					ass->type = AssetType::ModelOBJ;
 		else									ass->type = AssetType::Unknown;
 
-		LOG("Loaded asset '%s'", path);
+		LOG("Loaded asset '%s'", path.c_str());
 		return ass;
 	}
 
