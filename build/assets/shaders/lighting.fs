@@ -47,7 +47,7 @@ uniform float ambientLightIntensity;
 // point lighting
 vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec2 fragUV)
 {
-	vec4 result = vec4(0);
+	vec4 result = vec4(0, 0, 0, 1);
 	for(int i = 0; i < pointLightCount; i++)
 	{
 		vec3 lightDir = normalize(pointLights[i].position - fragPosition);

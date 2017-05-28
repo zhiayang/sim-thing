@@ -363,15 +363,17 @@ namespace Rx
 		Material mat = m;
 		RenderCommand rc;
 
-		// if(!mat.diffuseMap)
-		// {
-		// 	mat.diffuseMap = this->placeholderTexture;
-		// 	rc.type = RenderCommand::CommandType::RenderColouredVertices;
-		// }
-		// else
-		// {
+		auto placeholderColour = util::colour::white();
+
+		if(!mat.diffuseMap)
+		{
+			placeholderColour = mat.diffuseColour;
+			rc.type = RenderCommand::CommandType::RenderColouredVertices;
+		}
+		else
+		{
 			rc.type = RenderCommand::CommandType::RenderTexturedVertices;
-		// }
+		}
 
 		rc.dimensions = 3;
 		rc.isInScreenSpace = false;
@@ -395,7 +397,7 @@ namespace Rx
 				rc.normals.push_back(n);
 
 			// add some white colours
-			rc.colours.insert(rc.colours.begin(), rc.vertices.size(), glm::vec4(1, 1, 1, 1));
+			rc.colours.insert(rc.colours.begin(), rc.vertices.size(), placeholderColour);
 		}
 
 		this->renderList.push_back(rc);
@@ -533,11 +535,11 @@ namespace Rx
 
 
 		// render a cube at every point light
-		// for(auto pl : this->pointLights)
-		// {
-		// 	this->renderMesh(Mesh::getUnitCube(), Material(util::colour::red(), this->placeholderTexture, this->placeholderTexture, 0),
-		// 		glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), pl.position));
-		// }
+		for(auto pl : this->pointLights)
+		{
+			this->renderMesh(Mesh::getUnitCube(), Material(util::colour::white(), util::colour::white(), util::colour::white(), 0),
+				glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), pl.position));
+		}
 
 
 		for(auto rc : this->renderList)

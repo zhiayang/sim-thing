@@ -83,6 +83,16 @@ namespace util
 			return *this;
 		}
 
+		colour& operator = (const glm::vec4& other)
+		{
+			this->r = other.r;
+			this->g = other.g;
+			this->b = other.b;
+			this->a = other.a;
+
+			return *this;
+		}
+
 		operator glm::vec4() const { return this->toGL(); }
 
 		colour(float red, float green, float blue, float alpha) : r(red), g(green), b(blue), a(alpha) { }
