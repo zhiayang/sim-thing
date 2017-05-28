@@ -16,14 +16,16 @@ out vec4 colour;
 uniform vec3 cameraPosition;
 
 // it's here so we know how to call it.
-vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec2 fragUV);
+vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample);
 
 void main()
 {
 	vec3 viewDirection = normalize(cameraPosition - fragmentPosition);
 	vec4 base = ambientLightColour * ambientLightIntensity;
 
-	base += applyPointLights(normalize(fragmentNormal), fragmentPosition, viewDirection, fragmentUV);
+	base += applyPointLights(normalize(fragmentNormal), fragmentPosition, viewDirection,
+		texture(material.diffuseTexture, fragmentUV), texture(material.specularTexture, fragmentUV));
+
 	colour = base * fragmentColour * texture(material.diffuseTexture, fragmentUV).rgba;
 }
 

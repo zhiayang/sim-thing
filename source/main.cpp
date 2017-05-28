@@ -282,7 +282,7 @@ int main(int argc, char** argv)
 
 	// auto box = new Rx::Texture("textures/box.png", theRenderer);
 	auto col = util::colour(0.83, 0.20, 0.22);
-	auto cubeModel = Rx::Model::fromMesh(Rx::Mesh::getUnitCube(), Rx::Material(col, col, util::colour::green(), 32.0));
+	auto cubeModel = Rx::Model::fromMesh(Rx::Mesh::getUnitCube(), Rx::Material(col, col, util::colour::blue(), 32.0));
 
 
 	// Main loop
