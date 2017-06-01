@@ -113,7 +113,7 @@ namespace Sotv
 		this->massOfOxygenInKilograms *= 4.7;
 	}
 
-	void LifeSupportSystem::Render(GameState& gs, double delta, Rx::Renderer* ren)
+	void LifeSupportSystem::Render(GameState& gs, double delta, rx::Renderer* ren)
 	{
 		for(auto m : this->modules)
 			m->Render(gs, delta, ren);

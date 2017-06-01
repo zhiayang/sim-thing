@@ -5,16 +5,16 @@
 #include <tuple>
 
 #include "config.h"
-#include "renderer/rx.h"
+#include "rx.h"
 
 #include <SDL2/SDL.h>
 
 #include <glbinding/gl/gl.h>
 #include <glbinding/Binding.h>
 
-namespace Rx
+namespace rx
 {
-	std::pair<SDL_GLContext, Rx::Window*> Initialise(int width, int height)
+	std::pair<SDL_GLContext, rx::Window*> Initialise(int width, int height)
 	{
 		// initialise SDL
 		{
@@ -35,7 +35,7 @@ namespace Rx
 		SDL_GL_SetSwapInterval(1);
 
 
-		Rx::Window* window = new Rx::Window("connect", Config::getResX(), Config::getResY(), true);
+		rx::Window* window = new rx::Window("connect", Config::getResX(), Config::getResY(), true);
 		SDL_GLContext glcontext = SDL_GL_CreateContext(window->sdlWin);
 		if(glcontext == 0)
 			ERROR("Failed to create OpenGL context. SDL Error: '%s'", SDL_GetError());

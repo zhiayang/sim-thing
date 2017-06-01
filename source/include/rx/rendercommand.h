@@ -12,9 +12,9 @@
 #include <glm/vec4.hpp>
 #include <glbinding/gl/types.h>
 
-#include "renderer/model.h"
+#include "rx/model.h"
 
-namespace Rx
+namespace rx
 {
 	struct RenderCommand
 	{

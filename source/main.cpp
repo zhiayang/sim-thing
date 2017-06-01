@@ -11,8 +11,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "renderer/rx.h"
-#include "renderer/model.h"
+#include "rx.h"
+#include "rx/model.h"
 
 #include "config.h"
 #include "tinyformat.h"
@@ -30,9 +30,9 @@ static const double fixedDeltaTimeNs	= 1.0 * 1000.0 * 1000.0;
 // static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
 static Sotv::GameState* gameState = 0;
-static Rx::Renderer* theRenderer = 0;
+static rx::Renderer* theRenderer = 0;
 
-namespace Rx
+namespace rx
 {
 	std::pair<SDL_Event, bool> ProcessEvents()
 	{
@@ -116,12 +116,12 @@ int main(int argc, char** argv)
 
 
 	// Setup SDL
-	auto r = Rx::Initialise(Config::getResX(), Config::getResY());
+	auto r = rx::Initialise(Config::getResX(), Config::getResY());
 	SDL_GLContext glcontext = r.first;
-	Rx::Window* window = r.second;
+	rx::Window* window = r.second;
 
 
-	auto primaryFont = Rx::getFont("menlo", 64, ' ', 0xFF - ' ', 2, 2);
+	auto primaryFont = rx::getFont("menlo", 64, ' ', 0xFF - ' ', 2, 2);
 
 	double accumulator = 0.0;
 	double frameTime = S_TO_NS(0.01667);
@@ -136,7 +136,7 @@ int main(int argc, char** argv)
 	// .stupid.
 
 	// 1. simple texture shader
-	auto textureProg = Rx::ShaderProgram("simpleTexture", Rx::ShaderSource {
+	auto textureProg = rx::ShaderProgram("simpleTexture", rx::ShaderSource {
 
 		.glslVersion = "330 core",
 		.vertexShaderPath = "shaders/simpleTexture.vs",
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
 	});
 
 	// 2. simple colour shader
-	auto colourProg = Rx::ShaderProgram("simpleColour", Rx::ShaderSource {
+	auto colourProg = rx::ShaderProgram("simpleColour", rx::ShaderSource {
 
 		.glslVersion = "330 core",
 		.vertexShaderPath = "shaders/simpleColour.vs",
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 	});
 
 	// 3. text shader
-	auto textProg = Rx::ShaderProgram("textShader", Rx::ShaderSource {
+	auto textProg = rx::ShaderProgram("textShader", rx::ShaderSource {
 
 		.glslVersion = "330 core",
 		.vertexShaderPath = "shaders/textShader.vs",
@@ -176,13 +176,13 @@ int main(int argc, char** argv)
 		assert(sx == sy && "vertical and horizontal display scaling values do not match");
 
 
-		Rx::Camera cam;
+		rx::Camera cam;
 		cam.position = glm::vec3(0, 1, 2);
 		cam.yaw = -90;
 		cam.pitch = -20;
 
 		// setup the renderer. there's many parameters here...
-		theRenderer = new Rx::Renderer(window, glcontext,
+		theRenderer = new rx::Renderer(window, glcontext,
 			util::colour(0.01, 0.01, 0.01),		// clear colour
 			cam,								// camera
 			textureProg, colourProg, textProg,	// shader programs for textured objects, coloured objects, and text.
@@ -193,10 +193,10 @@ int main(int argc, char** argv)
 
 		// position, colour, intensity
 		theRenderer->setAmbientLighting(util::colour::white(), 0.3);
-		theRenderer->addPointLight(Rx::PointLight(glm::vec3(0, 2, 8), util::colour::white(), util::colour::white(),
+		theRenderer->addPointLight(rx::PointLight(glm::vec3(0, 2, 8), util::colour::white(), util::colour::white(),
 			2.5, 1.0, 0.022, 0.0019));
 
-		theRenderer->addPointLight(Rx::PointLight(glm::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
+		theRenderer->addPointLight(rx::PointLight(glm::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
 			3.0, 1.0, 0.022, 0.0019));
 	}
 
@@ -276,13 +276,13 @@ int main(int argc, char** argv)
 
 
 
-	auto model = Rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"), 1.0 / 20000.0);
-	// Rx::Model* cube = Rx::Model::getUnitCube();
+	auto model = rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"), 1.0 / 20000.0);
+	// rx::Model* cube = rx::Model::getUnitCube();
 	// cube = model;
 
-	// auto box = new Rx::Texture("textures/box.png", theRenderer);
+	// auto box = new rx::Texture("textures/box.png", theRenderer);
 	auto col = util::colour(0.83, 0.20, 0.22);
-	auto cubeModel = Rx::Model::fromMesh(Rx::Mesh::getUnitCube(), Rx::Material(col, col, util::colour::blue(), 32.0));
+	auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col, col, util::colour::blue(), 32.0));
 
 
 	// Main loop
@@ -291,7 +291,7 @@ int main(int argc, char** argv)
 	{
 		SDL_Event event;
 		{
-			auto t = Rx::ProcessEvents();
+			auto t = rx::ProcessEvents();
 
 			event = t.first;
 			done = t.second;
@@ -339,18 +339,19 @@ int main(int argc, char** argv)
 
 
 
-		Rx::PreFrame(theRenderer);
-		Rx::BeginFrame(theRenderer);
+		rx::PreFrame(theRenderer);
+		rx::BeginFrame(theRenderer);
 
 
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
 
-		// theRenderer->renderMesh(Rx::Mesh::getUnitCube(), glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 
 		// theRenderer->renderModel(model, glm::translate(glm::mat4(), glm::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
-		// theRenderer->renderMesh(Rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 		theRenderer->renderModel(cubeModel, glm::scale(glm::mat4(), glm::vec3(0.5)));
+		theRenderer->renderModel(cubeModel, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec3(0, 3, 0)));
 
 		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, 0, 2)), glm::vec4(0.24, 0.59, 0.77, 1.0));
 		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), glm::vec3(0, 20, 0)), util::colour::white());
@@ -383,7 +384,7 @@ int main(int argc, char** argv)
 				Units::formatWithUnits(cap, 2, "Wh"), percentage,
 				Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
 
-			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, 5), Rx::TextAlignment::RightAligned);
+			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, 5), rx::TextAlignment::RightAligned);
 
 
 			size_t ofs = 5;
@@ -396,16 +397,16 @@ int main(int argc, char** argv)
 				auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
 					Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
 
-				theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), Rx::TextAlignment::RightAligned);
+				theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), rx::TextAlignment::RightAligned);
 			}
 
 			str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
 				Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
 
-			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), Rx::TextAlignment::RightAligned);
+			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), rx::TextAlignment::RightAligned);
 		}
 
-		Rx::EndFrame(theRenderer);
+		rx::EndFrame(theRenderer);
 
 
 

@@ -5,8 +5,8 @@
 
 #include "utilities.h"
 
-#include "renderer/rx.h"
-#include "renderer/model.h"
+#include "rx.h"
+#include "rx/model.h"
 
 #include <glm/glm.hpp>
 
@@ -17,7 +17,7 @@
 using namespace AssetLoader;
 
 
-namespace Rx
+namespace rx
 {
 	Mesh::Mesh()
 	{

@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-namespace Rx { struct Renderer; }
+namespace rx { struct Renderer; }
 
 namespace Sotv
 {
@@ -21,7 +21,7 @@ namespace Sotv
 		virtual void activate() { this->activated = true; }
 		virtual bool toggle() { return (this->activated = !this->activated); }
 
-		virtual void Render(GameState& gs, double delta, Rx::Renderer* ren);
+		virtual void Render(GameState& gs, double delta, rx::Renderer* ren);
 		virtual void Update(GameState& gs, double delta);
 
 		virtual ~Module() { }

@@ -16,7 +16,7 @@
 #include "backend_abstraction.h"
 
 // custom stuff.
-#include "renderer/rx.h"
+#include "rx.h"
 
 using namespace gl;
 

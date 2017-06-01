@@ -64,7 +64,7 @@ namespace Sotv
 			this->systems.push_back(sys);
 	}
 
-	void Station::Render(GameState& gs, double delta, Rx::Renderer* ren)
+	void Station::Render(GameState& gs, double delta, rx::Renderer* ren)
 	{
 		for(auto s : this->systems)
 			s->Render(gs, delta, ren);

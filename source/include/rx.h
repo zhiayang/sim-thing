@@ -21,11 +21,11 @@
 #include "assetloader.h"
 
 // subheaders
-#include "renderer/misc.h"
-#include "renderer/fonts.h"
-#include "renderer/shaders.h"
-#include "renderer/lighting.h"
-#include "renderer/rendercommand.h"
+#include "rx/misc.h"
+#include "rx/fonts.h"
+#include "rx/shaders.h"
+#include "rx/lighting.h"
+#include "rx/rendercommand.h"
 
 
 // fuck this shit.
@@ -38,7 +38,7 @@ namespace glm
 	}
 }
 
-namespace Rx
+namespace rx
 {
 	struct Model;
 	struct Mesh;
@@ -105,10 +105,10 @@ namespace Rx
 
 		// screenspace takes pixel positions
 		// normalisedscreenspace takes 0-1 positions
-		void renderStringInScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos,
+		void renderStringInScreenSpace(std::string txt, rx::Font* font, float size, glm::vec2 pos,
 			TextAlignment align = TextAlignment::LeftAligned);
 
-		void renderStringInNormalisedScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos,
+		void renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, glm::vec2 pos,
 			TextAlignment align = TextAlignment::LeftAligned);
 
 		void renderMesh(const Mesh& mesh, const Material& mat, glm::mat4 transform);
@@ -155,13 +155,13 @@ namespace Rx
 
 
 
-	std::pair<SDL_GLContext, Rx::Window*> Initialise(int width, int height);
+	std::pair<SDL_GLContext, rx::Window*> Initialise(int width, int height);
 	std::pair<SDL_Event, bool> ProcessEvents();
 
 	// rendering stuff.
-	void PreFrame(Rx::Renderer* r);
-	void BeginFrame(Rx::Renderer* r);
-	void EndFrame(Rx::Renderer* r);
+	void PreFrame(rx::Renderer* r);
+	void BeginFrame(rx::Renderer* r);
+	void EndFrame(rx::Renderer* r);
 }
 
 

@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #include "utilities.h"
-#include "renderer/rx.h"
+#include "rx.h"
 
 #include "imgui.h"
 

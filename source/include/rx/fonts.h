@@ -17,7 +17,7 @@
 
 #include "stb/stb_truetype.h"
 
-namespace Rx
+namespace rx
 {
 	// font stuff
 	struct FontGlyphPos

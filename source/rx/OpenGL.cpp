@@ -8,7 +8,7 @@
 #include "imgui.h"
 
 #include "glwrapper.h"
-#include "renderer/rx.h"
+#include "rx.h"
 
 #include <glbinding/gl/gl.h>
 

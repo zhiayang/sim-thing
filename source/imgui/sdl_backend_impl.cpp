@@ -3,7 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #include "backend_abstraction.h"
-#include "renderer/rx.h"
+#include "rx.h"
 
 #include <map>
 

@@ -11,7 +11,7 @@
 
 #include "sotv/station.h"
 
-namespace Rx
+namespace rx
 {
 	struct Renderer;
 }
@@ -30,7 +30,7 @@ namespace Sotv
 		Station* playerStation = 0;
 	};
 
-	void Render(GameState& s, double delta, Rx::Renderer* ren);
+	void Render(GameState& s, double delta, rx::Renderer* ren);
 	void Update(GameState& s, double delta);
 
 

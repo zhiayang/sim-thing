@@ -11,7 +11,7 @@ namespace Sotv
 {
 	PowerSystem::PowerSystem(Station* stn) : System(stn), systemVoltage(SYSTEM_VOLTAGE) { }
 
-	void PowerSystem::Render(GameState& gs, double delta, Rx::Renderer* ren)
+	void PowerSystem::Render(GameState& gs, double delta, rx::Renderer* ren)
 	{
 	}
 

@@ -4,7 +4,7 @@
 
 #include "utilities.h"
 #include "assetloader.h"
-#include "renderer/shaders.h"
+#include "rx/shaders.h"
 
 #include "stx/string_view.hpp"
 #include <glbinding/gl/gl.h>
@@ -13,7 +13,7 @@ using namespace AssetLoader;
 
 #define DUMP_UNIFORM_LOCATIONS 0
 
-namespace Rx
+namespace rx
 {
 	static std::vector<stx::string_view> splitString(const char* str, size_t length)
 	{

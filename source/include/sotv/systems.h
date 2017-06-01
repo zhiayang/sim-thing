@@ -11,7 +11,7 @@
 
 #include "sotv/modules.h"
 
-namespace Rx { struct Renderer; }
+namespace rx { struct Renderer; }
 
 
 namespace Sotv
@@ -29,7 +29,7 @@ namespace Sotv
 		virtual void activate();
 		virtual bool toggle();
 
-		virtual void Render(GameState& gs, double delta, Rx::Renderer* ren);
+		virtual void Render(GameState& gs, double delta, rx::Renderer* ren);
 		virtual void Update(GameState& gs, double delta);
 
 		System(Station* stn) : station(stn) { }
@@ -69,7 +69,7 @@ namespace Sotv
 		double getTotalStorageInJoules();
 		double getTotalCapacityInJoules();
 
-		virtual void Render(GameState& gs, double delta, Rx::Renderer* ren) override;
+		virtual void Render(GameState& gs, double delta, rx::Renderer* ren) override;
 		virtual void Update(GameState& gs, double delta) override;
 
 		protected:
@@ -123,7 +123,7 @@ namespace Sotv
 
 		LifeSupportSystem(Station* stn, double targetPressure, double targetTemperature);
 
-		virtual void Render(GameState& gs, double delta, Rx::Renderer* ren) override;
+		virtual void Render(GameState& gs, double delta, rx::Renderer* ren) override;
 		virtual void Update(GameState& gs, double delta) override;
 
 		virtual bool toggle() override;

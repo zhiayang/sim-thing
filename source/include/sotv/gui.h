@@ -12,7 +12,7 @@
 
 #include "sotv/widgets.h"
 
-namespace Rx
+namespace rx
 {
 	struct Renderer;
 };
@@ -29,7 +29,7 @@ namespace Sotv
 		virtual void Close(GameState& gs) final;
 		virtual bool isOpen() final;
 
-		virtual void Render(GameState& gs, double delta, Rx::Renderer* r);
+		virtual void Render(GameState& gs, double delta, rx::Renderer* r);
 		virtual void Update(GameState& gs, double delta);
 
 		bool isWindowOpen = 0;

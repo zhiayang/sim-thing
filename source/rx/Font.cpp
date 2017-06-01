@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "renderer/rx.h"
+#include "rx.h"
 
 #include <glbinding/gl/gl.h>
 
@@ -18,7 +18,7 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb/stb_truetype.h"
 
-namespace Rx
+namespace rx
 {
 	typedef std::pair<std::string, size_t> FontTuple;
 	static std::map<FontTuple, Font*> fontMap;

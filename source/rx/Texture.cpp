@@ -4,11 +4,11 @@
 
 #include "imgui.h"
 #include "glwrapper.h"
-#include "renderer/rx.h"
+#include "rx.h"
 
 #include <glbinding/gl/gl.h>
 
-namespace Rx
+namespace rx
 {
 	Texture::Texture(std::string path, Renderer* r) : Texture(AssetLoader::Load(path.c_str()), r)
 	{

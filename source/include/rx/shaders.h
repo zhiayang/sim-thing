@@ -12,7 +12,7 @@
 
 #include <glbinding/gl/types.h>
 
-namespace Rx
+namespace rx
 {
 	struct ShaderSource
 	{

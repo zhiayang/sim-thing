@@ -7,10 +7,10 @@
 
 #include <glm/glm.hpp>
 
-#include "renderer/rx.h"
-#include "renderer/model.h"
+#include "rx.h"
+#include "rx/model.h"
 
-namespace Rx
+namespace rx
 {
 	Model loadModelFromWavefrontOBJ(AssetLoader::Asset* ass, double scale)
 	{

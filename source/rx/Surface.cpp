@@ -3,12 +3,12 @@
 // Licensed under the Apache License Version 2.0.
 
 #include "assetloader.h"
-#include "renderer/misc.h"
+#include "rx/misc.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
-namespace Rx
+namespace rx
 {
 	Surface::Surface(std::string path) : Surface(AssetLoader::Load(path.c_str()))
 	{

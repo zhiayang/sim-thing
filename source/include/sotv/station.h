@@ -13,7 +13,7 @@
 #include "sotv/modules.h"
 #include "sotv/systems.h"
 
-namespace Rx { struct Renderer; }
+namespace rx { struct Renderer; }
 
 namespace Sotv
 {
@@ -39,7 +39,7 @@ namespace Sotv
 		// use delta < 0 to decrease.
 		double increaseInternalVolume(double delta) { return (this->internalVolume += delta); }
 
-		void Render(GameState& s, double delta, Rx::Renderer* ren);
+		void Render(GameState& s, double delta, rx::Renderer* ren);
 		void Update(GameState& s, double delta);
 
 		static Station* makeDefaultSpaceStation(std::string name);

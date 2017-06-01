@@ -15,9 +15,9 @@
 
 #include "assetloader.h"
 
-#include "renderer/misc.h"
+#include "rx/misc.h"
 
-namespace Rx
+namespace rx
 {
 	struct Face
 	{

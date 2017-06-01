@@ -20,7 +20,7 @@ namespace AssetLoader
 
 struct SDL_Window;
 
-namespace Rx
+namespace rx
 {
 	struct Renderer;
 

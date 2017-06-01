@@ -7,8 +7,8 @@
 
 
 #include "glwrapper.h"
-#include "renderer/rx.h"
-#include "renderer/model.h"
+#include "rx.h"
+#include "rx/model.h"
 
 #include "utf8rewind.h"
 
@@ -24,7 +24,7 @@ using namespace gl;
 
 #define MAX_POINT_LIGHTS 16
 
-namespace Rx
+namespace rx
 {
 	Renderer::Renderer(Window* win, SDL_GLContext glc, util::colour clearCol, Camera cam, ShaderProgram textureShaderProg,
 		ShaderProgram colourShaderProg, ShaderProgram textShaderProg, double fov, double width, double height, double resscale,
@@ -198,7 +198,7 @@ namespace Rx
 		}
 	}
 
-	void Renderer::addPointLight(Rx::PointLight light)
+	void Renderer::addPointLight(rx::PointLight light)
 	{
 		this->pointLights.push_back(light);
 	}
@@ -236,7 +236,7 @@ namespace Rx
 		this->renderList.push_back(rc);
 	}
 
-	void Renderer::renderStringInNormalisedScreenSpace(std::string txt, Rx::Font* font, float size, glm::vec2 pos, TextAlignment align)
+	void Renderer::renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, glm::vec2 pos, TextAlignment align)
 	{
 		pos.x *= this->_width;
 		pos.y *= this->_height;
@@ -244,7 +244,7 @@ namespace Rx
 		this->renderStringInScreenSpace(txt, font, size, pos);
 	}
 
-	void Renderer::renderStringInScreenSpace(std::string str, Rx::Font* font, float size, glm::vec2 pos, TextAlignment align)
+	void Renderer::renderStringInScreenSpace(std::string str, rx::Font* font, float size, glm::vec2 pos, TextAlignment align)
 	{
 		bool rightAlign = (align == TextAlignment::RightAligned);
 
@@ -537,7 +537,7 @@ namespace Rx
 		// render a cube at every point light
 		for(auto pl : this->pointLights)
 		{
-			this->renderMesh(Mesh::getUnitCube(), Material(util::colour::white(), util::colour::white(), util::colour::white(), 0),
+			this->renderMesh(Mesh::getUnitCube(), Material(util::colour::white(), util::colour::white(), util::colour::white(), 1),
 				glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), pl.position));
 		}
 
@@ -929,16 +929,16 @@ namespace Rx
 
 
 	// imgui stuff
-	void PreFrame(Rx::Renderer* r)
+	void PreFrame(rx::Renderer* r)
 	{
 	}
 
-	void BeginFrame(Rx::Renderer* renderer)
+	void BeginFrame(rx::Renderer* renderer)
 	{
 		// ImGui_ImplSdl_NewFrame(renderer->window->sdlWin);
 	}
 
-	void EndFrame(Rx::Renderer* renderer)
+	void EndFrame(rx::Renderer* renderer)
 	{
 		renderer->renderAll();
 		SDL_GL_SwapWindow(renderer->window->sdlWin);
@@ -1182,7 +1182,7 @@ namespace Rx
 
 
 	#if 0
-	void Renderer::renderStringRightAligned(std::string txt, Rx::Font font, float size, Math::Vector2 pt)
+	void Renderer::renderStringRightAligned(std::string txt, rx::Font font, float size, Math::Vector2 pt)
 	{
 		// auto cmd = RenderCommand::createRenderString(txt, font, size, this->drawColour, Math::Vector2(0, pt.y));
 
@@ -1206,7 +1206,7 @@ namespace Rx
 		// this->renderList.push_back(cmd);
 	}
 
-	size_t Renderer::getStringWidthInPixels(std::string txt, Rx::Font font, float size)
+	size_t Renderer::getStringWidthInPixels(std::string txt, rx::Font font, float size)
 	{
 		#if 0
 		if(txt.empty()) return 0;

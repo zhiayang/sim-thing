@@ -15,7 +15,7 @@
 #include <vector>
 #include <unordered_map>
 
-namespace Rx
+namespace rx
 {
 	struct PointLight
 	{

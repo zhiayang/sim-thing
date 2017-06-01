@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace Rx
+namespace rx
 {
 	struct Renderer;
 };
