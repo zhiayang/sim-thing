@@ -122,8 +122,13 @@ namespace Input
 	// handler spec: returns a bool that determines if the key event was handled
 	// if true, then the key is *not* passed on; if false, then subsequent handlers are fired.
 
-	id_t addKeyHandler(State* state, Key k, int priority, std::function<bool(State*, Key, double)> handler, HandlerKind kind);
-	void removeKeyHandler(State* state, Key k, id_t handler);
+	std::vector<id_t> addKeyHandler(State* state, std::vector<Key> keys, int priority, std::function<bool(State*, Key, double)> handler,
+		HandlerKind kind);
+
+	std::vector<id_t> addKeyHandler(State* state, Key key, int priority, std::function<bool(State*, Key, double)> handler,
+		HandlerKind kind);
+
+	void removeKeyHandler(State* state, Key key, id_t handler);
 
 	glm::vec2 getMousePos(State* state);
 	glm::vec2 getMouseChange(State* state);

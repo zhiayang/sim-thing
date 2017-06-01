@@ -258,22 +258,36 @@ namespace Input
 	}
 
 
+	std::vector<id_t> addKeyHandler(State* state, Key key, int priority, std::function<bool(State*, Key, double)> handler,
+		HandlerKind kind)
+	{
+		return addKeyHandler(state, std::vector<Key> { key }, priority, handler, kind);
+	}
+
+
 	using HF_t = std::function<bool(State*, Key, double)>;
-	id_t addKeyHandler(State* state, Key key, int priority, HF_t handler, HandlerKind kind)
+	std::vector<id_t> addKeyHandler(State* state, std::vector<Key> keys, int priority, HF_t handler, HandlerKind kind)
 	{
 		static id_t uniqueID = 0;
-		id_t id = uniqueID++;
 
-		state->handlers[key].push_back({ id, kind, priority, handler });
-
-		// sort reverse -- so highest priority is in front
-		std::sort(state->handlers[key].begin(), state->handlers[key].end(), [](const std::tuple<id_t, HandlerKind, int, HF_t>& a,
-			const std::tuple<id_t, HandlerKind, int, HF_t>& b) -> bool
+		std::vector<id_t> ids;
+		for(auto key : keys)
 		{
-			return std::get<2>(a) > std::get<2>(b);
-		});
+			id_t id = uniqueID++;
 
-		return id;
+			state->handlers[key].push_back({ id, kind, priority, handler });
+
+			// sort reverse -- so highest priority is in front
+			std::sort(state->handlers[key].begin(), state->handlers[key].end(), [](const std::tuple<id_t, HandlerKind, int, HF_t>& a,
+				const std::tuple<id_t, HandlerKind, int, HF_t>& b) -> bool
+			{
+				return std::get<2>(a) > std::get<2>(b);
+			});
+
+			ids.push_back(id);
+		}
+
+		return ids;
 	}
 
 	void removeKeyHandler(State* state, Key k, id_t id)

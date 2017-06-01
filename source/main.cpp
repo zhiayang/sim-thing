@@ -207,69 +207,37 @@ int main(int argc, char** argv)
 	gameState = new Sotv::GameState();
 	gameState->playerStation = Sotv::Station::makeDefaultSpaceStation("");
 
-	Input::addKeyHandler(&gameState->inputState, Input::Key::Space, 0, [](Input::State* s, Input::Key k, double) -> bool {
+	// Input::addKeyHandler(&gameState->inputState, Input::Key::Space, 0, [](Input::State* s, Input::Key k, double) -> bool {
 
-		LOG("Life Support: %s", gameState->playerStation->lifeSupportSystem->toggle() ? "on" : "off");
-		return true;
+	// 	LOG("Life Support: %s", gameState->playerStation->lifeSupportSystem->toggle() ? "on" : "off");
+	// 	return true;
 
-	}, Input::HandlerKind::PressDown);
+	// }, Input::HandlerKind::PressDown);
 
-	Input::addKeyHandler(&gameState->inputState, Input::Key::W, 0, [](Input::State* s, Input::Key k, double) -> bool {
+	Input::addKeyHandler(&gameState->inputState,
+		{ Input::Key::W, Input::Key::S, Input::Key::A, Input::Key::D, Input::Key::ShiftL, Input::Key::SuperL, Input::Key::Space },
+		0, [](Input::State* s, Input::Key k, double) -> bool {
 
+		using IK = Input::Key;
 		auto cam = theRenderer->getCamera();
-		cam.position += cam.front() * 0.005f;
+
+		if(k == IK::A || k == IK::D || k == IK::W || k == IK::S)
+		{
+			cam.position += ((k == IK::W || k == IK::S) ? cam.front() : cam.right()) * 0.005f * ((k == IK::S || k == IK::A) ? -1.0f : 1.0f);
+		}
+		else
+		{
+			if(k == IK::Space)
+			{
+				cam.position.y += 0.005;
+			}
+			else
+			{
+				cam.position.y -= 0.005;
+			}
+		}
+
 		theRenderer->updateCamera(cam);
-
-		return true;
-
-	}, Input::HandlerKind::WhileDown);
-
-	Input::addKeyHandler(&gameState->inputState, Input::Key::S, 0, [](Input::State* s, Input::Key k, double) -> bool {
-
-		auto cam = theRenderer->getCamera();
-		cam.position -= cam.front() * 0.005f;
-		theRenderer->updateCamera(cam);
-
-		return true;
-
-	}, Input::HandlerKind::WhileDown);
-
-	Input::addKeyHandler(&gameState->inputState, Input::Key::A, 0, [](Input::State* s, Input::Key k, double) -> bool {
-
-		auto cam = theRenderer->getCamera();
-		cam.position -= cam.right() * 0.005f;
-		theRenderer->updateCamera(cam);
-
-		return true;
-
-	}, Input::HandlerKind::WhileDown);
-
-	Input::addKeyHandler(&gameState->inputState, Input::Key::D, 0, [](Input::State* s, Input::Key k, double) -> bool {
-
-		auto cam = theRenderer->getCamera();
-		cam.position += cam.right() * 0.005f;
-		theRenderer->updateCamera(cam);
-
-		return true;
-
-	}, Input::HandlerKind::WhileDown);
-
-	Input::addKeyHandler(&gameState->inputState, Input::Key::ShiftL, 0, [](Input::State* s, Input::Key k, double) -> bool {
-
-		auto cam = theRenderer->getCamera();
-		cam.position.y += 0.005;
-		theRenderer->updateCamera(cam);
-
-		return true;
-
-	}, Input::HandlerKind::WhileDown);
-
-	Input::addKeyHandler(&gameState->inputState, Input::Key::SuperL, 0, [](Input::State* s, Input::Key k, double) -> bool {
-
-		auto cam = theRenderer->getCamera();
-		cam.position.y -= 0.005;
-		theRenderer->updateCamera(cam);
-
 		return true;
 
 	}, Input::HandlerKind::WhileDown);
