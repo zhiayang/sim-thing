@@ -5,8 +5,6 @@
 #include <tuple>
 #include <deque>
 
-#include "imgui.h"
-
 #include "glwrapper.h"
 #include "rx.h"
 

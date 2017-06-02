@@ -73,7 +73,6 @@ namespace rx
 		void clearRenderList();
 
 		void renderAll();
-		std::vector<PointLight> sortAndUpdatePointLights(RenderCommand rc, glm::vec3 reference);
 
 		void setCamera(glm::mat4 cameraViewMatrix);
 		glm::mat4 getCameraViewMatrix();
@@ -94,6 +93,9 @@ namespace rx
 		void setAmbientLighting(glm::vec4 colour, float intensity);
 		void addPointLight(PointLight light);
 
+
+		std::vector<PointLight> sortAndUpdatePointLights(glm::vec3 reference);
+		std::vector<SpotLight> sortAndUpdateSpotLights(glm::vec3 reference);
 
 
 		// start of 'rendering' functions, so to speak
@@ -123,6 +125,7 @@ namespace rx
 
 
 		std::vector<PointLight> pointLights;
+		std::vector<SpotLight> spotLights;
 
 
 		Window* window = 0;

@@ -7,11 +7,11 @@
 struct PointLight
 {
 	vec3 position;
-	float intensity;
 
 	vec4 diffuseColour;
 	vec4 specularColour;
 
+	float intensity;
 	float lightRadius;
 };
 
@@ -25,6 +25,9 @@ struct SpotLight
 	vec3 position;
 	vec3 direction;
 
+	vec4 diffuseColour;
+	vec4 specularColour;
+
 	// for smoothing, anything inside the inner cone is max bright,
 	// anything between the inner and outer cones is bright between 0 to 1
 	// anything outside the outer cone is 0.
@@ -36,6 +39,7 @@ struct SpotLight
 	float outerCutoffCosine;
 
 	float intensity;
+	float lightRadius;
 };
 
 #define MAX_SPOT_LIGHTS 16
@@ -107,6 +111,16 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 d
 		vec4 specular = pointLights[i].specularColour * SPECULAR_POWER * spec * specularSample;
 
 		result += (diffuse + specular) * pointLights[i].intensity * atten;
+	}
+
+	return result;
+}
+
+vec4 applySpotLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample)
+{
+	vec4 result = vec4(0, 0, 0, 1);
+	for(int i = 0; i < spotLightCount; i++)
+	{
 	}
 
 	return result;

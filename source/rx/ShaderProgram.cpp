@@ -9,6 +9,9 @@
 #include "stx/string_view.hpp"
 #include <glbinding/gl/gl.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 using namespace AssetLoader;
 
 #define DUMP_UNIFORM_LOCATIONS 0
@@ -233,7 +236,19 @@ namespace rx
 		LOG("Cached %d uniform locations in shader program '%s'\n", activeUniforms, this->name.c_str());
 	}
 
-	gl::GLuint ShaderProgram::getUniform(std::string name)
+
+
+
+
+
+
+
+
+	// make sure we only change the shaderprogram using ->use();
+	static gl::GLuint currentlyInUse = 0;
+
+
+	gl::GLuint ShaderProgram::getUniformLocation(std::string name)
 	{
 		if(this->uniformLocations.find(name) == this->uniformLocations.end())
 			ERROR("No such uniform named '%s' in shader program '%s'", name.c_str(), this->name.c_str());
@@ -241,9 +256,108 @@ namespace rx
 		return this->uniformLocations[name];
 	}
 
+
+	void ShaderProgram::setUniform(std::string name, glm::vec4 v4)
+	{
+		if(currentlyInUse != this->progId)
+			this->use();
+
+		auto loc = this->getUniformLocation(name);
+		gl::glUniform4fv(loc, 1, glm::value_ptr(v4));
+	}
+
+	void ShaderProgram::setUniform(std::string name, glm::vec3 v3)
+	{
+		if(currentlyInUse != this->progId)
+			this->use();
+
+		auto loc = this->getUniformLocation(name);
+		gl::glUniform3fv(loc, 1, glm::value_ptr(v3));
+	}
+
+	void ShaderProgram::setUniform(std::string name, glm::vec2 v2)
+	{
+		if(currentlyInUse != this->progId)
+			this->use();
+
+		auto loc = this->getUniformLocation(name);
+		gl::glUniform2fv(loc, 1, glm::value_ptr(v2));
+	}
+
+
+	void ShaderProgram::setUniform(std::string name, glm::mat4 m4)
+	{
+		if(currentlyInUse != this->progId)
+			this->use();
+
+		auto loc = this->getUniformLocation(name);
+		gl::glUniformMatrix4fv(loc, 1, gl::GL_FALSE, glm::value_ptr(m4));
+	}
+
+	void ShaderProgram::setUniform(std::string name, glm::mat3 m3)
+	{
+		if(currentlyInUse != this->progId)
+			this->use();
+
+		auto loc = this->getUniformLocation(name);
+		gl::glUniformMatrix3fv(loc, 1, gl::GL_FALSE, glm::value_ptr(m3));
+	}
+
+	void ShaderProgram::setUniform(std::string name, glm::mat2 m2)
+	{
+		if(currentlyInUse != this->progId)
+			this->use();
+
+		auto loc = this->getUniformLocation(name);
+		gl::glUniformMatrix2fv(loc, 1, gl::GL_FALSE, glm::value_ptr(m2));
+	}
+
+
+	void ShaderProgram::setUniform(std::string name, float f)
+	{
+		if(currentlyInUse != this->progId)
+			this->use();
+
+		auto loc = this->getUniformLocation(name);
+		gl::glUniform1f(loc, f);
+	}
+
+	void ShaderProgram::setUniform(std::string name, int i)
+	{
+		if(currentlyInUse != this->progId)
+			this->use();
+
+		auto loc = this->getUniformLocation(name);
+		gl::glUniform1i(loc, i);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	void ShaderProgram::use()
 	{
-		gl::glUseProgram(this->progId);
+		if(currentlyInUse != this->progId)
+		{
+			gl::glUseProgram(this->progId);
+			currentlyInUse = this->progId;
+		}
+	}
+
+	bool ShaderProgram::isInUse()
+	{
+		return currentlyInUse == this->progId;
 	}
 }
 

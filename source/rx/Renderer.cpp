@@ -23,6 +23,7 @@
 using namespace gl;
 
 #define MAX_POINT_LIGHTS 16
+#define MAX_SPOT_LIGHTS 16
 
 namespace rx
 {
@@ -179,22 +180,11 @@ namespace rx
 	void Renderer::setAmbientLighting(glm::vec4 colour, float intensity)
 	{
 		// set for both
-		this->colourShaderProgram.use();
+		for(auto* prog : { &this->colourShaderProgram, &this->textureShaderProgram })
 		{
-			auto colourLoc = this->colourShaderProgram.getUniform("ambientLightColour");
-			auto intensityLoc = this->colourShaderProgram.getUniform("ambientLightIntensity");
-
-			glUniform4fv(colourLoc, 1, glm::value_ptr(colour));
-			glUniform1f(intensityLoc, intensity);
-		}
-
-		this->textureShaderProgram.use();
-		{
-			auto colourLoc = this->textureShaderProgram.getUniform("ambientLightColour");
-			auto intensityLoc = this->textureShaderProgram.getUniform("ambientLightIntensity");
-
-			glUniform4fv(colourLoc, 1, glm::value_ptr(colour));
-			glUniform1f(intensityLoc, intensity);
+			prog->use();
+			prog->setUniform("ambientLightColour", colour);
+			prog->setUniform("ambientLightIntensity", intensity);
 		}
 	}
 
@@ -444,10 +434,8 @@ namespace rx
 
 
 
-	std::vector<PointLight> Renderer::sortAndUpdatePointLights(RenderCommand rc, glm::vec3 vert)
+	std::vector<PointLight> Renderer::sortAndUpdatePointLights(glm::vec3 vert)
 	{
-		using CType = RenderCommand::CommandType;
-
 		// sort by distance, take the first N only.
 		std::vector<PointLight> lights(this->pointLights.begin(), this->pointLights.end());
 		std::sort(lights.begin(), lights.end(), [vert](const PointLight& a, const PointLight& b) -> bool {
@@ -457,37 +445,78 @@ namespace rx
 		if(lights.size() > MAX_POINT_LIGHTS)
 			lights.erase(lights.begin() + MAX_POINT_LIGHTS, lights.end());
 
-		ShaderProgram* shaderProg = 0;
-		if(rc.type == CType::RenderColouredVertices)
-			shaderProg = &this->colourShaderProgram;
-
-		else if(rc.type == CType::RenderTexturedVertices)
-			shaderProg = &this->textureShaderProgram;
-
-		assert(shaderProg);
-		shaderProg->use();
-
-		size_t ctr = 0;
-		for(auto light : lights)
+		for(auto* shaderProg : { &this->colourShaderProgram, &this->textureShaderProgram })
 		{
-			std::string arraypre = "pointLights[" + std::to_string(ctr) + "].";
+			assert(shaderProg);
+			shaderProg->use();
 
-			glUniform3fv(shaderProg->getUniform(arraypre + "position"), 1, glm::value_ptr(light.position));
-			glUniform1f(shaderProg->getUniform(arraypre + "intensity"), light.intensity);
+			size_t ctr = 0;
+			for(auto light : lights)
+			{
+				std::string arraypre = "pointLights[" + std::to_string(ctr) + "].";
 
-			glUniform4fv(shaderProg->getUniform(arraypre + "diffuseColour"), 1, glm::value_ptr(light.diffuseColour));
-			glUniform4fv(shaderProg->getUniform(arraypre + "specularColour"), 1, glm::value_ptr(light.specularColour));
+				shaderProg->setUniform(arraypre + "position", light.position);
+				shaderProg->setUniform(arraypre + "intensity", light.intensity);
 
-			glUniform1f(shaderProg->getUniform(arraypre + "lightRadius"), light.lightRadius);
+				shaderProg->setUniform(arraypre + "diffuseColour", light.diffuseColour);
+				shaderProg->setUniform(arraypre + "specularColour", light.specularColour);
 
-			ctr++;
+				shaderProg->setUniform(arraypre + "lightRadius", light.lightRadius);
+
+				ctr++;
+			}
+
+			shaderProg->setUniform("pointLightCount", (int) ctr);
 		}
-
-		glUniform1i(shaderProg->getUniform("pointLightCount"), (int) ctr);
-		glUniform3fv(shaderProg->getUniform("cameraPosition"), 1, glm::value_ptr(this->camera.position));
 
 		return lights;
 	}
+
+
+
+
+	std::vector<SpotLight> Renderer::sortAndUpdateSpotLights(glm::vec3 vert)
+	{
+		// sort by distance, take the first N only.
+		std::vector<SpotLight> lights(this->spotLights.begin(), this->spotLights.end());
+		std::sort(lights.begin(), lights.end(), [vert](const SpotLight& a, const SpotLight& b) -> bool {
+			return glm::distance(vert, a.position) < glm::distance(vert, b.position);
+		});
+
+		if(lights.size() > MAX_SPOT_LIGHTS)
+			lights.erase(lights.begin() + MAX_SPOT_LIGHTS, lights.end());
+
+		for(auto* shaderProg : { &this->colourShaderProgram, &this->textureShaderProgram })
+		{
+			assert(shaderProg);
+			shaderProg->use();
+
+			size_t ctr = 0;
+			for(auto light : lights)
+			{
+				std::string arraypre = "spotLights[" + std::to_string(ctr) + "].";
+
+				shaderProg->setUniform(arraypre + "position", light.position);
+				shaderProg->setUniform(arraypre + "intensity", light.intensity);
+
+				shaderProg->setUniform(arraypre + "diffuseColour", light.diffuseColour);
+				shaderProg->setUniform(arraypre + "specularColour", light.specularColour);
+
+				shaderProg->setUniform(arraypre + "lightRadius", light.lightRadius);
+
+				ctr++;
+			}
+
+			shaderProg->setUniform("spotLightCount", (int) ctr);
+		}
+
+		// return lights;
+		return { };
+	}
+
+
+
+
 
 
 
@@ -540,22 +569,20 @@ namespace rx
 		}
 
 
+		// sort the lights by distance to the camera
+		{
+			this->textureShaderProgram.setUniform("cameraPosition", this->camera.position);
+			this->colourShaderProgram.setUniform("cameraPosition", this->camera.position);
+
+			this->sortAndUpdatePointLights(this->camera.position);
+			this->sortAndUpdateSpotLights(this->camera.position);
+		}
+
+
+
 		for(auto rc : this->renderList)
 		{
 			using CType = RenderCommand::CommandType;
-
-			// sort the lights by distance
-			if(rc.type == CType::RenderColouredVertices || rc.type == CType::RenderTexturedVertices)
-			{
-				// everything has at least one vertex; get the first one as a reference.
-				assert(rc.vertices.size() > 0);
-				glm::vec3 vert = rc.vertices[0];
-
-				this->sortAndUpdatePointLights(rc, vert);
-			}
-
-
-
 
 			switch(rc.type)
 			{
@@ -574,13 +601,9 @@ namespace rx
 					auto& sprog = this->colourShaderProgram;
 					sprog.use();
 
-					auto modelLoc = sprog.getUniform("modelMatrix");
-					auto viewLoc = sprog.getUniform("viewMatrix");
-					auto projLoc = sprog.getUniform("projMatrix");
-
-					glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
-					glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
-					glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
+					sprog.setUniform("modelMatrix", glm::mat4(1.0));
+					sprog.setUniform("viewMatrix", this->cameraMatrix);
+					sprog.setUniform("projMatrix", this->projectionMatrix);
 
 					glEnableVertexAttribArray(0);
 					{
@@ -641,29 +664,29 @@ namespace rx
 					if(rc.material.hasValue)
 					{
 						auto& mat = rc.material;
-						glUniform1f(sprog.getUniform("material.shine"), mat.shine);
+						sprog.setUniform("material.shine", mat.shine);
 
 						// set the colours
-						glUniform4fv(sprog.getUniform("material.ambientColour"), 1, glm::value_ptr(mat.ambientColour));
-						glUniform4fv(sprog.getUniform("material.diffuseColour"), 1, glm::value_ptr(mat.diffuseColour));
-						glUniform4fv(sprog.getUniform("material.specularColour"), 1, glm::value_ptr(mat.specularColour));
+						sprog.setUniform("material.ambientColour", mat.ambientColour);
+						sprog.setUniform("material.diffuseColour", mat.diffuseColour);
+						sprog.setUniform("material.specularColour", mat.specularColour);
 					}
 					else
 					{
 						// setup default material, which allows us to continue using the vertex colours.
-						glUniform1f(sprog.getUniform("material.shine"), 32.0f);
+						sprog.setUniform("material.shine", 32.0f);
 
 						// set the colours
-						glUniform4fv(sprog.getUniform("material.ambientColour"), 1, glm::value_ptr(glm::vec4(1.0)));
-						glUniform4fv(sprog.getUniform("material.diffuseColour"), 1, glm::value_ptr(glm::vec4(1.0)));
-						glUniform4fv(sprog.getUniform("material.specularColour"), 1, glm::value_ptr(glm::vec4(1.0)));
+						sprog.setUniform("material.ambientColour", glm::vec4(1.0));
+						sprog.setUniform("material.diffuseColour", glm::vec4(1.0));
+						sprog.setUniform("material.specularColour", glm::vec4(1.0));
 					}
 
 
 					{
 						// i presume this sets which texture unit to use
-						glUniform1i(sprog.getUniform("material.diffuseTexture"), 0);
-						glUniform1i(sprog.getUniform("material.specularTexture"), 1);
+						sprog.setUniform("material.diffuseTexture", 0);
+						sprog.setUniform("material.specularTexture", 1);
 
 						// use the placeholder white texture
 						glActiveTexture(GL_TEXTURE1);
@@ -698,13 +721,9 @@ namespace rx
 					auto& sprog = this->textureShaderProgram;
 					sprog.use();
 
-					auto modelLoc = sprog.getUniform("modelMatrix");
-					auto viewLoc = sprog.getUniform("viewMatrix");
-					auto projLoc = sprog.getUniform("projMatrix");
-
-					glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0)));
-					glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(this->cameraMatrix));
-					glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(this->projectionMatrix));
+					sprog.setUniform("modelMatrix", glm::mat4(1.0));
+					sprog.setUniform("viewMatrix", this->cameraMatrix);
+					sprog.setUniform("projMatrix", this->projectionMatrix);
 
 					glEnableVertexAttribArray(0);
 					{
@@ -785,10 +804,10 @@ namespace rx
 					auto& mat = rc.material;
 					{
 						// i presume this sets which texture unit to use
-						glUniform1i(sprog.getUniform("material.diffuseTexture"), 0);
-						glUniform1i(sprog.getUniform("material.specularTexture"), 1);
+						sprog.setUniform("material.diffuseTexture", 0);
+						sprog.setUniform("material.specularTexture", 1);
 
-						glUniform1f(sprog.getUniform("material.shine"), mat.hasValue ? mat.shine : 32.0f);
+						sprog.setUniform("material.shine", mat.hasValue ? mat.shine : 32.0f);
 
 						if(!mat.hasValue) assert(rc.textureToBind != (GLuint) -1);
 
@@ -803,9 +822,9 @@ namespace rx
 						glActiveTexture(GL_TEXTURE0);
 
 						// set the colours so that multiplying by them does nothing.
-						glUniform4fv(sprog.getUniform("material.ambientColour"), 1, glm::value_ptr(glm::vec4(1.0)));
-						glUniform4fv(sprog.getUniform("material.diffuseColour"), 1, glm::value_ptr(glm::vec4(1.0)));
-						glUniform4fv(sprog.getUniform("material.specularColour"), 1, glm::value_ptr(glm::vec4(1.0)));
+						sprog.setUniform("material.ambientColour", glm::vec4(1.0));
+						sprog.setUniform("material.diffuseColour", glm::vec4(1.0));
+						sprog.setUniform("material.specularColour", glm::vec4(1.0));
 					}
 
 
@@ -827,7 +846,7 @@ namespace rx
 					this->textShaderProgram.use();
 
 					glm::mat4 orthoProj = glm::ortho(0.0, this->_width, this->_height, 0.0);
-					glUniformMatrix4fv(this->textShaderProgram.getUniform("projectionMatrix"), 1, GL_FALSE, glm::value_ptr(orthoProj));
+					this->textShaderProgram.setUniform("projectionMatrix", orthoProj);
 
 					glEnableVertexAttribArray(0);
 					{

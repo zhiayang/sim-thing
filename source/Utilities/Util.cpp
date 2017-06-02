@@ -6,10 +6,8 @@
 #include <map>
 #include <stdio.h>
 
-#include "utilities.h"
 #include "rx.h"
-
-#include "imgui.h"
+#include "utilities.h"
 
 namespace util
 {
