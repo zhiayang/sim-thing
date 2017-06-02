@@ -4,64 +4,44 @@
 
 #include <tuple>
 
-#include "config.h"
 #include "rx.h"
+#include "config.h"
+#include "platform.h"
 
-#include <SDL2/SDL.h>
-
-#include <glbinding/gl/gl.h>
 #include <glbinding/Binding.h>
 
-namespace rx
+namespace platform
 {
-	std::pair<SDL_GLContext, rx::Window*> Initialise(int width, int height)
+	std::pair<rx::Window*, void*> Initialise()
 	{
-		// initialise SDL
-		{
-			auto err = SDL_Init(SDL_INIT_EVERYTHING);
-			if(err)	ERROR("SDL failed to initialise, subsystem flags: %d", SDL_INIT_EVERYTHING);
-		}
+		std::string windowTitle = "SotV";
 
+		void* userdata = platform::initialiseUserData();
+		void* userwindow = platform::createWindow(userdata, windowTitle, Config::getResX(), Config::getResY(), true);
 
-		// Setup window
-		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-		SDL_CaptureMouse((SDL_bool) true);
-		SDL_GL_SetSwapInterval(1);
-
-
-		rx::Window* window = new rx::Window("connect", Config::getResX(), Config::getResY(), true);
-		SDL_GLContext glcontext = SDL_GL_CreateContext(window->sdlWin);
-		if(glcontext == 0)
-			ERROR("Failed to create OpenGL context. SDL Error: '%s'", SDL_GetError());
+		int scale = platform::getWindowScale(userdata, userwindow);
+		rx::Window* window = new rx::Window(windowTitle, userdata, userwindow, Config::getResX(), Config::getResY(), scale);
 
 		glbinding::Binding::initialize();
 
-		return { glcontext, window };
+		return { window, userdata };
 	}
 
-
-
-
-
-	Window::Window(std::string title, int w, int h, bool resizeable) : width(w), height(h)
+	void Uninitialise(rx::Window* window, void* userdata)
 	{
-		this->sdlWin = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
-			SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | (resizeable ? SDL_WINDOW_RESIZABLE : 0));
+		assert(window->platformData == userdata);
+		platform::destroyWindow(userdata, window->platformWindow);
 
-		if(!this->sdlWin) ERROR("Failed to initialise SDL Window! (%dx%d)", w, h);
-
-		LOG("Created new SDL Window with dimensions %dx%d", this->width, this->height);
+		platform::uninitialiseUserData(userdata);
 	}
+}
 
+
+namespace rx
+{
 	Window::~Window()
 	{
-		SDL_DestroyWindow(this->sdlWin);
+		platform::destroyWindow(this->platformData, this->platformWindow);
 	}
 }
 

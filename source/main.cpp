@@ -15,6 +15,7 @@
 #include "rx/model.h"
 
 #include "config.h"
+#include "platform.h"
 #include "tinyformat.h"
 
 #include "sotv/sotv.h"
@@ -34,32 +35,32 @@ static rx::Renderer* theRenderer = 0;
 
 namespace rx
 {
-	std::pair<SDL_Event, bool> ProcessEvents()
-	{
-		bool done = false;
+	// std::pair<SDL_Event, bool> ProcessEvents()
+	// {
+	// 	bool done = false;
 
-		SDL_Event event;
-		while(SDL_PollEvent(&event))
-		{
-			if(event.type == SDL_KEYUP || event.type == SDL_KEYDOWN)
-				Input::handleKeyInput(&gameState->inputState, &event);
+	// 	SDL_Event event;
+	// 	while(SDL_PollEvent(&event))
+	// 	{
+	// 		if(event.type == SDL_KEYUP || event.type == SDL_KEYDOWN)
+	// 			Input::handleKeyInput(&gameState->inputState, &event);
 
-			else if(event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN)
-				Input::handleMouseInput(&gameState->inputState, &event);
+	// 		else if(event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN)
+	// 			Input::handleMouseInput(&gameState->inputState, &event);
 
-			if(event.type == SDL_QUIT)
-			{
-				done = true;
-			}
-			else if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-			{
-				assert(theRenderer);
-				theRenderer->updateWindowSize(event.window.data1, event.window.data2);
-			}
-		}
+	// 		if(event.type == SDL_QUIT)
+	// 		{
+	// 			done = true;
+	// 		}
+	// 		else if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+	// 		{
+	// 			assert(theRenderer);
+	// 			theRenderer->updateWindowSize(event.window.data1, event.window.data2);
+	// 		}
+	// 	}
 
-		return { event, done };
-	}
+	// 	return { event, done };
+	// }
 }
 
 
@@ -110,16 +111,8 @@ int main(int argc, char** argv)
 	prof::enable();
 
 
-
-
-
-
-
-	// Setup SDL
-	auto r = rx::Initialise(Config::getResX(), Config::getResY());
-	SDL_GLContext glcontext = r.first;
-	rx::Window* window = r.second;
-
+	// Setup the platform
+	auto platformData = platform::Initialise();
 
 	auto primaryFont = rx::getFont("menlo", 64, ' ', 0xFF - ' ', 2, 2);
 
@@ -163,32 +156,18 @@ int main(int argc, char** argv)
 
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
-		int rx = 0; int ry = 0;
-		SDL_GetWindowSize(window->sdlWin, &rx, &ry);
-		LOG("window is %d x %d", rx, ry);
-
-		int dx = 0; int dy = 0;
-		SDL_GL_GetDrawableSize(window->sdlWin, &dx, &dy);
-
-		int sx = dx / rx;
-		int sy = dy / ry;
-
-		assert(sx == sy && "vertical and horizontal display scaling values do not match");
-
-
 		rx::Camera cam;
 		cam.position = glm::vec3(0, 1, 2);
 		cam.yaw = -90;
 		cam.pitch = -20;
 
 		// setup the renderer. there's many parameters here...
-		theRenderer = new rx::Renderer(window, glcontext,
-			util::colour(0.01, 0.01, 0.01),		// clear colour
-			cam,								// camera
-			textureProg, colourProg, textProg,	// shader programs for textured objects, coloured objects, and text.
-			glm::radians(70.0f),				// FOV, 70 degrees
-			rx, ry, sx,							// window res (x, y), and scale (2 for retina, 1 for normal)
-			0.001, 1000							// near plane, far plane
+		theRenderer = new rx::Renderer(platformData.first,	// the window
+			util::colour(0.01, 0.01, 0.01),					// clear colour
+			cam,											// camera
+			textureProg, colourProg, textProg,				// shader programs for textured objects, coloured objects, and text.
+			glm::radians(70.0f),							// FOV, 70 degrees
+			0.001, 1000										// near plane, far plane
 		);
 
 		// position, colour, intensity
@@ -213,11 +192,11 @@ int main(int argc, char** argv)
 
 	// }, Input::HandlerKind::PressDown);
 
-	Input::addKeyHandler(&gameState->inputState,
-		{ Input::Key::W, Input::Key::S, Input::Key::A, Input::Key::D, Input::Key::ShiftL, Input::Key::Space },
-		0, [](Input::State* s, Input::Key k, double) -> bool {
+	input::addKeyHandler(&gameState->inputState,
+		{ input::Key::W, input::Key::S, input::Key::A, input::Key::D, input::Key::ShiftL, input::Key::Space },
+		0, [](input::State* s, input::Key k, double) -> bool {
 
-		using IK = Input::Key;
+		using IK = input::Key;
 		auto cam = theRenderer->getCamera();
 
 		if(k == IK::A || k == IK::D || k == IK::W || k == IK::S)
@@ -239,7 +218,7 @@ int main(int argc, char** argv)
 		theRenderer->updateCamera(cam);
 		return true;
 
-	}, Input::HandlerKind::WhileDown);
+	}, input::HandlerKind::WhileDown);
 
 
 
@@ -262,13 +241,20 @@ int main(int argc, char** argv)
 	bool done = false;
 	while(!done)
 	{
-		SDL_Event event;
+		// get and process events
+		auto events = platform::getEvents(platformData.second);
+		for(auto event : events)
 		{
-			auto t = rx::ProcessEvents();
+			if(event.ignore)
+				continue;
 
-			event = t.first;
-			done = t.second;
+			if(event.type == input::Event::Type::WindowResize)
+				theRenderer->updateWindowSize(event.windowWidth, event.windowHeight);
+
+			done = input::processEvent(&gameState->inputState, event);
+			if(done) break;
 		}
+
 
 		double frameBegin = util::Time::ns();
 		std::tie(currentFps, renderDelta) = determineCurrentFPS(prevTimestamp, frameBegin, frameTime);
@@ -295,7 +281,7 @@ int main(int argc, char** argv)
 					bool invert = true;
 
 					double sensitivity = 0.5;
-					auto md = Input::getMouseChange(&gameState->inputState);
+					auto md = input::getMouseChange(&gameState->inputState);
 					auto cam = theRenderer->getCamera();
 
 					// fprintf(stderr, "delta = (%.0f, %.0f)\n", md.x, md.y);
@@ -305,7 +291,7 @@ int main(int argc, char** argv)
 					theRenderer->updateCamera(cam);
 
 
-					Input::Update(&gameState->inputState, fixedDeltaTimeNs * timeSpeedupFactor);
+					input::Update(&gameState->inputState, theRenderer->window, fixedDeltaTimeNs * timeSpeedupFactor);
 				}
 			}
 		}
@@ -336,7 +322,7 @@ int main(int argc, char** argv)
 		{
 			std::string fpsstr = tfm::format("%.2f fps / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)", currentFps,
 				theRenderer->getCamera().position.x, theRenderer->getCamera().position.y, theRenderer->getCamera().position.z,
-				Input::getMousePos(&gameState->inputState).x, Input::getMousePos(&gameState->inputState).y,
+				input::getMousePos(&gameState->inputState).x, input::getMousePos(&gameState->inputState).y,
 				theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
 
 			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
@@ -433,12 +419,8 @@ int main(int argc, char** argv)
 
 	// prof::printResults();
 
-	// Cleanup
-	// ImGui_ImplSdl_Shutdown();
-
-	SDL_GL_DeleteContext(glcontext);
-	SDL_DestroyWindow(theRenderer->window->sdlWin);
-	SDL_Quit();
+	// cleanup
+	platform::Uninitialise(theRenderer->window, platformData.second);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-// InputManager.h
+// input.h
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
@@ -10,9 +10,12 @@
 
 #include <glm/vec2.hpp>
 
-union SDL_Event;
+namespace rx
+{
+	struct Window;
+}
 
-namespace Input
+namespace input
 {
 	enum class Key
 	{
@@ -79,9 +82,6 @@ namespace Input
 		NUM_KEYS,
 	};
 
-	Key FromSDL(uint32_t sdlKeycode);
-	uint32_t ToSDL(Key key);
-
 	constexpr size_t NUM_KEYS = (size_t) Key::NUM_KEYS;
 
 	enum class HandlerKind
@@ -108,13 +108,47 @@ namespace Input
 		std::unordered_map<Key, std::vector<std::tuple<id_t, HandlerKind, int, std::function<bool(State*, Key, double)>>>> handlers;
 	};
 
-	void handleKeyInput(State* inputState, SDL_Event* e);
-	void handleMouseInput(State* inputState, SDL_Event* e);
+	struct Event
+	{
+		enum class Type
+		{
+			Invalid,
+
+			QuitProgram,
+
+			KeyUp,
+			KeyDown,
+
+			MouseButtonUp,
+			MouseButtonDown,
+
+			MouseMotion,
+
+			WindowResize,
+		};
+
+		Type type = Type::Invalid;
+		bool ignore = false;
+
+		// only valid if Event.type is KeyUp, KeyDown, MouseButtonUp, or MouseButtonDown.
+		Key keypress = Key::INVALID;
+
+		// only valid if Event.type is MouseMotion
+		int motionX = 0;
+		int motionY = 0;
+
+		// only valid if Event.type is WindowResize
+		int windowWidth = 0;
+		int windowHeight = 0;
+	};
+
 
 	bool testKey(State* state, Key k);
 
-	void Update(State* inputState, double delta);
+	void Update(State* inputState, rx::Window* window, double delta);
 
+	// returns true if we need to quit
+	bool processEvent(State* state, Event event);
 
 	// returns a unique ID that can be used to remove the handler later.
 	// handlers with higher priorities are fired first.

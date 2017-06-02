@@ -6,9 +6,12 @@
 #include <algorithm>
 
 
-#include "glwrapper.h"
 #include "rx.h"
 #include "rx/model.h"
+
+#include "platform.h"
+
+#include "glwrapper.h"
 
 #include "utf8rewind.h"
 
@@ -27,29 +30,27 @@ using namespace gl;
 
 namespace rx
 {
-	Renderer::Renderer(Window* win, SDL_GLContext glc, util::colour clearCol, Camera cam, ShaderProgram textureShaderProg,
-		ShaderProgram colourShaderProg, ShaderProgram textShaderProg, double fov, double width, double height, double resscale,
-		double near, double far) :
+	Renderer::Renderer(Window* win, util::colour clearCol, Camera cam, ShaderProgram textureShaderProg,
+		ShaderProgram colourShaderProg, ShaderProgram textShaderProg, double fov, double near, double far) :
 		textureShaderProgram(textureShaderProg), colourShaderProgram(colourShaderProg), textShaderProgram(textShaderProg)
 	{
 		assert(win);
 		this->window = win;
-		this->glContext = glc;
 
+		this->_width			= window->width;
+		this->_height			= window->height;
+		this->_resolutionScale	= window->displayScale;
 
 		// identity matrix.
 		this->updateCamera(cam);
-		this->projectionMatrix = glm::perspective(fov, width / height, near, far);
+		this->projectionMatrix = glm::perspective(fov, this->_width / this->_height, near, far);
 
 		this->clearColour = clearCol;
 
 		this->_fov		= fov;
-		this->_width	= width;
-		this->_height	= height;
 		this->_near		= near;
 		this->_far		= far;
 
-		this->_resolutionScale = resscale;
 
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -948,17 +949,18 @@ namespace rx
 	// imgui stuff
 	void PreFrame(rx::Renderer* r)
 	{
+		platform::preFrame(r->window->platformData, r->window->platformWindow);
 	}
 
-	void BeginFrame(rx::Renderer* renderer)
+	void BeginFrame(rx::Renderer* r)
 	{
-		// ImGui_ImplSdl_NewFrame(renderer->window->sdlWin);
+		platform::preFrame(r->window->platformData, r->window->platformWindow);
 	}
 
-	void EndFrame(rx::Renderer* renderer)
+	void EndFrame(rx::Renderer* r)
 	{
-		renderer->renderAll();
-		SDL_GL_SwapWindow(renderer->window->sdlWin);
+		r->renderAll();
+		platform::endFrame(r->window->platformData, r->window->platformWindow);
 	}
 
 

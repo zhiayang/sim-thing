@@ -26,12 +26,18 @@ namespace rx
 
 	struct Window
 	{
-		Window(std::string title, int w, int h, bool resizeable);
+		Window(std::string n, void* pd, void* pw, int w, int h, int scale)
+			: title(n), platformData(pd), platformWindow(pw), width(w), height(h), displayScale(scale) { }
 		~Window();
-		SDL_Window* sdlWin;
 
-		int width;
-		int height;
+		std::string title;
+
+		void* platformData = 0;
+		void* platformWindow = 0;
+
+		int width = 0;
+		int height = 0;
+		int displayScale = 0;
 	};
 
 

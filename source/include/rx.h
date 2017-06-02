@@ -66,9 +66,8 @@ namespace rx
 
 	struct Renderer
 	{
-		Renderer(Window* win, SDL_GLContext glc, util::colour clearColour, Camera camera, ShaderProgram textureShaderProg,
-			ShaderProgram colourShaderProg, ShaderProgram textShaderProg, double fov, double width, double height, double resscale,
-			double near, double far);
+		Renderer(Window* win, util::colour clearColour, Camera camera, ShaderProgram textureShaderProg,
+			ShaderProgram colourShaderProg, ShaderProgram textShaderProg, double fov, double near, double far);
 
 		void clearRenderList();
 
@@ -129,7 +128,6 @@ namespace rx
 
 
 		Window* window = 0;
-		SDL_GLContext glContext;
 
 		private:
 			glm::mat4 cameraMatrix;
@@ -153,13 +151,6 @@ namespace rx
 
 			std::vector<RenderCommand> renderList;
 	};
-
-
-
-
-
-	std::pair<SDL_GLContext, rx::Window*> Initialise(int width, int height);
-	std::pair<SDL_Event, bool> ProcessEvents();
 
 	// rendering stuff.
 	void PreFrame(rx::Renderer* r);

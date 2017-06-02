@@ -7,7 +7,7 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include "inputmanager.h"
+#include "input.h"
 
 #include "sotv/station.h"
 
@@ -23,7 +23,7 @@ namespace Sotv
 
 	struct GameState
 	{
-		Input::State inputState;
+		input::State inputState;
 		std::vector<Window*> windowList;
 
 
