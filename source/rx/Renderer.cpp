@@ -194,6 +194,11 @@ namespace rx
 		this->pointLights.push_back(light);
 	}
 
+	void Renderer::addSpotLight(rx::SpotLight light)
+	{
+		this->spotLights.push_back(light);
+	}
+
 
 
 
@@ -498,10 +503,15 @@ namespace rx
 				std::string arraypre = "spotLights[" + std::to_string(ctr) + "].";
 
 				shaderProg->setUniform(arraypre + "position", light.position);
+				shaderProg->setUniform(arraypre + "direction", light.direction);
+
 				shaderProg->setUniform(arraypre + "intensity", light.intensity);
 
 				shaderProg->setUniform(arraypre + "diffuseColour", light.diffuseColour);
 				shaderProg->setUniform(arraypre + "specularColour", light.specularColour);
+
+				shaderProg->setUniform(arraypre + "innerCutoffCosine", light.innerCutoffCosine);
+				shaderProg->setUniform(arraypre + "outerCutoffCosine", light.outerCutoffCosine);
 
 				shaderProg->setUniform(arraypre + "lightRadius", light.lightRadius);
 
@@ -511,8 +521,7 @@ namespace rx
 			shaderProg->setUniform("spotLightCount", (int) ctr);
 		}
 
-		// return lights;
-		return { };
+		return lights;
 	}
 
 

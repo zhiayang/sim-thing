@@ -9,6 +9,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+#include <glm/trigonometric.hpp>
 
 #include <glbinding/gl/types.h>
 
@@ -35,14 +36,15 @@ namespace rx
 
 	struct SpotLight
 	{
-		SpotLight(glm::vec3 p, glm::vec4 dc, glm::vec4 sc, float i, float r, float inner, float outer)
-			: position(p), diffuseColour(dc), specularColour(sc), intensity(i), lightRadius(r)
+		SpotLight(glm::vec3 p, glm::vec3 dir, glm::vec4 dc, glm::vec4 sc, float i, float r, float inner, float outer)
+			: position(p), direction(dir), diffuseColour(dc), specularColour(sc), intensity(i), lightRadius(r)
 		{
-			this->innerCutoffCosine = cos(inner);
-			this->outerCutoffCosine = cos(outer);
+			this->innerCutoffCosine = glm::cos(glm::radians(inner));
+			this->outerCutoffCosine = glm::cos(glm::radians(outer));
 		}
 
 		glm::vec3 position;
+		glm::vec3 direction;
 
 		glm::vec4 diffuseColour;
 		glm::vec4 specularColour;

@@ -171,8 +171,11 @@ int main(int argc, char** argv)
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
-		theRenderer->addPointLight(rx::PointLight(glm::vec3(0, 0, 8), util::colour::white(), util::colour::white(), 1.0, 10.0));
+		theRenderer->setAmbientLighting(util::colour::white(), 0.0);
+		theRenderer->addPointLight(rx::PointLight(glm::vec3(0, 0, 8), util::colour::white(), util::colour::white(), 0.0, 10.0));
+
+		theRenderer->addSpotLight(rx::SpotLight(glm::vec3(0, -4, 0), glm::vec3(0, 1, 0), util::colour::white(), util::colour::white(),
+			1.0, 5.0, 12.5, 30));
 
 		// theRenderer->addPointLight(rx::PointLight(glm::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
 		// 	1.0, 1.0, 0.022, 0.0019));
@@ -290,6 +293,8 @@ int main(int argc, char** argv)
 
 					theRenderer->updateCamera(cam);
 
+					theRenderer->spotLights.back().position = cam.position;
+					theRenderer->spotLights.back().direction = cam.front();
 
 					input::Update(&gameState->inputState, theRenderer->window, fixedDeltaTimeNs * timeSpeedupFactor);
 				}

@@ -121,6 +121,39 @@ vec4 applySpotLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 di
 	vec4 result = vec4(0, 0, 0, 1);
 	for(int i = 0; i < spotLightCount; i++)
 	{
+		vec3 lightDir = normalize(spotLights[i].position - fragPosition);
+		float radius = spotLights[i].lightRadius;
+
+		float theta = dot(lightDir, normalize(-spotLights[i].direction));
+		float epsilon = (spotLights[i].innerCutoffCosine - spotLights[i].outerCutoffCosine);
+
+
+		{
+			// Diffuse lighting
+			float diff = max(dot(normal, lightDir), 0.0);
+
+			// Specular lighting
+			vec3 reflectDir = reflect(-1 * lightDir, normal);
+			float spec = pow(max(dot(viewDirection, reflectDir), 0.0), material.shine);
+
+
+			float smoothIntensity = clamp((theta - spotLights[i].outerCutoffCosine) / epsilon, 0.0, 1.0);
+
+			// Attenuation
+			float dist = max(length(spotLights[i].position - fragPosition), 0);
+			dist -= radius;
+
+			float _denom = (dist / radius) + 1;
+			float _att = 1.0 / (_denom * _denom);
+
+			vec4 atten = vec4(_att, _att, _att, 1.0);
+
+
+			vec4 diffuse = spotLights[i].diffuseColour * diff * diffuseSample;
+			vec4 specular = spotLights[i].specularColour * SPECULAR_POWER * spec * specularSample;
+
+			result += (diffuse + specular) * spotLights[i].intensity * smoothIntensity * atten;
+		}
 	}
 
 	return result;

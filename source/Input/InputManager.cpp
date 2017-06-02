@@ -150,8 +150,24 @@ namespace input
 
 
 
+	static id_t uniqueID = 0;
+	using HF_t = std::function<bool(State*, Key, double)>;
 
+	id_t addMouseHandler(State* state, int priority, std::function<bool(State*, double)> handler)
+	{
+		id_t id = uniqueID++;
 
+		state->mouseHandlers.push_back({ id, priority, handler });
+
+		// sort reverse -- so highest priority is in front
+		std::sort(state->mouseHandlers.begin(), state->mouseHandlers.end(), [](const std::tuple<id_t, int,
+			std::function<bool(State*, double)>>& a, const std::tuple<id_t, int, std::function<bool(State*, double)>>& b) -> bool
+		{
+			return std::get<1>(a) > std::get<1>(b);
+		});
+
+		return id;
+	}
 
 
 
@@ -168,11 +184,8 @@ namespace input
 	}
 
 
-	using HF_t = std::function<bool(State*, Key, double)>;
 	std::vector<id_t> addKeyHandler(State* state, std::vector<Key> keys, int priority, HF_t handler, HandlerKind kind)
 	{
-		static id_t uniqueID = 0;
-
 		std::vector<id_t> ids;
 		for(auto key : keys)
 		{
@@ -210,7 +223,6 @@ namespace input
 		ERROR("Handler with id '%zu' was not found", id);
 	}
 }
-
 
 
 

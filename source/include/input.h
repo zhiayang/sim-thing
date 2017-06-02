@@ -106,6 +106,7 @@ namespace input
 		std::bitset<NUM_KEYS> keys;
 
 		std::unordered_map<Key, std::vector<std::tuple<id_t, HandlerKind, int, std::function<bool(State*, Key, double)>>>> handlers;
+		std::vector<std::tuple<id_t, int, std::function<bool(State*, double)>>> mouseHandlers;
 	};
 
 	struct Event
@@ -161,6 +162,8 @@ namespace input
 
 	std::vector<id_t> addKeyHandler(State* state, Key key, int priority, std::function<bool(State*, Key, double)> handler,
 		HandlerKind kind);
+
+	id_t addMouseHandler(State* state, int priority, std::function<bool(State*, double)> handler);
 
 	void removeKeyHandler(State* state, Key key, id_t handler);
 

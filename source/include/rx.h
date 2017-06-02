@@ -91,6 +91,7 @@ namespace rx
 
 		void setAmbientLighting(glm::vec4 colour, float intensity);
 		void addPointLight(PointLight light);
+		void addSpotLight(SpotLight light);
 
 
 		std::vector<PointLight> sortAndUpdatePointLights(glm::vec3 reference);
