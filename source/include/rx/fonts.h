@@ -13,8 +13,6 @@
 #include <glbinding/gl/enum.h>
 #include <glbinding/gl/types.h>
 
-#include <glm/mat4x4.hpp>
-
 #include "stb/stb_truetype.h"
 
 namespace rx

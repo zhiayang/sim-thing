@@ -4,6 +4,7 @@
 
 #include <tuple>
 #include <deque>
+#include <assert.h>
 
 #include "glwrapper.h"
 #include "rx.h"

@@ -33,7 +33,7 @@ namespace platform
 	void* createWindow(void* userdata, std::string title, int width, int height, bool allowResize);
 	void destroyWindow(void* userdata, void* userwindow);
 	int getWindowScale(void* userdata, void* userwindow);
-	glm::vec2 getMousePosition(void* userdata);
+	lx::vec2 getMousePosition(void* userdata);
 
 	void updateInput(input::State* inputState, double delta, void* userdata);
 

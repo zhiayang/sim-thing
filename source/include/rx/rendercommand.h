@@ -7,11 +7,9 @@
 #include <stdint.h>
 #include <vector>
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
 #include <glbinding/gl/types.h>
 
+#include "lx.h"
 #include "rx/model.h"
 
 namespace rx
@@ -42,10 +40,10 @@ namespace rx
 
 		Material material;
 
-		std::vector<glm::vec2> uvs;
-		std::vector<glm::vec4> colours;
+		std::vector<lx::vec2> uvs;
+		std::vector<lx::vec4> colours;
 
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec3> vertices;
+		std::vector<lx::vec3> normals;
+		std::vector<lx::vec3> vertices;
 	};
 }

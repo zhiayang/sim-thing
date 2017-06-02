@@ -8,8 +8,6 @@
 #include <functional>
 #include <unordered_map>
 
-#include <glm/vec2.hpp>
-
 namespace rx
 {
 	struct Window;
@@ -100,8 +98,8 @@ namespace input
 
 	struct State
 	{
-		glm::vec2 mouseDelta;
-		glm::vec2 mousePosition;
+		lx::vec2 mouseDelta;
+		lx::vec2 mousePosition;
 
 		std::bitset<NUM_KEYS> keys;
 
@@ -167,8 +165,8 @@ namespace input
 
 	void removeKeyHandler(State* state, Key key, id_t handler);
 
-	glm::vec2 getMousePos(State* state);
-	glm::vec2 getMouseChange(State* state);
+	lx::vec2 getMousePos(State* state);
+	lx::vec2 getMouseChange(State* state);
 }
 
 

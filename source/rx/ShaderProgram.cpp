@@ -2,15 +2,15 @@
 // Copyright (c) 2014 - 2016, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
+#include <assert.h>
+
 #include "utilities.h"
 #include "assetloader.h"
+
 #include "rx/shaders.h"
 
 #include "stx/string_view.hpp"
 #include <glbinding/gl/gl.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 using namespace AssetLoader;
 
@@ -257,59 +257,59 @@ namespace rx
 	}
 
 
-	void ShaderProgram::setUniform(std::string name, glm::vec4 v4)
+	void ShaderProgram::setUniform(std::string name, lx::vec4 v4)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
 
 		auto loc = this->getUniformLocation(name);
-		gl::glUniform4fv(loc, 1, glm::value_ptr(v4));
+		gl::glUniform4fv(loc, 1, v4.ptr);
 	}
 
-	void ShaderProgram::setUniform(std::string name, glm::vec3 v3)
+	void ShaderProgram::setUniform(std::string name, lx::vec3 v3)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
 
 		auto loc = this->getUniformLocation(name);
-		gl::glUniform3fv(loc, 1, glm::value_ptr(v3));
+		gl::glUniform3fv(loc, 1, v3.ptr);
 	}
 
-	void ShaderProgram::setUniform(std::string name, glm::vec2 v2)
+	void ShaderProgram::setUniform(std::string name, lx::vec2 v2)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
 
 		auto loc = this->getUniformLocation(name);
-		gl::glUniform2fv(loc, 1, glm::value_ptr(v2));
+		gl::glUniform2fv(loc, 1, v2.ptr);
 	}
 
 
-	void ShaderProgram::setUniform(std::string name, glm::mat4 m4)
+	void ShaderProgram::setUniform(std::string name, lx::mat4 m4)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
 
 		auto loc = this->getUniformLocation(name);
-		gl::glUniformMatrix4fv(loc, 1, gl::GL_FALSE, glm::value_ptr(m4));
+		gl::glUniformMatrix4fv(loc, 1, gl::GL_FALSE, m4.ptr);
 	}
 
-	void ShaderProgram::setUniform(std::string name, glm::mat3 m3)
+	void ShaderProgram::setUniform(std::string name, lx::mat3 m3)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
 
 		auto loc = this->getUniformLocation(name);
-		gl::glUniformMatrix3fv(loc, 1, gl::GL_FALSE, glm::value_ptr(m3));
+		gl::glUniformMatrix3fv(loc, 1, gl::GL_FALSE, m3.ptr);
 	}
 
-	void ShaderProgram::setUniform(std::string name, glm::mat2 m2)
+	void ShaderProgram::setUniform(std::string name, lx::mat2 m2)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
 
 		auto loc = this->getUniformLocation(name);
-		gl::glUniformMatrix2fv(loc, 1, gl::GL_FALSE, glm::value_ptr(m2));
+		gl::glUniformMatrix2fv(loc, 1, gl::GL_FALSE, m2.ptr);
 	}
 
 

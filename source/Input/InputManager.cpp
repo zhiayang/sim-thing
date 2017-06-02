@@ -75,13 +75,13 @@ namespace input
 				{
 					auto old = state->mousePosition;
 
-					state->mousePosition = glm::vec2(event.motionX, event.motionY);
+					state->mousePosition = lx::vec2(event.motionX, event.motionY);
 					state->mouseDelta = state->mousePosition - old;
 				}
 				else
 				{
-					state->mousePosition = glm::vec2(event.motionX, event.motionY);
-					state->mouseDelta = glm::vec2(0);
+					state->mousePosition = lx::vec2(event.motionX, event.motionY);
+					state->mouseDelta = lx::vec2(0);
 				}
 
 				firstMouse = false;
@@ -104,12 +104,12 @@ namespace input
 		return false;
 	}
 
-	glm::vec2 getMousePos(State* state)
+	lx::vec2 getMousePos(State* state)
 	{
 		return state->mousePosition;
 	}
 
-	glm::vec2 getMouseChange(State* state)
+	lx::vec2 getMouseChange(State* state)
 	{
 		return state->mouseDelta;
 	}
@@ -133,7 +133,7 @@ namespace input
 		}
 
 		if(platform::getMousePosition(window->platformData) == st->mousePosition)
-			st->mouseDelta = glm::vec2(0);
+			st->mouseDelta = lx::vec2(0);
 	}
 
 

@@ -5,11 +5,7 @@
 #include <stdio.h>
 #include <glbinding/gl/gl.h>
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/matrix.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "lx.h"
 
 #include "rx.h"
 #include "rx/model.h"
@@ -157,7 +153,7 @@ int main(int argc, char** argv)
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
 		rx::Camera cam;
-		cam.position = glm::vec3(0, 1, 2);
+		cam.position = lx::vec3(0, 1, 2);
 		cam.yaw = -90;
 		cam.pitch = -20;
 
@@ -166,18 +162,18 @@ int main(int argc, char** argv)
 			util::colour(0.01, 0.01, 0.01),					// clear colour
 			cam,											// camera
 			textureProg, colourProg, textProg,				// shader programs for textured objects, coloured objects, and text.
-			glm::radians(70.0f),							// FOV, 70 degrees
+			lx::toRadians(70.0f),							// FOV, 70 degrees
 			0.001, 1000										// near plane, far plane
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.0);
-		theRenderer->addPointLight(rx::PointLight(glm::vec3(0, 0, 8), util::colour::white(), util::colour::white(), 0.0, 10.0));
+		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
+		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 0, 8), util::colour::white(), util::colour::white(), 0.0, 10.0));
 
-		theRenderer->addSpotLight(rx::SpotLight(glm::vec3(0, -4, 0), glm::vec3(0, 1, 0), util::colour::white(), util::colour::white(),
+		theRenderer->addSpotLight(rx::SpotLight(lx::vec3(0, -4, 0), lx::vec3(0, 1, 0), util::colour::white(), util::colour::white(),
 			1.0, 5.0, 12.5, 30));
 
-		// theRenderer->addPointLight(rx::PointLight(glm::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
+		// theRenderer->addPointLight(rx::PointLight(lx::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
 		// 	1.0, 1.0, 0.022, 0.0019));
 	}
 
@@ -288,7 +284,7 @@ int main(int argc, char** argv)
 					auto cam = theRenderer->getCamera();
 
 					// fprintf(stderr, "delta = (%.0f, %.0f)\n", md.x, md.y);
-					cam.pitch = glm::clamp(cam.pitch + md.y * sensitivity * (invert ? -1 : 1), -89.4, +89.4);
+					cam.pitch = lx::clamp(cam.pitch + md.y * sensitivity * (invert ? -1 : 1), -89.4, +89.4);
 					cam.yaw += md.x * sensitivity;
 
 					theRenderer->updateCamera(cam);
@@ -310,15 +306,15 @@ int main(int argc, char** argv)
 
 		Sotv::Render(*gameState, renderDelta, theRenderer);
 
-		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::translate(glm::mat4(), glm::vec3(0, -2, 0)), glm::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::translate(glm::mat4(), lx::vec3(0, -2, 0)), lx::vec4(0.24, 0.59, 0.77, 1.0));
 
-		// theRenderer->renderModel(model, glm::translate(glm::mat4(), glm::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
-		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec4(0.24, 0.59, 0.77, 1.0));
-		theRenderer->renderModel(cubeModel, glm::scale(glm::mat4(), glm::vec3(0.5)));
-		theRenderer->renderModel(cubeModel, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.5)), glm::vec3(0, 3, 0)));
+		// theRenderer->renderModel(model, glm::translate(glm::mat4(), lx::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
+		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), lx::vec3(0.5)), lx::vec4(0.24, 0.59, 0.77, 1.0));
+		theRenderer->renderModel(cubeModel, lx::mat4());
+		theRenderer->renderModel(cubeModel, lx::mat4().translate(lx::vec3(0, 3, 0)));
 
-		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), glm::vec3(0, 0, 2)), glm::vec4(0.24, 0.59, 0.77, 1.0));
-		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), glm::vec3(0, 20, 0)), util::colour::white());
+		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), lx::vec3(0, 0, 2)), lx::vec4(0.24, 0.59, 0.77, 1.0));
+		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), lx::vec3(0.1)), lx::vec3(0, 20, 0)), util::colour::white());
 
 
 
@@ -330,7 +326,7 @@ int main(int argc, char** argv)
 				input::getMousePos(&gameState->inputState).x, input::getMousePos(&gameState->inputState).y,
 				theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
 
-			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, glm::vec2(5, 5));
+			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, lx::vec2(5, 5));
 
 			auto psys = gameState->playerStation->powerSystem;
 			auto lss = gameState->playerStation->lifeSupportSystem;
@@ -348,7 +344,7 @@ int main(int argc, char** argv)
 				Units::formatWithUnits(cap, 2, "Wh"), percentage,
 				Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
 
-			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, 5), rx::TextAlignment::RightAligned);
+			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, 5), rx::TextAlignment::RightAligned);
 
 
 			size_t ofs = 5;
@@ -361,13 +357,13 @@ int main(int argc, char** argv)
 				auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
 					Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
 
-				theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), rx::TextAlignment::RightAligned);
+				theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, ofs += 15), rx::TextAlignment::RightAligned);
 			}
 
 			str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
 				Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
 
-			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, glm::vec2(5, ofs += 15), rx::TextAlignment::RightAligned);
+			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, ofs += 15), rx::TextAlignment::RightAligned);
 		}
 
 		rx::EndFrame(theRenderer);

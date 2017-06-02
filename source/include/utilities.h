@@ -8,10 +8,9 @@
 #include <stdlib.h>
 #include <algorithm>
 
+#include "lx.h"
 #include "units.h"
 #include "profile.h"
-
-#include <glm/vec4.hpp>
 
 struct ImFont;
 
@@ -83,7 +82,7 @@ namespace util
 			return *this;
 		}
 
-		colour& operator = (const glm::vec4& other)
+		colour& operator = (const lx::vec4& other)
 		{
 			this->r = other.r;
 			this->g = other.g;
@@ -93,7 +92,7 @@ namespace util
 			return *this;
 		}
 
-		operator glm::vec4() const { return this->toGL(); }
+		operator lx::vec4() const { return this->toGL(); }
 
 		colour(float red, float green, float blue, float alpha) : r(red), g(green), b(blue), a(alpha) { }
 		colour(float red, float green, float blue) : r(red), g(green), b(blue), a(1.0) { }
@@ -111,9 +110,9 @@ namespace util
 				std::max(this->b + other.b, 1.0f), std::max(this->a + other.a, 1.0f));
 		}
 
-		glm::vec4 toGL() const
+		lx::vec4 toGL() const
 		{
-			return glm::vec4(this->r, this->g, this->b, this->a);
+			return lx::vec4(this->r, this->g, this->b, this->a);
 		}
 
 		static colour fromHex(uint32_t hex)

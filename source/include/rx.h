@@ -14,9 +14,7 @@
 #include <glbinding/gl/enum.h>
 #include <glbinding/gl/types.h>
 
-#include <glm/mat4x4.hpp>
-#include <glm/trigonometric.hpp>
-
+#include "lx.h"
 #include "utilities.h"
 #include "assetloader.h"
 
@@ -26,17 +24,6 @@
 #include "rx/shaders.h"
 #include "rx/lighting.h"
 #include "rx/rendercommand.h"
-
-
-// fuck this shit.
-namespace glm
-{
-	template <typename T>
-	T normalise(const T& thing)
-	{
-		return glm::normalize(thing);
-	}
-}
 
 namespace rx
 {
@@ -53,11 +40,11 @@ namespace rx
 
 	struct Camera
 	{
-		glm::vec3 position;
+		lx::vec3 position;
 
-		glm::vec3 front() const;
-		glm::vec3 right() const;
-		glm::vec3 up() const;
+		lx::vec3 front() const;
+		lx::vec3 right() const;
+		lx::vec3 up() const;
 
 		float pitch = 0;
 		float roll = 0;
@@ -73,11 +60,11 @@ namespace rx
 
 		void renderAll();
 
-		void setCamera(glm::mat4 cameraViewMatrix);
-		glm::mat4 getCameraViewMatrix();
+		void setCamera(lx::mat4 cameraViewMatrix);
+		lx::mat4 getCameraViewMatrix();
 
-		void setProjectionMatrix(glm::mat4 projMatrix);
-		glm::mat4 getProjectionMatrix();
+		void setProjectionMatrix(lx::mat4 projMatrix);
+		lx::mat4 getProjectionMatrix();
 
 		void setProjectionMatrix(double fieldOfView, double width, double height, double nearPlane, double farPlane);
 
@@ -89,32 +76,32 @@ namespace rx
 
 
 
-		void setAmbientLighting(glm::vec4 colour, float intensity);
+		void setAmbientLighting(lx::vec4 colour, float intensity);
 		void addPointLight(PointLight light);
 		void addSpotLight(SpotLight light);
 
 
-		std::vector<PointLight> sortAndUpdatePointLights(glm::vec3 reference);
-		std::vector<SpotLight> sortAndUpdateSpotLights(glm::vec3 reference);
+		std::vector<PointLight> sortAndUpdatePointLights(lx::vec3 reference);
+		std::vector<SpotLight> sortAndUpdateSpotLights(lx::vec3 reference);
 
 
 		// start of 'rendering' functions, so to speak
 
 		void clearScreen(util::colour colour);
 
-		void renderTexturedVertices(std::vector<glm::vec3> verts, std::vector<glm::vec2> uvs, std::vector<glm::vec3> normals);
-		void renderColouredVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals);
+		void renderTexturedVertices(std::vector<lx::vec3> verts, std::vector<lx::vec2> uvs, std::vector<lx::vec3> normals);
+		void renderColouredVertices(std::vector<lx::vec3> verts, std::vector<lx::vec4> colours, std::vector<lx::vec3> normals);
 
 		// screenspace takes pixel positions
 		// normalisedscreenspace takes 0-1 positions
-		void renderStringInScreenSpace(std::string txt, rx::Font* font, float size, glm::vec2 pos,
+		void renderStringInScreenSpace(std::string txt, rx::Font* font, float size, lx::vec2 pos,
 			TextAlignment align = TextAlignment::LeftAligned);
 
-		void renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, glm::vec2 pos,
+		void renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, lx::vec2 pos,
 			TextAlignment align = TextAlignment::LeftAligned);
 
-		void renderMesh(const Mesh& mesh, const Material& mat, glm::mat4 transform);
-		void renderModel(const Model& model, glm::mat4 transform);
+		void renderMesh(const Mesh& mesh, const Material& mat, lx::mat4 transform);
+		void renderModel(const Model& model, lx::mat4 transform);
 
 		void updateCamera(const Camera& cam);
 		Camera getCamera();
@@ -131,8 +118,8 @@ namespace rx
 		Window* window = 0;
 
 		private:
-			glm::mat4 cameraMatrix;
-			glm::mat4 projectionMatrix;
+			lx::mat4 cameraMatrix;
+			lx::mat4 projectionMatrix;
 
 			Camera camera;
 			util::colour clearColour;

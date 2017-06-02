@@ -5,8 +5,6 @@
 #include <vector>
 #include <stx/string_view.hpp>
 
-#include <glm/glm.hpp>
-
 #include "rx.h"
 #include "rx/model.h"
 
@@ -70,9 +68,9 @@ namespace rx
 
 		std::vector<ObjectGroup> objs;
 
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec2> uvs;
+		std::vector<lx::vec3> vertices;
+		std::vector<lx::vec3> normals;
+		std::vector<lx::vec2> uvs;
 
 		size_t ln = 1;
 		for(auto line : lines)
@@ -92,7 +90,7 @@ namespace rx
 				if(res != 3)
 					ERROR("Malformed vertex on line %zu", ln);
 
-				vertices.push_back(glm::vec3(x, y, z));
+				vertices.push_back(lx::vec3(x, y, z));
 			}
 			else if(line.find("vt ") == 0)
 			{
@@ -104,7 +102,7 @@ namespace rx
 				if(res != 2)
 					ERROR("Malformed UV coordinates on line %zu", ln);
 
-				uvs.push_back(glm::vec2(u, v));
+				uvs.push_back(lx::vec2(u, v));
 			}
 			else if(line.find("vn ") == 0)
 			{
@@ -117,7 +115,7 @@ namespace rx
 				if(res != 3)
 					ERROR("Malformed normal on line %zu", ln);
 
-				normals.push_back(glm::normalise(glm::vec3(x, y, z)));
+				normals.push_back(lx::vec3(x, y, z).normalised());
 			}
 			else if(line.find("f") == 0)
 			{

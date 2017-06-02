@@ -2,15 +2,13 @@
 // Copyright (c) 2014 - 2016, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
+#include <sstream>
+#include <assert.h>
 
 #include "utilities.h"
 
 #include "rx.h"
 #include "rx/model.h"
-
-#include <glm/glm.hpp>
-
-#include <sstream>
 
 #include <stx/string_view.hpp>
 
@@ -61,9 +59,9 @@ namespace rx
 
 	Face triangulateQuadFace(Face face)
 	{
-		std::vector<glm::vec3> verts;
-		std::vector<glm::vec3> norms;
-		std::vector<glm::vec2> uvs;
+		std::vector<lx::vec3> verts;
+		std::vector<lx::vec3> norms;
+		std::vector<lx::vec2> uvs;
 
 		// only supprot quads
 		assert(face.vertices.size() == 4 && "only quads supported");
@@ -72,18 +70,18 @@ namespace rx
 		auto c = face.vertices[2];
 		auto d = face.vertices[3];
 
-		auto an = face.normals.size() > 0 ? face.normals[0] : glm::vec3();
-		auto bn = face.normals.size() > 0 ? face.normals[1] : glm::vec3();
-		auto cn = face.normals.size() > 0 ? face.normals[2] : glm::vec3();
-		auto dn = face.normals.size() > 0 ? face.normals[3] : glm::vec3();
+		auto an = face.normals.size() > 0 ? face.normals[0] : lx::vec3();
+		auto bn = face.normals.size() > 0 ? face.normals[1] : lx::vec3();
+		auto cn = face.normals.size() > 0 ? face.normals[2] : lx::vec3();
+		auto dn = face.normals.size() > 0 ? face.normals[3] : lx::vec3();
 
-		auto at = face.uvs.size() > 0 ? face.uvs[0] : glm::vec2();
-		auto bt = face.uvs.size() > 0 ? face.uvs[1] : glm::vec2();
-		auto ct = face.uvs.size() > 0 ? face.uvs[2] : glm::vec2();
-		auto dt = face.uvs.size() > 0 ? face.uvs[3] : glm::vec2();
+		auto at = face.uvs.size() > 0 ? face.uvs[0] : lx::vec2();
+		auto bt = face.uvs.size() > 0 ? face.uvs[1] : lx::vec2();
+		auto ct = face.uvs.size() > 0 ? face.uvs[2] : lx::vec2();
+		auto dt = face.uvs.size() > 0 ? face.uvs[3] : lx::vec2();
 
-		auto ac = glm::distance(a, c);
-		auto bd = glm::distance(b, d);
+		auto ac = lx::distance(a, c);
+		auto bd = lx::distance(b, d);
 
 		if(ac < bd)
 		{
@@ -119,7 +117,7 @@ namespace rx
 
 
 
-	glm::vec3 calculateNormalForFace(Face face)
+	lx::vec3 calculateNormalForFace(Face face)
 	{
 		// note: there's an implicit understanding here. if we're given a quad face, then the normal of
 		// that quad face should equal the normal of the 2 triangles, since they must lie in the same plane.
@@ -131,7 +129,7 @@ namespace rx
 		auto b = face.vertices[1];
 		auto c = face.vertices[2];
 
-		return glm::normalise(glm::cross(b - a, c - a));
+		return lx::cross(b - a, c - a).normalised();
 	}
 
 
@@ -144,50 +142,50 @@ namespace rx
 
 		Face top;
 		{
-			top.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));		top.uvs.push_back(glm::vec2(0.0, 1.0));
-			top.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));		top.uvs.push_back(glm::vec2(1.0, 1.0));
-			top.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));		top.uvs.push_back(glm::vec2(1.0, 0.0));
-			top.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));		top.uvs.push_back(glm::vec2(0.0, 0.0));
+			top.vertices.push_back(lx::vec3(0.5, 0.5, -0.5));		top.uvs.push_back(lx::vec2(0.0, 1.0));
+			top.vertices.push_back(lx::vec3(-0.5, 0.5, -0.5));		top.uvs.push_back(lx::vec2(1.0, 1.0));
+			top.vertices.push_back(lx::vec3(-0.5, 0.5, 0.5));		top.uvs.push_back(lx::vec2(1.0, 0.0));
+			top.vertices.push_back(lx::vec3(0.5, 0.5, 0.5));		top.uvs.push_back(lx::vec2(0.0, 0.0));
 		}
 
 		Face bottom;
 		{
-			bottom.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));	bottom.uvs.push_back(glm::vec2(0.0, 0.0));
-			bottom.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));	bottom.uvs.push_back(glm::vec2(1.0, 0.0));
-			bottom.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));	bottom.uvs.push_back(glm::vec2(1.0, 1.0));
-			bottom.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));	bottom.uvs.push_back(glm::vec2(0.0, 1.0));
+			bottom.vertices.push_back(lx::vec3(0.5, -0.5, 0.5));	bottom.uvs.push_back(lx::vec2(0.0, 0.0));
+			bottom.vertices.push_back(lx::vec3(-0.5, -0.5, 0.5));	bottom.uvs.push_back(lx::vec2(1.0, 0.0));
+			bottom.vertices.push_back(lx::vec3(-0.5, -0.5, -0.5));	bottom.uvs.push_back(lx::vec2(1.0, 1.0));
+			bottom.vertices.push_back(lx::vec3(0.5, -0.5, -0.5));	bottom.uvs.push_back(lx::vec2(0.0, 1.0));
 		}
 
 		Face left;
 		{
-			left.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));	left.uvs.push_back(glm::vec2(1.0, 0.0));
-			left.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));	left.uvs.push_back(glm::vec2(1.0, 1.0));
-			left.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));	left.uvs.push_back(glm::vec2(0.0, 1.0));
-			left.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));		left.uvs.push_back(glm::vec2(0.0, 0.0));
+			left.vertices.push_back(lx::vec3(-0.5, 0.5, -0.5));	left.uvs.push_back(lx::vec2(1.0, 0.0));
+			left.vertices.push_back(lx::vec3(-0.5, -0.5, -0.5));	left.uvs.push_back(lx::vec2(1.0, 1.0));
+			left.vertices.push_back(lx::vec3(-0.5, -0.5, 0.5));	left.uvs.push_back(lx::vec2(0.0, 1.0));
+			left.vertices.push_back(lx::vec3(-0.5, 0.5, 0.5));		left.uvs.push_back(lx::vec2(0.0, 0.0));
 		}
 
 		Face right;
 		{
-			right.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));	right.uvs.push_back(glm::vec2(0.0, 0.0));
-			right.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));		right.uvs.push_back(glm::vec2(1.0, 0.0));
-			right.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));	right.uvs.push_back(glm::vec2(1.0, 1.0));
-			right.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));	right.uvs.push_back(glm::vec2(0.0, 1.0));
+			right.vertices.push_back(lx::vec3(0.5, 0.5, -0.5));	right.uvs.push_back(lx::vec2(0.0, 0.0));
+			right.vertices.push_back(lx::vec3(0.5, 0.5, 0.5));		right.uvs.push_back(lx::vec2(1.0, 0.0));
+			right.vertices.push_back(lx::vec3(0.5, -0.5, 0.5));	right.uvs.push_back(lx::vec2(1.0, 1.0));
+			right.vertices.push_back(lx::vec3(0.5, -0.5, -0.5));	right.uvs.push_back(lx::vec2(0.0, 1.0));
 		}
 
 		Face front;
 		{
-			front.vertices.push_back(glm::vec3(0.5, 0.5, 0.5));		front.uvs.push_back(glm::vec2(0.0, 0.0));
-			front.vertices.push_back(glm::vec3(-0.5, 0.5, 0.5));	front.uvs.push_back(glm::vec2(1.0, 0.0));
-			front.vertices.push_back(glm::vec3(-0.5, -0.5, 0.5));	front.uvs.push_back(glm::vec2(1.0, 1.0));
-			front.vertices.push_back(glm::vec3(0.5, -0.5, 0.5));	front.uvs.push_back(glm::vec2(0.0, 1.0));
+			front.vertices.push_back(lx::vec3(0.5, 0.5, 0.5));		front.uvs.push_back(lx::vec2(0.0, 0.0));
+			front.vertices.push_back(lx::vec3(-0.5, 0.5, 0.5));	front.uvs.push_back(lx::vec2(1.0, 0.0));
+			front.vertices.push_back(lx::vec3(-0.5, -0.5, 0.5));	front.uvs.push_back(lx::vec2(1.0, 1.0));
+			front.vertices.push_back(lx::vec3(0.5, -0.5, 0.5));	front.uvs.push_back(lx::vec2(0.0, 1.0));
 		}
 
 		Face back;
 		{
-			back.vertices.push_back(glm::vec3(0.5, 0.5, -0.5));		back.uvs.push_back(glm::vec2(0.0, 0.0));
-			back.vertices.push_back(glm::vec3(0.5, -0.5, -0.5));	back.uvs.push_back(glm::vec2(0.0, 1.0));
-			back.vertices.push_back(glm::vec3(-0.5, -0.5, -0.5));	back.uvs.push_back(glm::vec2(1.0, 1.0));
-			back.vertices.push_back(glm::vec3(-0.5, 0.5, -0.5));	back.uvs.push_back(glm::vec2(1.0, 0.0));
+			back.vertices.push_back(lx::vec3(0.5, 0.5, -0.5));		back.uvs.push_back(lx::vec2(0.0, 0.0));
+			back.vertices.push_back(lx::vec3(0.5, -0.5, -0.5));	back.uvs.push_back(lx::vec2(0.0, 1.0));
+			back.vertices.push_back(lx::vec3(-0.5, -0.5, -0.5));	back.uvs.push_back(lx::vec2(1.0, 1.0));
+			back.vertices.push_back(lx::vec3(-0.5, 0.5, -0.5));	back.uvs.push_back(lx::vec2(1.0, 0.0));
 		}
 
 		ret.faces.push_back(top);

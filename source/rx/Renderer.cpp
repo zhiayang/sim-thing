@@ -2,8 +2,9 @@
 // Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
-#include <unordered_map>
+#include <assert.h>
 #include <algorithm>
+#include <unordered_map>
 
 
 #include "rx.h"
@@ -16,12 +17,6 @@
 #include "utf8rewind.h"
 
 #include <glbinding/gl/gl.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <glm/gtx/string_cast.hpp>
 
 using namespace gl;
 
@@ -43,7 +38,7 @@ namespace rx
 
 		// identity matrix.
 		this->updateCamera(cam);
-		this->projectionMatrix = glm::perspective(fov, this->_width / this->_height, near, far);
+		this->projectionMatrix = lx::perspective(fov, this->_width / this->_height, near, far);
 
 		this->clearColour = clearCol;
 
@@ -75,7 +70,7 @@ namespace rx
 		glPushMatrix();
 		glLoadIdentity();
 
-		this->setAmbientLighting(glm::vec4(1.0), 0.2);
+		this->setAmbientLighting(lx::vec4(1.0), 0.2);
 
 		// one completely white pixel.
 		static uint8_t white[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
@@ -93,34 +88,34 @@ namespace rx
 		this->id = __id++;
 	}
 
-	glm::vec3 Camera::front() const
+	lx::vec3 Camera::front() const
 	{
-		return glm::normalise(glm::vec3(
-			cos(glm::radians(this->pitch)) * cos(glm::radians(this->yaw)),
-			sin(glm::radians(this->pitch)),
-			cos(glm::radians(this->pitch)) * sin(glm::radians(this->yaw)))
-		);
+		return lx::vec3(
+			lx::cos(lx::toRadians(this->pitch)) * lx::cos(lx::toRadians(this->yaw)),
+			lx::sin(lx::toRadians(this->pitch)),
+			lx::cos(lx::toRadians(this->pitch)) * lx::sin(lx::toRadians(this->yaw))
+		).normalised();
 	}
 
-	glm::vec3 Camera::right() const
+	lx::vec3 Camera::right() const
 	{
-		return glm::normalize(glm::cross(this->front(), glm::vec3(0, 1, 0)));
+		return lx::cross(this->front(), lx::vec3(0, 1, 0)).normalised();
 	}
 
-	glm::vec3 Camera::up() const
+	lx::vec3 Camera::up() const
 	{
-		return glm::normalise(glm::vec3(
-			sin(glm::radians(this->roll)),
-			cos(glm::radians(this->roll)),
+		return lx::vec3(
+			lx::sin(lx::toRadians(this->roll)),
+			lx::cos(lx::toRadians(this->roll)),
 			0.0
-		));
+		).normalised();
 	}
 
 
 	void Renderer::updateCamera(const Camera& cam)
 	{
 		this->camera = cam;
-		this->cameraMatrix = glm::lookAt(cam.position, cam.position + cam.front(), cam.up());
+		this->cameraMatrix = lx::lookAt(lx::vec3(cam.position), lx::vec3(cam.position + cam.front()), lx::vec3(cam.up()));
 	}
 
 	Camera Renderer::getCamera()
@@ -153,7 +148,7 @@ namespace rx
 		LOG("window resized to %d x %d", (int) this->_width, (int) this->_height);
 
 		// redo the projection matrix
-		this->projectionMatrix = glm::perspective(this->_fov, this->_width / this->_height, this->_near, this->_far);
+		this->projectionMatrix = lx::perspective(this->_fov, this->_width / this->_height, this->_near, this->_far);
 
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
@@ -178,7 +173,7 @@ namespace rx
 
 	// lighting
 
-	void Renderer::setAmbientLighting(glm::vec4 colour, float intensity)
+	void Renderer::setAmbientLighting(lx::vec4 colour, float intensity)
 	{
 		// set for both
 		for(auto* prog : { &this->colourShaderProgram, &this->textureShaderProgram })
@@ -216,7 +211,7 @@ namespace rx
 
 	// render things
 
-	void Renderer::renderColouredVertices(std::vector<glm::vec3> verts, std::vector<glm::vec4> colours, std::vector<glm::vec3> normals)
+	void Renderer::renderColouredVertices(std::vector<lx::vec3> verts, std::vector<lx::vec4> colours, std::vector<lx::vec3> normals)
 	{
 		RenderCommand rc;
 		rc.type			= RenderCommand::CommandType::RenderColouredVertices;
@@ -232,7 +227,7 @@ namespace rx
 		this->renderList.push_back(rc);
 	}
 
-	void Renderer::renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, glm::vec2 pos, TextAlignment align)
+	void Renderer::renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, lx::vec2 pos, TextAlignment align)
 	{
 		pos.x *= this->_width;
 		pos.y *= this->_height;
@@ -240,7 +235,7 @@ namespace rx
 		this->renderStringInScreenSpace(txt, font, size, pos);
 	}
 
-	void Renderer::renderStringInScreenSpace(std::string str, rx::Font* font, float size, glm::vec2 pos, TextAlignment align)
+	void Renderer::renderStringInScreenSpace(std::string str, rx::Font* font, float size, lx::vec2 pos, TextAlignment align)
 	{
 		bool rightAlign = (align == TextAlignment::RightAligned);
 
@@ -262,17 +257,17 @@ namespace rx
 		// do the magic
 
 		float scale = size / (float) font->pixelSize;
-		double xPos = glm::round(pos).x;
+		double xPos = lx::round(pos).x;
 
 		// (0, 0) in font-space is the bottom left, because :shrug:, so flip it.
-		double yPos = glm::round(pos).y + (scale * font->ascent);
+		double yPos = lx::round(pos).y + (scale * font->ascent);
 
-		glm::vec4 cliprect;
+		lx::vec4 cliprect;
 		{
-			double x0 = xPos;
-			double y0 = yPos + (scale * font->descent);
+			float x0 = xPos;
+			float y0 = yPos + (scale * font->descent);
 
-			double advx = 0;
+			float advx = 0;
 			for(size_t i = 0; i < codepoints.size(); i++)
 				advx += scale * font->getGlyphMetrics(codepoints[i]).xAdvance;
 
@@ -280,12 +275,12 @@ namespace rx
 			if(rightAlign)
 				xPos = this->_width - xPos - scale * font->getGlyphMetrics(codepoints.back()).xAdvance;
 
-			double advy = scale * font->ascent;
+			float advy = scale * font->ascent;
 
-			double x1 = x0 + advx;
-			double y1 = y0 + advy;
+			float x1 = x0 + advx;
+			float y1 = y0 + advy;
 
-			cliprect = { x0, y0, x1, y1 };
+			cliprect = lx::vec4(0, y0, x1, y1);
 		}
 
 
@@ -320,24 +315,24 @@ namespace rx
 					rc.textureToBind = font->glTextureID;
 
 					// fill it up.
-					auto pos = glm::vec2(round(xPos), round(yPos));
+					auto pos = lx::vec2(round(xPos), round(yPos));
 
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y0), 0, 1)));	// 3
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y1), 0, 1)));	// 2
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y0), 0, 1)));	// 1
+					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y0), 0, 1)).xyz());	// 3
+					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y1), 0, 1)).xyz());	// 2
+					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y0), 0, 1)).xyz());	// 1
 
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x0, gpos.y1), 0, 1)));
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y0), 0, 1)));
-					rc.vertices.push_back(glm::round(glm::vec4(pos + scale * glm::vec2(gpos.x1, gpos.y1), 0, 1)));
+					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y1), 0, 1)).xyz());
+					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y0), 0, 1)).xyz());
+					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y1), 0, 1)).xyz());
 
 					rc.uvs = {
-								glm::vec2(gpos.u1, gpos.v0),	// 3
-								glm::vec2(gpos.u0, gpos.v1),	// 2
-								glm::vec2(gpos.u0, gpos.v0),	// 1
+								lx::vec2(gpos.u1, gpos.v0),	// 3
+								lx::vec2(gpos.u0, gpos.v1),	// 2
+								lx::vec2(gpos.u0, gpos.v0),	// 1
 
-								glm::vec2(gpos.u0, gpos.v1),
-								glm::vec2(gpos.u1, gpos.v0),
-								glm::vec2(gpos.u1, gpos.v1)
+								lx::vec2(gpos.u0, gpos.v1),
+								lx::vec2(gpos.u1, gpos.v0),
+								lx::vec2(gpos.u1, gpos.v1)
 							};
 
 					this->renderList.push_back(rc);
@@ -354,7 +349,7 @@ namespace rx
 
 
 
-	void Renderer::renderMesh(const Mesh& mesh, const Material& m, glm::mat4 transform)
+	void Renderer::renderMesh(const Mesh& mesh, const Material& m, lx::mat4 transform)
 	{
 		Material mat = m;
 		RenderCommand rc;
@@ -384,7 +379,7 @@ namespace rx
 				ERROR("face needs at least one vertex");
 
 			for(auto v : face.vertices)
-				rc.vertices.push_back(transform * glm::vec4(v, 1.0));
+				rc.vertices.push_back((transform * lx::vec4(v, 1.0)).xyz());
 
 			for(auto t : face.uvs)
 				rc.uvs.push_back(t);
@@ -400,7 +395,7 @@ namespace rx
 	}
 
 
-	void Renderer::renderModel(const Model& model, glm::mat4 transform)
+	void Renderer::renderModel(const Model& model, lx::mat4 transform)
 	{
 		for(auto mesh : model.objects)
 			this->renderMesh(mesh.first, mesh.second, transform);
@@ -440,12 +435,12 @@ namespace rx
 
 
 
-	std::vector<PointLight> Renderer::sortAndUpdatePointLights(glm::vec3 vert)
+	std::vector<PointLight> Renderer::sortAndUpdatePointLights(lx::vec3 vert)
 	{
 		// sort by distance, take the first N only.
 		std::vector<PointLight> lights(this->pointLights.begin(), this->pointLights.end());
 		std::sort(lights.begin(), lights.end(), [vert](const PointLight& a, const PointLight& b) -> bool {
-			return glm::distance(vert, a.position) < glm::distance(vert, b.position);
+			return lx::distance(vert, a.position) < lx::distance(vert, b.position);
 		});
 
 		if(lights.size() > MAX_POINT_LIGHTS)
@@ -481,12 +476,12 @@ namespace rx
 
 
 
-	std::vector<SpotLight> Renderer::sortAndUpdateSpotLights(glm::vec3 vert)
+	std::vector<SpotLight> Renderer::sortAndUpdateSpotLights(lx::vec3 vert)
 	{
 		// sort by distance, take the first N only.
 		std::vector<SpotLight> lights(this->spotLights.begin(), this->spotLights.end());
 		std::sort(lights.begin(), lights.end(), [vert](const SpotLight& a, const SpotLight& b) -> bool {
-			return glm::distance(vert, a.position) < glm::distance(vert, b.position);
+			return lx::distance(vert, a.position) < lx::distance(vert, b.position);
 		});
 
 		if(lights.size() > MAX_SPOT_LIGHTS)
@@ -575,7 +570,7 @@ namespace rx
 		for(auto pl : this->pointLights)
 		{
 			this->renderMesh(Mesh::getUnitCube(), Material(util::colour::white(), util::colour::white(), util::colour::white(), 1),
-				glm::translate(glm::scale(glm::mat4(), glm::vec3(0.1)), pl.position));
+				lx::mat4().scale(0.1).translate(pl.position));
 		}
 
 
@@ -611,7 +606,7 @@ namespace rx
 					auto& sprog = this->colourShaderProgram;
 					sprog.use();
 
-					sprog.setUniform("modelMatrix", glm::mat4(1.0));
+					sprog.setUniform("modelMatrix", lx::mat4());
 					sprog.setUniform("viewMatrix", this->cameraMatrix);
 					sprog.setUniform("projMatrix", this->projectionMatrix);
 
@@ -619,7 +614,7 @@ namespace rx
 					{
 						// we always have vertices
 						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(lx::vec3), &rc.vertices[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -638,7 +633,7 @@ namespace rx
 						glEnableVertexAttribArray(1);
 
 						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(glm::vec4), &rc.colours[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(lx::vec4), &rc.colours[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -657,7 +652,7 @@ namespace rx
 						glEnableVertexAttribArray(2);
 
 						glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.normals.size() * sizeof(glm::vec3), &rc.normals[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.normals.size() * sizeof(lx::vec3), &rc.normals[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -687,9 +682,9 @@ namespace rx
 						sprog.setUniform("material.shine", 32.0f);
 
 						// set the colours
-						sprog.setUniform("material.ambientColour", glm::vec4(1.0));
-						sprog.setUniform("material.diffuseColour", glm::vec4(1.0));
-						sprog.setUniform("material.specularColour", glm::vec4(1.0));
+						sprog.setUniform("material.ambientColour", lx::vec4(1.0));
+						sprog.setUniform("material.diffuseColour", lx::vec4(1.0));
+						sprog.setUniform("material.specularColour", lx::vec4(1.0));
 					}
 
 
@@ -731,7 +726,7 @@ namespace rx
 					auto& sprog = this->textureShaderProgram;
 					sprog.use();
 
-					sprog.setUniform("modelMatrix", glm::mat4(1.0));
+					sprog.setUniform("modelMatrix", lx::mat4());
 					sprog.setUniform("viewMatrix", this->cameraMatrix);
 					sprog.setUniform("projMatrix", this->projectionMatrix);
 
@@ -739,7 +734,7 @@ namespace rx
 					{
 						// we always have vertices
 						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(lx::vec3), &rc.vertices[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -759,7 +754,7 @@ namespace rx
 						glEnableVertexAttribArray(1);
 
 						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(glm::vec4), &rc.colours[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(lx::vec4), &rc.colours[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -778,7 +773,7 @@ namespace rx
 						glEnableVertexAttribArray(2);
 
 						glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.normals.size() * sizeof(glm::vec3), &rc.normals[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.normals.size() * sizeof(lx::vec3), &rc.normals[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -797,7 +792,7 @@ namespace rx
 						glEnableVertexAttribArray(3);
 
 						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(lx::vec2), &rc.uvs[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -832,9 +827,9 @@ namespace rx
 						glActiveTexture(GL_TEXTURE0);
 
 						// set the colours so that multiplying by them does nothing.
-						sprog.setUniform("material.ambientColour", glm::vec4(1.0));
-						sprog.setUniform("material.diffuseColour", glm::vec4(1.0));
-						sprog.setUniform("material.specularColour", glm::vec4(1.0));
+						sprog.setUniform("material.ambientColour", lx::vec4(1.0));
+						sprog.setUniform("material.diffuseColour", lx::vec4(1.0));
+						sprog.setUniform("material.specularColour", lx::vec4(1.0));
 					}
 
 
@@ -855,14 +850,14 @@ namespace rx
 
 					this->textShaderProgram.use();
 
-					glm::mat4 orthoProj = glm::ortho(0.0, this->_width, this->_height, 0.0);
+					lx::mat4 orthoProj = lx::orthographic(0.0, this->_width, this->_height, 0.0);
 					this->textShaderProgram.setUniform("projectionMatrix", orthoProj);
 
 					glEnableVertexAttribArray(0);
 					{
 						// we always have vertices
 						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(glm::vec3), &rc.vertices[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(lx::vec3), &rc.vertices[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -882,7 +877,7 @@ namespace rx
 						assert(rc.uvs.size() > 0);
 
 						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(glm::vec2), &rc.uvs[0],
+						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(lx::vec2), &rc.uvs[0],
 							GL_STATIC_DRAW);
 
 						glVertexAttribPointer(
@@ -1022,13 +1017,13 @@ namespace rx
 		glViewport(0, 0, (GLsizei) *fb_width, (GLsizei) *fb_height);
 
 		// Setup orthographic projection matrix
-		glMatrixMode(GL_PROJECTION);
+		lxatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
 
 		// glOrtho(0.0f, io.DisplaySize.x, io.DisplaySize.y, 0.0f, -1.0f, +1.0f);
 
-		double fov = glm::radians(70.0);
+		double fov = lx::radians(70.0);
 		double near = -1000;
 
 		double top = tan(0.5 * fov) * near;
@@ -1042,7 +1037,7 @@ namespace rx
 		glFrustum(left, right, bottom, top, -1000.0, 1000);
 		// gluPerspective(60.0, (float) io.DisplaySize.x / (float) io.DisplaySize.y, 1.0, 50000000000.0);
 
-		glMatrixMode(GL_MODELVIEW);
+		lxatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
 	}
@@ -1100,9 +1095,9 @@ namespace rx
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		glMatrixMode(GL_MODELVIEW);
+		lxatrixMode(GL_MODELVIEW);
 		glPopMatrix();
-		glMatrixMode(GL_PROJECTION);
+		lxatrixMode(GL_PROJECTION);
 		glPopMatrix();
 		glPopAttrib();
 	}

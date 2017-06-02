@@ -3,6 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #include <tuple>
+#include <assert.h>
 
 #include "rx.h"
 #include "config.h"

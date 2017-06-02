@@ -3,6 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #include <string>
+#include <assert.h>
 
 #include "platform.h"
 #include "platform/sdl.h"
@@ -221,14 +222,14 @@ namespace platform
 	}
 
 
-	glm::vec2 getMousePosition(void* userdata)
+	lx::vec2 getMousePosition(void* userdata)
 	{
 		int mx = 0;
 		int my = 0;
 
 		SDL_GetMouseState(&mx, &my);
 
-		return glm::vec2(mx, my);
+		return lx::vec2(mx, my);
 	}
 
 	void updateInput(input::State* inputState, double delta, void* userdata)

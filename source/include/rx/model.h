@@ -9,10 +9,6 @@
 #include <string>
 #include <vector>
 
-#include <glm/fwd.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
-
 #include "assetloader.h"
 
 #include "rx/misc.h"
@@ -21,30 +17,30 @@ namespace rx
 {
 	struct Face
 	{
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec2> uvs;
+		std::vector<lx::vec3> vertices;
+		std::vector<lx::vec3> normals;
+		std::vector<lx::vec2> uvs;
 
-		glm::vec3 faceNormal;
+		lx::vec3 faceNormal;
 	};
 
 	struct Material
 	{
 		Material() { }
-		Material(glm::vec4 amb, glm::vec4 dif, glm::vec4 spc, float s)
+		Material(lx::vec4 amb, lx::vec4 dif, lx::vec4 spc, float s)
 			: hasValue(true), ambientColour(amb), diffuseColour(dif), specularColour(spc), shine(s) { }
 
-		Material(glm::vec4 amb, Texture* diffuse, Texture* specular, float s)
+		Material(lx::vec4 amb, Texture* diffuse, Texture* specular, float s)
 			: hasValue(true), ambientColour(amb), diffuseMap(diffuse), specularMap(specular), shine(s) { }
 
 		bool hasValue = false;
 
-		glm::vec4 ambientColour;
+		lx::vec4 ambientColour;
 		float shine = 0;
 
 		// possible to use colours
-		glm::vec4 diffuseColour;
-		glm::vec4 specularColour;
+		lx::vec4 diffuseColour;
+		lx::vec4 specularColour;
 
 		// or textures
 		Texture* diffuseMap = 0;
@@ -80,7 +76,7 @@ namespace rx
 
 	// given 4 vertices, returns 6 vertices which are the triangles of the quad.
 	Face triangulateQuadFace(Face face);
-	glm::vec3 calculateNormalForFace(Face face);
+	lx::vec3 calculateNormalForFace(Face face);
 
 	Model loadModelFromAsset(AssetLoader::Asset* asset, double scale);
 

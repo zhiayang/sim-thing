@@ -12,7 +12,7 @@
 
 #include <glbinding/gl/types.h>
 
-#include <glm/fwd.hpp>
+#include "lx.h"
 
 namespace rx
 {
@@ -34,13 +34,13 @@ namespace rx
 
 		gl::GLuint getUniformLocation(std::string name);
 
-		void setUniform(std::string name, glm::vec4 v4);
-		void setUniform(std::string name, glm::vec3 v3);
-		void setUniform(std::string name, glm::vec2 v2);
+		void setUniform(std::string name, lx::vec4 v4);
+		void setUniform(std::string name, lx::vec3 v3);
+		void setUniform(std::string name, lx::vec2 v2);
 
-		void setUniform(std::string name, glm::mat4 m4);
-		void setUniform(std::string name, glm::mat3 m3);
-		void setUniform(std::string name, glm::mat2 m2);
+		void setUniform(std::string name, lx::mat4 m4);
+		void setUniform(std::string name, lx::mat3 m3);
+		void setUniform(std::string name, lx::mat2 m2);
 
 		void setUniform(std::string name, float f);
 		void setUniform(std::string name, int i);
