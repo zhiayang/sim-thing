@@ -19,7 +19,7 @@ namespace rx
 {
 	struct PointLight
 	{
-		PointLight(glm::vec3 p, glm::vec4 dc, glm::vec4 sc, float i, float c, float l, float q)
+		PointLight(glm::vec3 p, glm::vec4 dc, glm::vec4 sc, float i, float r)
 		{
 			this->position = p;
 			this->intensity = i;
@@ -27,9 +27,7 @@ namespace rx
 			this->diffuseColour = dc;
 			this->specularColour = sc;
 
-			this->constantFactor = c;
-			this->linearFactor = l;
-			this->quadFactor = q;
+			this->lightRadius = r;
 		}
 
 		glm::vec3 position;
@@ -38,16 +36,34 @@ namespace rx
 		glm::vec4 diffuseColour;
 		glm::vec4 specularColour;
 
-		float constantFactor = 0;
-		float linearFactor = 0;
-		float quadFactor = 0;
-	};
-
-	struct DirectionalLight
-	{
+		float lightRadius = 0;
 	};
 
 	struct SpotLight
 	{
 	};
+
+	struct DirectionalLight
+	{
+	};
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

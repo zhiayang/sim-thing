@@ -478,9 +478,7 @@ namespace rx
 			glUniform4fv(shaderProg->getUniform(arraypre + "diffuseColour"), 1, glm::value_ptr(light.diffuseColour));
 			glUniform4fv(shaderProg->getUniform(arraypre + "specularColour"), 1, glm::value_ptr(light.specularColour));
 
-			glUniform1f(shaderProg->getUniform(arraypre + "constantFactor"), light.constantFactor);
-			glUniform1f(shaderProg->getUniform(arraypre + "linearFactor"), light.linearFactor);
-			glUniform1f(shaderProg->getUniform(arraypre + "quadFactor"), light.quadFactor);
+			glUniform1f(shaderProg->getUniform(arraypre + "lightRadius"), light.lightRadius);
 
 			ctr++;
 		}

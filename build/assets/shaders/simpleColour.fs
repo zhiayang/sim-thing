@@ -20,7 +20,7 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 d
 void main()
 {
 	vec3 viewDirection = normalize(cameraPosition - fragmentPosition);
-	vec4 base = ambientLightColour * ambientLightIntensity;
+	vec4 base = ambientLightColour * ambientLightIntensity * material.ambientColour;
 
 	base += applyPointLights(normalize(fragmentNormal), fragmentPosition, viewDirection, material.diffuseColour, material.specularColour);
 

@@ -192,12 +192,11 @@ int main(int argc, char** argv)
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.3);
-		theRenderer->addPointLight(rx::PointLight(glm::vec3(0, 2, 8), util::colour::white(), util::colour::white(),
-			2.5, 1.0, 0.022, 0.0019));
+		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
+		theRenderer->addPointLight(rx::PointLight(glm::vec3(0, 0, 8), util::colour::white(), util::colour::white(), 1.0, 10.0));
 
-		theRenderer->addPointLight(rx::PointLight(glm::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
-			3.0, 1.0, 0.022, 0.0019));
+		// theRenderer->addPointLight(rx::PointLight(glm::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
+		// 	1.0, 1.0, 0.022, 0.0019));
 	}
 
 
@@ -215,7 +214,7 @@ int main(int argc, char** argv)
 	// }, Input::HandlerKind::PressDown);
 
 	Input::addKeyHandler(&gameState->inputState,
-		{ Input::Key::W, Input::Key::S, Input::Key::A, Input::Key::D, Input::Key::ShiftL, Input::Key::SuperL, Input::Key::Space },
+		{ Input::Key::W, Input::Key::S, Input::Key::A, Input::Key::D, Input::Key::ShiftL, Input::Key::Space },
 		0, [](Input::State* s, Input::Key k, double) -> bool {
 
 		using IK = Input::Key;
@@ -248,9 +247,15 @@ int main(int argc, char** argv)
 	// rx::Model* cube = rx::Model::getUnitCube();
 	// cube = model;
 
-	// auto box = new rx::Texture("textures/box.png", theRenderer);
-	auto col = util::colour(0.83, 0.20, 0.22);
-	auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col, col, util::colour::blue(), 32.0));
+	auto box = new rx::Texture("textures/box.png", theRenderer);
+	auto box_spec = new rx::Texture("textures/box_spec.png", theRenderer);
+	auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
+	// auto col = util::colour(0.83, 0.20, 0.22);
+	// auto col1 = util::colour(0.24725, 0.1995, 0.0745);
+	// auto col2 = util::colour(0.75164, 0.60648, 0.22648);
+	// auto col3 = util::colour(0.628281, 0.555802, 0.366065);
+	// auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col, col, util::colour::white(), 1024.0));
+	// auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col1, col2, col3, 0.4 * 128));
 
 
 	// Main loop

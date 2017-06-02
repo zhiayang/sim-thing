@@ -12,14 +12,37 @@ struct PointLight
 	vec4 diffuseColour;
 	vec4 specularColour;
 
-	float constantFactor;
-	float linearFactor;
-	float quadFactor;
+	float lightRadius;
 };
 
 #define MAX_POINT_LIGHTS 16
 uniform int pointLightCount;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
+
+
+struct SpotLight
+{
+	vec3 position;
+	vec3 direction;
+
+	// for smoothing, anything inside the inner cone is max bright,
+	// anything between the inner and outer cones is bright between 0 to 1
+	// anything outside the outer cone is 0.
+
+	// note 2: we store the cosine values instead of the raw angle, such that we don't have to calculate
+	// any inverse cosines; we get a dot product in the calculations, so we can just compare cos() values
+	// directly instead.
+	float innerCutoffCosine;
+	float outerCutoffCosine;
+
+	float intensity;
+};
+
+#define MAX_SPOT_LIGHTS 16
+uniform int spotLightCount;
+uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
+
+
 
 
 struct Material
@@ -38,9 +61,18 @@ struct Material
 uniform Material material;
 
 
-// lighting nonsense
+// lighting nonsense.
+// note: there's actually two separate "ambient" lightings that we're talking about here.
+// the first, which is controlled by the 2 uniforms below, is the global background lighting that stops everything from being
+// pitch black in a scene without lights -- it's the bare minimum lighting, essentially.
+
+// the second, which is the ambientColour of the material, is the colour the material has under ambient light.
+// it's multiplied with the background ambient light, which is usually white, to get the desired effect.
+
 uniform vec4 ambientLightColour;
 uniform float ambientLightIntensity;
+
+#define SPECULAR_POWER 1.5
 
 
 
@@ -51,6 +83,7 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 d
 	for(int i = 0; i < pointLightCount; i++)
 	{
 		vec3 lightDir = normalize(pointLights[i].position - fragPosition);
+		float radius = pointLights[i].lightRadius;
 
 		// Diffuse lighting
 		float diff = max(dot(normal, lightDir), 0.0);
@@ -60,14 +93,18 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 d
 		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), material.shine);
 
 		// Attenuation
-		float dist = length(pointLights[i].position - fragPosition);
+		float dist = max(length(pointLights[i].position - fragPosition), 0);
+		dist -= radius;
 
-		float _att = 1.0 / (pointLights[i].constantFactor + pointLights[i].linearFactor * dist + pointLights[i].quadFactor * (dist * dist));
+		float _denom = (dist / radius) + 1;
+		float _att = 1.0 / (_denom * _denom);
+
+		// float _att = 1.0 / (pointLights[i].constantFactor + pointLights[i].linearFactor * dist + pointLights[i].quadFactor * (dist * dist));
 		vec4 atten = vec4(_att, _att, _att, 1.0);
 
 		// Combine results
 		vec4 diffuse = pointLights[i].diffuseColour * diff * diffuseSample;
-		vec4 specular = pointLights[i].specularColour * 0.5 * spec * specularSample;
+		vec4 specular = pointLights[i].specularColour * SPECULAR_POWER * spec * specularSample;
 
 		result += (diffuse + specular) * pointLights[i].intensity * atten;
 	}
