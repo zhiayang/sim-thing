@@ -170,6 +170,10 @@ namespace rx
 		auto ret = RenderObject::fromTexturedVertices(vertices, uvs, normals);
 		ret->material = mat;
 
+		// do a check here
+		if(!mat.diffuseMap)
+			ret->renderType = RenderType::Coloured;
+
 		return ret;
 	}
 }

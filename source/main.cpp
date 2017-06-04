@@ -171,7 +171,7 @@ int main(int argc, char** argv)
 		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 0, 10), util::colour::white(), util::colour::white(), 2.0, 10.0));
 
 		theRenderer->addSpotLight(rx::SpotLight(lx::vec3(0, -4, 0), lx::vec3(0, 1, 0), util::colour::white(), util::colour::white(),
-			1.0, 5.0, 12.5, 30));
+			0.3, 2.0, 12.5, 30));
 
 		// theRenderer->addPointLight(rx::PointLight(lx::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
 		// 	1.0, 1.0, 0.022, 0.0019));
@@ -228,6 +228,7 @@ int main(int argc, char** argv)
 	auto box = new rx::Texture("textures/box.png");
 	auto box_spec = new rx::Texture("textures/box_spec.png");
 	auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
+	// auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour(0.83, 0.20, 0.22), util::colour(0.83, 0.20, 0.22), util::colour::blue(), 32));
 
 
 	// auto col = util::colour(0.83, 0.20, 0.22);

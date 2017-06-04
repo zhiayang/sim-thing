@@ -87,14 +87,16 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 d
 	for(int i = 0; i < pointLightCount; i++)
 	{
 		vec3 lightDir = normalize(pointLights[i].position - fragPosition);
+		vec3 halfwayDir = normalize(lightDir + viewDirection);
+
 		float radius = pointLights[i].lightRadius;
 
 		// Diffuse lighting
 		float diff = max(dot(normal, lightDir), 0.0);
 
 		// Specular lighting
-		vec3 reflectDir = reflect(-1 * lightDir, normal);
-		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), material.shine);
+		// vec3 reflectDir = reflect(-1 * lightDir, normal);
+		float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shine);
 
 		// Attenuation
 		float dist = max(length(pointLights[i].position - fragPosition), 0);

@@ -86,14 +86,14 @@ namespace rx
 					incPath.pop_back();
 
 					// load the asset, hopefully.
-					Asset* incAsset = AssetLoader::Load(("shaders/" + incPath).c_str());
-					auto inclines = splitString((const char*) incAsset->raw, incAsset->length);
+					std::string incstr = loadShaderSource("shaders/" + incPath, "");
+					auto inclines = splitString(incstr.c_str(), incstr.size());
+
 					{
 						// insert the inc into the vsrc
 						for(auto il : inclines)
 							finalLines.push_back(il.to_string());
 					}
-					AssetLoader::Unload(incAsset);
 				}
 				else
 				{
