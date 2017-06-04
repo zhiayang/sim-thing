@@ -135,57 +135,60 @@ namespace rx
 
 
 
-	Mesh Mesh::getUnitCube()
+	Mesh Mesh::getUnitCube(float scale)
 	{
 		Mesh ret;
 		ret.name = "unit_cube";
 
+		float p = 0.5 * scale;
+		float n = -0.5 * scale;
+
 		Face top;
 		{
-			top.vertices.push_back(lx::vec3(0.5, 0.5, -0.5));		top.uvs.push_back(lx::vec2(0.0, 1.0));
-			top.vertices.push_back(lx::vec3(-0.5, 0.5, -0.5));		top.uvs.push_back(lx::vec2(1.0, 1.0));
-			top.vertices.push_back(lx::vec3(-0.5, 0.5, 0.5));		top.uvs.push_back(lx::vec2(1.0, 0.0));
-			top.vertices.push_back(lx::vec3(0.5, 0.5, 0.5));		top.uvs.push_back(lx::vec2(0.0, 0.0));
+			top.vertices.push_back(lx::vec3(p, p, n));		top.uvs.push_back(lx::vec2(0.0, 1.0));
+			top.vertices.push_back(lx::vec3(n, p, n));		top.uvs.push_back(lx::vec2(1.0, 1.0));
+			top.vertices.push_back(lx::vec3(n, p, p));		top.uvs.push_back(lx::vec2(1.0, 0.0));
+			top.vertices.push_back(lx::vec3(p, p, p));		top.uvs.push_back(lx::vec2(0.0, 0.0));
 		}
 
 		Face bottom;
 		{
-			bottom.vertices.push_back(lx::vec3(0.5, -0.5, 0.5));	bottom.uvs.push_back(lx::vec2(0.0, 0.0));
-			bottom.vertices.push_back(lx::vec3(-0.5, -0.5, 0.5));	bottom.uvs.push_back(lx::vec2(1.0, 0.0));
-			bottom.vertices.push_back(lx::vec3(-0.5, -0.5, -0.5));	bottom.uvs.push_back(lx::vec2(1.0, 1.0));
-			bottom.vertices.push_back(lx::vec3(0.5, -0.5, -0.5));	bottom.uvs.push_back(lx::vec2(0.0, 1.0));
+			bottom.vertices.push_back(lx::vec3(p, n, p));	bottom.uvs.push_back(lx::vec2(0.0, 0.0));
+			bottom.vertices.push_back(lx::vec3(n, n, p));	bottom.uvs.push_back(lx::vec2(1.0, 0.0));
+			bottom.vertices.push_back(lx::vec3(n, n, n));	bottom.uvs.push_back(lx::vec2(1.0, 1.0));
+			bottom.vertices.push_back(lx::vec3(p, n, n));	bottom.uvs.push_back(lx::vec2(0.0, 1.0));
 		}
 
 		Face left;
 		{
-			left.vertices.push_back(lx::vec3(-0.5, 0.5, -0.5));	left.uvs.push_back(lx::vec2(1.0, 0.0));
-			left.vertices.push_back(lx::vec3(-0.5, -0.5, -0.5));	left.uvs.push_back(lx::vec2(1.0, 1.0));
-			left.vertices.push_back(lx::vec3(-0.5, -0.5, 0.5));	left.uvs.push_back(lx::vec2(0.0, 1.0));
-			left.vertices.push_back(lx::vec3(-0.5, 0.5, 0.5));		left.uvs.push_back(lx::vec2(0.0, 0.0));
+			left.vertices.push_back(lx::vec3(n, p, n));	left.uvs.push_back(lx::vec2(1.0, 0.0));
+			left.vertices.push_back(lx::vec3(n, n, n));	left.uvs.push_back(lx::vec2(1.0, 1.0));
+			left.vertices.push_back(lx::vec3(n, n, p));	left.uvs.push_back(lx::vec2(0.0, 1.0));
+			left.vertices.push_back(lx::vec3(n, p, p));		left.uvs.push_back(lx::vec2(0.0, 0.0));
 		}
 
 		Face right;
 		{
-			right.vertices.push_back(lx::vec3(0.5, 0.5, -0.5));	right.uvs.push_back(lx::vec2(0.0, 0.0));
-			right.vertices.push_back(lx::vec3(0.5, 0.5, 0.5));		right.uvs.push_back(lx::vec2(1.0, 0.0));
-			right.vertices.push_back(lx::vec3(0.5, -0.5, 0.5));	right.uvs.push_back(lx::vec2(1.0, 1.0));
-			right.vertices.push_back(lx::vec3(0.5, -0.5, -0.5));	right.uvs.push_back(lx::vec2(0.0, 1.0));
+			right.vertices.push_back(lx::vec3(p, p, n));	right.uvs.push_back(lx::vec2(0.0, 0.0));
+			right.vertices.push_back(lx::vec3(p, p, p));		right.uvs.push_back(lx::vec2(1.0, 0.0));
+			right.vertices.push_back(lx::vec3(p, n, p));	right.uvs.push_back(lx::vec2(1.0, 1.0));
+			right.vertices.push_back(lx::vec3(p, n, n));	right.uvs.push_back(lx::vec2(0.0, 1.0));
 		}
 
 		Face front;
 		{
-			front.vertices.push_back(lx::vec3(0.5, 0.5, 0.5));		front.uvs.push_back(lx::vec2(0.0, 0.0));
-			front.vertices.push_back(lx::vec3(-0.5, 0.5, 0.5));	front.uvs.push_back(lx::vec2(1.0, 0.0));
-			front.vertices.push_back(lx::vec3(-0.5, -0.5, 0.5));	front.uvs.push_back(lx::vec2(1.0, 1.0));
-			front.vertices.push_back(lx::vec3(0.5, -0.5, 0.5));	front.uvs.push_back(lx::vec2(0.0, 1.0));
+			front.vertices.push_back(lx::vec3(p, p, p));		front.uvs.push_back(lx::vec2(0.0, 0.0));
+			front.vertices.push_back(lx::vec3(n, p, p));	front.uvs.push_back(lx::vec2(1.0, 0.0));
+			front.vertices.push_back(lx::vec3(n, n, p));	front.uvs.push_back(lx::vec2(1.0, 1.0));
+			front.vertices.push_back(lx::vec3(p, n, p));	front.uvs.push_back(lx::vec2(0.0, 1.0));
 		}
 
 		Face back;
 		{
-			back.vertices.push_back(lx::vec3(0.5, 0.5, -0.5));		back.uvs.push_back(lx::vec2(0.0, 0.0));
-			back.vertices.push_back(lx::vec3(0.5, -0.5, -0.5));	back.uvs.push_back(lx::vec2(0.0, 1.0));
-			back.vertices.push_back(lx::vec3(-0.5, -0.5, -0.5));	back.uvs.push_back(lx::vec2(1.0, 1.0));
-			back.vertices.push_back(lx::vec3(-0.5, 0.5, -0.5));	back.uvs.push_back(lx::vec2(1.0, 0.0));
+			back.vertices.push_back(lx::vec3(p, p, n));		back.uvs.push_back(lx::vec2(0.0, 0.0));
+			back.vertices.push_back(lx::vec3(p, n, n));	back.uvs.push_back(lx::vec2(0.0, 1.0));
+			back.vertices.push_back(lx::vec3(n, n, n));	back.uvs.push_back(lx::vec2(1.0, 1.0));
+			back.vertices.push_back(lx::vec3(n, p, n));	back.uvs.push_back(lx::vec2(1.0, 0.0));
 		}
 
 		ret.faces.push_back(top);

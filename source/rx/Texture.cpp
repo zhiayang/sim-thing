@@ -44,6 +44,7 @@ namespace rx
 			glBindTexture(GL_TEXTURE_2D, this->glTextureID);
 
 			GLenum texmode;
+
 			if(surf->format == ImageFormat::RGBA)
 			{
 				texmode = GL_RGBA;

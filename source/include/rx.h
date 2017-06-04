@@ -58,9 +58,7 @@ namespace rx
 		Invalid,
 
 		Text,
-
-		Textured,
-		Coloured,
+		Vertices,
 	};
 
 	struct RenderObject
@@ -112,7 +110,7 @@ namespace rx
 
 		void clearRenderList();
 
-		void renderAll();
+		void renderForward();
 
 		void setCamera(lx::mat4 cameraViewMatrix);
 		lx::mat4 getCameraViewMatrix();

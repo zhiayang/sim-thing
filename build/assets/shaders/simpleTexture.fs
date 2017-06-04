@@ -24,8 +24,8 @@ void main()
 	vec3 viewDirection = normalize(cameraPosition - fragmentPosition);
 	vec4 base = ambientLightColour * ambientLightIntensity * material.ambientColour;
 
-	vec4 diffSample = texture(material.diffuseTexture, fragmentUV);
-	vec4 specSample = texture(material.specularTexture, fragmentUV);
+	vec4 diffSample = texture(material.diffuseTexture, fragmentUV) * material.diffuseColour;
+	vec4 specSample = texture(material.specularTexture, fragmentUV) * material.specularColour;
 
 	base += applyPointLights(normalize(fragmentNormal), fragmentPosition, viewDirection, diffSample, specSample);
 	base += applySpotLights(normalize(fragmentNormal), fragmentPosition, viewDirection, diffSample, specSample);

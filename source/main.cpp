@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 
 		// position, colour, intensity
 		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
-		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 0, 10), util::colour::white(), util::colour::white(), 2.0, 10.0));
+		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 10, 10), util::colour::white(), util::colour::white(), 1.7, 15.0));
 
 		theRenderer->addSpotLight(rx::SpotLight(lx::vec3(0, -4, 0), lx::vec3(0, 1, 0), util::colour::white(), util::colour::white(),
 			0.3, 2.0, 12.5, 30));
@@ -225,13 +225,16 @@ int main(int argc, char** argv)
 	// rx::Model* cube = rx::Model::getUnitCube();
 	// cube = model;
 
+	auto aColour = util::colour(0.83, 0.20, 0.22);
 	auto box = new rx::Texture("textures/box.png");
 	auto box_spec = new rx::Texture("textures/box_spec.png");
 	auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
+	auto cubeRO1 = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), aColour, aColour, 32));
+
 	// auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour(0.83, 0.20, 0.22), util::colour(0.83, 0.20, 0.22), util::colour::blue(), 32));
 
 
-	// auto col = util::colour(0.83, 0.20, 0.22);
+	//
 	// auto col1 = util::colour(0.24725, 0.1995, 0.0745);
 	// auto col2 = util::colour(0.75164, 0.60648, 0.22648);
 	// auto col3 = util::colour(0.628281, 0.555802, 0.366065);
@@ -314,7 +317,7 @@ int main(int argc, char** argv)
 		// theRenderer->renderModel(model, glm::translate(glm::mat4(), lx::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
 		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), lx::vec3(0.5)), lx::vec4(0.24, 0.59, 0.77, 1.0));
 		theRenderer->renderObject(cubeRO, lx::mat4());
-		theRenderer->renderObject(cubeRO, lx::mat4().translate(lx::vec3(0, 4, 0)));
+		theRenderer->renderObject(cubeRO1, lx::mat4().translate(lx::vec3(0, -0.3, 0)).scale(lx::vec3(10, 0.01, 10)));
 
 		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), lx::vec3(0, 0, 2)), lx::vec4(0.24, 0.59, 0.77, 1.0));
 		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), lx::vec3(0.1)), lx::vec3(0, 20, 0)), util::colour::white());

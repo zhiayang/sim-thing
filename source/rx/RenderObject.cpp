@@ -57,8 +57,6 @@ namespace rx
 		}
 
 		glBindVertexArray(0);
-
-		ret->renderType = RenderType::Textured;
 		return ret;
 	}
 
@@ -128,7 +126,7 @@ namespace rx
 
 		glBindVertexArray(0);
 
-		ret->renderType = RenderType::Coloured;
+		ret->renderType = RenderType::Vertices;
 		ret->arrayLength = verts.size();
 
 		return ret;
@@ -169,10 +167,6 @@ namespace rx
 
 		auto ret = RenderObject::fromTexturedVertices(vertices, uvs, normals);
 		ret->material = mat;
-
-		// do a check here
-		if(!mat.diffuseMap)
-			ret->renderType = RenderType::Coloured;
 
 		return ret;
 	}

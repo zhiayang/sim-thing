@@ -34,7 +34,8 @@ namespace rx
 			: hasValue(true), ambientColour(amb), diffuseColour(dif), specularColour(spc), shine(s) { }
 
 		Material(lx::vec4 amb, Texture* diffuse, Texture* specular, float s)
-			: hasValue(true), ambientColour(amb), diffuseMap(diffuse), specularMap(specular), shine(s) { }
+			: hasValue(true), ambientColour(amb), diffuseColour(util::colour::white()), specularColour(util::colour::white()),
+				diffuseMap(diffuse), specularMap(specular), shine(s) { }
 
 		bool hasValue = false;
 
@@ -59,7 +60,7 @@ namespace rx
 
 		std::vector<Face> faces;
 
-		static Mesh getUnitCube();
+		static Mesh getUnitCube(float scale = 1.0);
 	};
 
 	struct Model
