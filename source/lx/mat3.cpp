@@ -97,9 +97,9 @@ namespace lx
 		auto z = v.z;
 
 		result.vecs[3] = vec4(x, y, z, 1);
-		result.vecs[2] = vec4(0, 0, 1, 0);
-		result.vecs[1] = vec4(0, 1, 0, 0);
-		result.vecs[0] = vec4(1, 0, 0, 0);
+		result.vecs[2] = vec4(this->vecs[2], 0);
+		result.vecs[1] = vec4(this->vecs[1], 0);
+		result.vecs[0] = vec4(this->vecs[0], 0);
 
 		return result;
 	}
@@ -129,7 +129,7 @@ namespace lx
 		ret.vecs[1] = vec3(M * L * C - N * s,	M * M * C + c,		M * N * C + L * s);
 		ret.vecs[0] = vec3(L * L * C + c,		L * M * C + N * s,	L * N * C - M * s);
 
-		return ret;
+		return ret * (*this);
 	}
 
 	mat3x3 mat3x3::scale(const vec3& v)

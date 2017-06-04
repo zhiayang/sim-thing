@@ -39,6 +39,7 @@ namespace rx
 		CommandType type = CommandType::Invalid;
 
 		Material material;
+		lx::mat4 modelMatrix;
 
 		std::vector<lx::vec2> uvs;
 		std::vector<lx::vec4> colours;
@@ -47,3 +48,11 @@ namespace rx
 		std::vector<lx::vec3> vertices;
 	};
 }
+
+
+
+
+
+
+
+

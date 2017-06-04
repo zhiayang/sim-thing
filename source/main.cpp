@@ -1,5 +1,5 @@
 // main.cpp
-// Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
+// Copyright (c) 2014 - 2017, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
 #include <stdio.h>
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 
 		// position, colour, intensity
 		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
-		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 0, 8), util::colour::white(), util::colour::white(), 0.0, 10.0));
+		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 0, 8), util::colour::white(), util::colour::white(), 2.0, 10.0));
 
 		theRenderer->addSpotLight(rx::SpotLight(lx::vec3(0, -4, 0), lx::vec3(0, 1, 0), util::colour::white(), util::colour::white(),
 			1.0, 5.0, 12.5, 30));
@@ -311,7 +311,7 @@ int main(int argc, char** argv)
 		// theRenderer->renderModel(model, glm::translate(glm::mat4(), lx::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
 		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), lx::vec3(0.5)), lx::vec4(0.24, 0.59, 0.77, 1.0));
 		theRenderer->renderModel(cubeModel, lx::mat4());
-		theRenderer->renderModel(cubeModel, lx::mat4().translate(lx::vec3(0, 3, 0)));
+		theRenderer->renderModel(cubeModel, lx::mat4().translate(lx::vec3(0, 8, 0)));
 
 		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), lx::vec3(0, 0, 2)), lx::vec4(0.24, 0.59, 0.77, 1.0));
 		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), lx::vec3(0.1)), lx::vec3(0, 20, 0)), util::colour::white());

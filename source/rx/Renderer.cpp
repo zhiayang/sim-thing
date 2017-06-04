@@ -1,5 +1,5 @@
 // Renderer.cpp
-// Copyright (c) 2014 - The Foreseeable Future, zhiayang@gmail.com
+// Copyright (c) 2014 - 2017, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
 #include <assert.h>
@@ -368,7 +368,9 @@ namespace rx
 
 		rc.dimensions = 3;
 		rc.isInScreenSpace = false;
+
 		rc.material = mat;
+		rc.modelMatrix = transform;
 
 		if(mesh.faces.empty())
 			ERROR("mesh (id %zu) needs at least one face", mesh.id);
@@ -379,7 +381,7 @@ namespace rx
 				ERROR("face needs at least one vertex");
 
 			for(auto v : face.vertices)
-				rc.vertices.push_back((transform * lx::vec4(v, 1.0)).xyz());
+				rc.vertices.push_back(v);
 
 			for(auto t : face.uvs)
 				rc.uvs.push_back(t);
@@ -606,7 +608,7 @@ namespace rx
 					auto& sprog = this->colourShaderProgram;
 					sprog.use();
 
-					sprog.setUniform("modelMatrix", lx::mat4());
+					sprog.setUniform("modelMatrix", rc.modelMatrix);
 					sprog.setUniform("viewMatrix", this->cameraMatrix);
 					sprog.setUniform("projMatrix", this->projectionMatrix);
 
@@ -726,7 +728,7 @@ namespace rx
 					auto& sprog = this->textureShaderProgram;
 					sprog.use();
 
-					sprog.setUniform("modelMatrix", lx::mat4());
+					sprog.setUniform("modelMatrix", rc.modelMatrix);
 					sprog.setUniform("viewMatrix", this->cameraMatrix);
 					sprog.setUniform("projMatrix", this->projectionMatrix);
 

@@ -92,9 +92,9 @@ namespace lx
 
 	mat4x4 mat4x4::translate(const vec3& v)
 	{
-		mat4x4 result;
-
+		mat4x4 result = *this;
 		result[3] = this->vecs[0] * v[0] + this->vecs[1] * v[1] + this->vecs[2] * v[2] + this->vecs[3];
+
 		return result;
 	}
 
@@ -125,7 +125,7 @@ namespace lx
 		ret.vecs[1] = vec4(M * L * C - N * s,	M * M * C + c,		M * N * C + L * s,	0);
 		ret.vecs[0] = vec4(L * L * C + c,		L * M * C + N * s,	L * N * C - M * s,	0);
 
-		return ret;
+		return ret * (*this);
 	}
 
 	mat4x4 mat4x4::scale(const vec3& v)
