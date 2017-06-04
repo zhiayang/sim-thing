@@ -124,29 +124,49 @@ int main(int argc, char** argv)
 	// constructors do not replace this, especially since it doesn't have named arguments
 	// .stupid.
 
-	// 1. simple texture shader
-	auto textureProg = rx::ShaderProgram("simpleTexture", rx::ShaderSource {
+	// 1. shader for forward rendering
+	auto forwardProg = rx::ShaderProgram("forwardShader", rx::ShaderSource {
 
 		.glslVersion = "330 core",
-		.vertexShaderPath = "shaders/simpleTexture.vs",
-		.fragmentShaderPath = "shaders/simpleTexture.fs",
+		.vertexShaderPath = "shaders/forwardShader.vs",
+		.fragmentShaderPath = "shaders/forwardShader.fs",
 	});
 
-	// 2. simple colour shader
-	auto colourProg = rx::ShaderProgram("simpleColour", rx::ShaderSource {
-
-		.glslVersion = "330 core",
-		.vertexShaderPath = "shaders/simpleColour.vs",
-		.fragmentShaderPath = "shaders/simpleColour.fs",
-	});
-
-	// 3. text shader
+	// 2. text shader
 	auto textProg = rx::ShaderProgram("textShader", rx::ShaderSource {
 
 		.glslVersion = "330 core",
 		.vertexShaderPath = "shaders/textShader.vs",
 		.fragmentShaderPath = "shaders/textShader.fs",
 	});
+
+
+	// 3. deferred geometry shader
+	auto deferredGeomProg = rx::ShaderProgram("deferredGeometryShader", rx::ShaderSource {
+
+		.glslVersion = "330 core",
+		.vertexShaderPath = "shaders/deferred/geometry.vs",
+		.fragmentShaderPath = "shaders/deferred/geometry.fs",
+	});
+
+	// 4. deferred lighting shader
+	auto deferredLightProg = rx::ShaderProgram("deferredLightingShader", rx::ShaderSource {
+
+		.glslVersion = "330 core",
+		.vertexShaderPath = "shaders/deferred/lighting.vs",
+		.fragmentShaderPath = "shaders/deferred/lighting.fs",
+	});
+
+
+
+	rx::ShaderPipeline pipeline {
+
+		.deferredGeometryShader = deferredGeomProg,
+		.deferredLightingShader = deferredLightProg,
+
+		.forwardShader = forwardProg,
+		.textShader = textProg
+	};
 
 
 
@@ -158,12 +178,13 @@ int main(int argc, char** argv)
 		cam.pitch = -20;
 
 		// setup the renderer. there's many parameters here...
-		theRenderer = new rx::Renderer(platformData.first,	// the window
-			util::colour(0.01, 0.01, 0.01),					// clear colour
-			cam,											// camera
-			textureProg, colourProg, textProg,				// shader programs for textured objects, coloured objects, and text.
-			lx::toRadians(70.0f),							// FOV, 70 degrees
-			0.001, 1000										// near plane, far plane
+		theRenderer = new rx::Renderer(
+			platformData.first,					// the window
+			util::colour(0.01, 0.01, 0.01),		// clear colour
+			cam,								// camera
+			pipeline,							// shaders for forward rendering, deferred rendering, and text rendering.
+			lx::toRadians(70.0f),				// FOV, 70 degrees
+			0.001, 1000							// near plane, far plane
 		);
 
 		// position, colour, intensity

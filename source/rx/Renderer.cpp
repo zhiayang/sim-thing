@@ -25,9 +25,8 @@ using namespace gl;
 
 namespace rx
 {
-	Renderer::Renderer(Window* win, util::colour clearCol, Camera cam, ShaderProgram textureShaderProg,
-		ShaderProgram colourShaderProg, ShaderProgram textShaderProg, double fov, double near, double far) :
-		textureShaderProgram(textureShaderProg), colourShaderProgram(colourShaderProg), textShaderProgram(textShaderProg)
+	Renderer::Renderer(Window* win, util::colour clearCol, Camera cam, ShaderPipeline pipeline, double fov, double near, double far)
+		: forwardShaderProgram(pipeline.forwardShader), textShaderProgram(pipeline.textShader), deferredGeometryShaderProgram(pipeline.deferredGeometryShader), deferredLightingShaderProgram(pipeline.deferredLightingShader)
 	{
 		assert(win);
 		this->window = win;
@@ -71,6 +70,8 @@ namespace rx
 		// one completely white pixel.
 		static uint8_t white[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 		this->placeholderTexture = new Texture(white, 1, 1, ImageFormat::RGBA);
+
+		this->gBuffer = GBuffer::create(this);
 	}
 
 
@@ -121,7 +122,8 @@ namespace rx
 
 	void Renderer::clearRenderList()
 	{
-		this->renderList.clear();
+		this->forwardList.clear();
+		this->deferredList.clear();
 	}
 
 	void Renderer::updateWindowSize(double width, double height)
@@ -163,7 +165,7 @@ namespace rx
 	void Renderer::setAmbientLighting(lx::vec4 colour, float intensity)
 	{
 		// set for both
-		for(auto* prog : { &this->colourShaderProgram, &this->textureShaderProgram })
+		for(auto* prog : { &this->forwardShaderProgram, &this->deferredGeometryShaderProgram, &this->deferredLightingShaderProgram })
 		{
 			prog->use();
 			prog->setUniform("ambientLightColour", colour);
@@ -206,7 +208,8 @@ namespace rx
 		if(!rc.renderObject->material.hasValue)
 			rc.renderObject->material = Material(util::colour::white(), this->placeholderTexture, this->placeholderTexture, 1);
 
-		this->renderList.push_back(rc);
+		this->deferredList.push_back(rc);
+		this->forwardList.push_back(rc);
 	}
 
 
@@ -313,7 +316,7 @@ namespace rx
 		rc.textScale = scale;
 		rc.textColour = colour.vec4();
 
-		this->renderList.push_back(rc);
+		this->forwardList.push_back(rc);
 	}
 
 
@@ -367,7 +370,7 @@ namespace rx
 		if(lights.size() > MAX_POINT_LIGHTS)
 			lights.erase(lights.begin() + MAX_POINT_LIGHTS, lights.end());
 
-		for(auto* shaderProg : { &this->colourShaderProgram, &this->textureShaderProgram })
+		for(auto* shaderProg : { &this->forwardShaderProgram, &this->deferredLightingShaderProgram })
 		{
 			assert(shaderProg);
 			shaderProg->use();
@@ -408,7 +411,7 @@ namespace rx
 		if(lights.size() > MAX_SPOT_LIGHTS)
 			lights.erase(lights.begin() + MAX_SPOT_LIGHTS, lights.end());
 
-		for(auto* shaderProg : { &this->colourShaderProgram, &this->textureShaderProgram })
+		for(auto* shaderProg : { &this->forwardShaderProgram, &this->deferredLightingShaderProgram })
 		{
 			assert(shaderProg);
 			shaderProg->use();
@@ -450,28 +453,125 @@ namespace rx
 
 	// main render pusher
 
-	/*
-		note about the renderer + shaders:
-
-		if rendering coloured vertices, ie. without textures, the material used will be based on colours.
-		ie. you have ambientColour, diffuseColour, specularColour.
-
-		if rendering textured vertices, then the material used will be based on textures, and we need to upload
-		UV coords to the shader.
-
-		I don't think we'll support textured objects with colour-mats, since you can just use the same texture for the diffuse
-		map. and using textures for colour-verts defeats the purpose (read: keep it simple) of the entire thing.
-
-		so there. mutual exclusion by design.
-	*/
-
-	void Renderer::renderForward()
+	void Renderer::renderDeferredGeometryPass()
 	{
-		glClearColor(this->clearColour.r, this->clearColour.g, this->clearColour.b, this->clearColour.a);
+		glBindFramebuffer(GL_FRAMEBUFFER, this->gBuffer->gFramebuffer);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		double rscale = this->_resolutionScale;
 		glViewport(0, 0, (int) (this->_width * rscale), (int) (this->_height * rscale));
+
+		auto& sprog = this->deferredGeometryShaderProgram;
+		sprog.use();
+
+		for(auto rc : this->deferredList)
+		{
+			auto* renderObj = rc.renderObject;
+			switch(renderObj->renderType)
+			{
+				case RenderType::Vertices: {
+
+					sprog.setUniform("modelMatrix", rc.modelMatrix);
+					sprog.setUniform("viewMatrix", this->cameraMatrix);
+					sprog.setUniform("projMatrix", this->projectionMatrix);
+
+					// sprog.setUniform("gPosition", 0);
+					// sprog.setUniform("gNormal", 1);
+					// sprog.setUniform("gColour", 2);
+
+					assert(renderObj->material.hasValue);
+					{
+						auto& mat = renderObj->material;
+						sprog.setUniform("material.shine", mat.shine);
+
+						// set the colours
+						sprog.setUniform("material.ambientColour", mat.ambientColour);
+						sprog.setUniform("material.diffuseColour", mat.diffuseColour);
+						sprog.setUniform("material.specularColour", mat.specularColour);
+					}
+
+					{
+						// i presume this sets which texture unit to use
+						sprog.setUniform("material.diffuseTexture", 0);
+						sprog.setUniform("material.specularTexture", 1);
+
+						auto& mat = renderObj->material;
+						Texture* diff = (mat.diffuseMap ? mat.diffuseMap : this->placeholderTexture);
+						Texture* spec = (mat.specularMap ? mat.specularMap : this->placeholderTexture);
+
+						// use the placeholder white texture
+						glActiveTexture(GL_TEXTURE1);
+						glBindTexture(GL_TEXTURE_2D, spec->glTextureID);
+
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, diff->glTextureID);
+					}
+
+					glDrawArrays(renderObj->wireframe ? GL_LINES : GL_TRIANGLES, 0, renderObj->arrayLength);
+
+				} break;
+
+				default:
+					LOG("not handled");
+					break;
+			}
+		}
+
+		this->deferredList.clear();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void Renderer::renderDeferredLightingPass()
+	{
+		// glBindFramebuffer(GL_FRAMEBUFFER, this->gBuffer->gFramebuffer);
+		// glClear(GL_COLOR_BUFFER_BIT);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		this->forwardShaderProgram.use();
+
+		auto ro = RenderObject::fromTexturedVertices({
+			lx::vec3(1, 0, 0),
+			lx::vec3(0, 1, 0),
+			lx::vec3(0, 0, 0),
+
+			lx::vec3(0, 1, 0),
+			lx::vec3(1, 0, 0),
+			lx::vec3(1, 1, 0),
+		}, {
+			lx::vec2(1, 0),
+			lx::vec2(0, 1),
+			lx::vec2(0, 0),
+
+			lx::vec2(0, 1),
+			lx::vec2(1, 0),
+			lx::vec2(1, 1),
+		}, {
+			lx::vec3(0, 0, 1),
+			lx::vec3(0, 0, 1),
+			lx::vec3(0, 0, 1),
+			lx::vec3(0, 0, 1),
+			lx::vec3(0, 0, 1),
+			lx::vec3(0, 0, 1),
+		});
+
+
+		RenderCommand rc;
+
+		rc.renderObject = ro;
+		rc.modelMatrix = lx::mat4();
+
+		if(!rc.renderObject->material.hasValue)
+			rc.renderObject->material = Material(util::colour::white(), this->placeholderTexture, this->placeholderTexture, 1);
+
+		rc.renderObject->material.diffuseMap->glTextureID = gBuffer->positionBuffer;
+		this->forwardList.push_back(rc);
+	}
+
+	void Renderer::renderForward()
+	{
+		glClearColor(1, 1, 1, 1);
+		// glClearColor(this->clearColour.r, this->clearColour.g, this->clearColour.b, this->clearColour.a);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// render a cube at every point light
 		static auto cubeRO = RenderObject::fromMesh(Mesh::getUnitCube(), Material(util::colour::white(),
@@ -484,8 +584,9 @@ namespace rx
 
 		// sort the lights by distance to the camera
 		{
-			this->textureShaderProgram.setUniform("cameraPosition", this->camera.position);
-			this->colourShaderProgram.setUniform("cameraPosition", this->camera.position);
+			this->forwardShaderProgram.setUniform("cameraPosition", this->camera.position);
+			// this->deferredGeometryShaderProgram.setUniform("cameraPosition", this->camera.position);
+			// this->deferredLightingShaderProgram.setUniform("cameraPosition", this->camera.position);
 
 			this->sortAndUpdatePointLights(this->camera.position);
 			this->sortAndUpdateSpotLights(this->camera.position);
@@ -493,7 +594,7 @@ namespace rx
 
 
 
-		for(auto rc : this->renderList)
+		for(auto rc : this->forwardList)
 		{
 			assert(rc.renderObject);
 			auto renderObj = rc.renderObject;
@@ -504,7 +605,7 @@ namespace rx
 			{
 				case RenderType::Vertices: {
 
-					auto& sprog = this->textureShaderProgram;
+					auto& sprog = this->forwardShaderProgram;
 					sprog.use();
 
 					sprog.setUniform("modelMatrix", rc.modelMatrix);
@@ -521,7 +622,6 @@ namespace rx
 						sprog.setUniform("material.diffuseColour", mat.diffuseColour);
 						sprog.setUniform("material.specularColour", mat.specularColour);
 					}
-
 
 					{
 						// i presume this sets which texture unit to use
@@ -609,6 +709,9 @@ namespace rx
 
 	void EndFrame(rx::Renderer* r)
 	{
+		r->renderDeferredGeometryPass();
+		r->renderDeferredLightingPass();
+
 		r->renderForward();
 		platform::endFrame(r->window->platformData, r->window->platformWindow);
 	}
