@@ -45,6 +45,9 @@ namespace rx
 	enum class ImageFormat
 	{
 		Invalid,
+
+		GREYSCALE,
+
 		RGB,
 		RGBA
 	};
@@ -67,9 +70,10 @@ namespace rx
 
 	struct Texture
 	{
-		Texture(Surface* surf, Renderer* rend);
-		Texture(std::string path, Renderer* rend);
-		Texture(AssetLoader::Asset* ass, Renderer* rend);
+		Texture(Surface* surf, bool autoGenGLTexture = true);
+		Texture(std::string path);
+		Texture(AssetLoader::Asset* ass);
+		Texture(uint8_t* bytes, size_t width, size_t height, ImageFormat format, bool autoGenGLTexture = true);
 		~Texture();
 
 		gl::GLuint glTextureID;
@@ -79,8 +83,6 @@ namespace rx
 
 		uint64_t width = 0;
 		uint64_t height = 0;
-
-		ImageFormat format = ImageFormat::Invalid;
 	};
 }
 

@@ -17,6 +17,9 @@
 
 namespace rx
 {
+	struct Texture;
+	struct RenderObject;
+
 	// font stuff
 	struct FontGlyphPos
 	{
@@ -50,17 +53,15 @@ namespace rx
 		uint8_t* ttfBuffer = 0;
 		size_t ttfBufferSize = 0;
 
-		uint8_t* atlas = 0;
-		size_t atlasWidth = 0;
-		size_t atlasHeight = 0;
-
 		size_t vertOversample = 0;
 		size_t horzOversample = 0;
 
 		uint32_t firstChar = 0;
 		size_t numChars = 0;
 
-		gl::GLuint glTextureID = -1;
+		Texture* fontAtlas = 0;
+
+		RenderObject* renderObject = 0;
 
 		stbtt_fontinfo fontInfo;
 		stbtt_packedchar* charInfo = 0;

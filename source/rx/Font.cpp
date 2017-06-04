@@ -25,8 +25,6 @@ namespace rx
 
 	Font* getFont(std::string name, size_t pixelSize, uint32_t firstChar, size_t numChars, size_t oversampleH, size_t oversampleV)
 	{
-		// see long comment on fonts in main.cpp
-
 		FontTuple tup(name, pixelSize);
 		if(fontMap.find(tup) != fontMap.end())
 		{
@@ -56,10 +54,6 @@ namespace rx
 			fclose(f);
 		}
 
-		// this is because imgui deletes the buffer
-		// uint8_t* bufcopy = new uint8_t[ttfSize];
-		// memcpy(bufcopy, ttfbuffer, ttfSize);
-
 		Font* font = new Font(name);
 		font->pixelSize = pixelSize;
 
@@ -76,17 +70,20 @@ namespace rx
 		size_t maxpixsize = std::max(oversampleH * pixelSize, oversampleV * pixelSize);
 		size_t numperside = (size_t) (sqrt(numChars) + 1);
 
-		font->atlasHeight = numperside * maxpixsize;
-		font->atlasWidth = numperside * maxpixsize;
+		{
+			size_t atlasWidth = numperside * maxpixsize;
+			size_t atlasHeight = numperside * maxpixsize;
+			uint8_t* atlasBuffer = new uint8_t[atlasWidth * atlasHeight];
+			assert(atlasBuffer && "failed to allocate memory for atlas");
+			memset(atlasBuffer, 0, atlasWidth * atlasHeight);
 
-		font->atlas = new uint8_t[font->atlasWidth * font->atlasHeight];
-		assert(font->atlas && "failed to allocate memory for atlas");
-		memset(font->atlas, 0, font->atlasWidth * font->atlasHeight);
-
+			// autotex = false -- we want to generate the texture ourselves.
+			font->fontAtlas = new Texture(atlasBuffer, atlasWidth, atlasHeight, ImageFormat::GREYSCALE, false);
+		}
 
 		LOG("Allocated a %s font atlas (%zux%zu) for font '%s' at size %zupx",
-			Units::formatWithUnits(font->atlasWidth * font->atlasHeight, 1, "B").c_str(), font->atlasWidth, font->atlasHeight,
-			name.c_str(), pixelSize);
+			Units::formatWithUnits(font->fontAtlas->width * font->fontAtlas->height, 1, "B").c_str(),
+				font->fontAtlas->width, font->fontAtlas->height, name.c_str(), pixelSize);
 
 
 		stbtt_InitFont(&font->fontInfo, font->ttfBuffer, 0);
@@ -95,7 +92,7 @@ namespace rx
 		// begin stb_truetype stuff
 		{
 			stbtt_pack_context context;
-			if(!stbtt_PackBegin(&context, font->atlas, font->atlasWidth, font->atlasHeight, 0, 1, nullptr))
+			if(!stbtt_PackBegin(&context, font->fontAtlas->surf->data, font->fontAtlas->width, font->fontAtlas->height, 0, 1, nullptr))
 				ERROR("Failed to initialise font '%s'", name.c_str());
 
 			font->charInfo = new stbtt_packedchar[font->numChars];
@@ -115,8 +112,9 @@ namespace rx
 			// make the opengl texture
 			{
 				using namespace gl;
-				glGenTextures(1, &font->glTextureID);
-				glBindTexture(GL_TEXTURE_2D, font->glTextureID);
+
+				glGenTextures(1, &font->fontAtlas->glTextureID);
+				glBindTexture(GL_TEXTURE_2D, font->fontAtlas->glTextureID);
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 				// minification is more important, since we usually oversample and down-scale for better-looking text
@@ -128,8 +126,8 @@ namespace rx
 
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, font->atlasWidth, font->atlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE,
-					font->atlas);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, font->fontAtlas->width, font->fontAtlas->height, 0, GL_RED, GL_UNSIGNED_BYTE,
+					font->fontAtlas->surf->data);
 
 				glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 				glGenerateMipmap(GL_TEXTURE_2D);
@@ -140,14 +138,90 @@ namespace rx
 		int ascent = 0;
 		int descent = 0;
 		int linegap = 0;
-        stbtt_GetFontVMetrics(&font->fontInfo, &ascent, &descent, &linegap);
+		stbtt_GetFontVMetrics(&font->fontInfo, &ascent, &descent, &linegap);
 
-        font->ascent = ascent * stbtt_ScaleForPixelHeight(&font->fontInfo, font->pixelSize);
-        font->descent = descent * stbtt_ScaleForPixelHeight(&font->fontInfo, font->pixelSize);
+		font->ascent = ascent * stbtt_ScaleForPixelHeight(&font->fontInfo, font->pixelSize);
+		font->descent = descent * stbtt_ScaleForPixelHeight(&font->fontInfo, font->pixelSize);
 
-		// pre-generate glyph positions
-		for(uint32_t ch = firstChar; ch < firstChar + numChars; ch++)
-			font->getGlyphMetrics(ch);
+
+
+
+
+
+		// make some VBOs that contain all the vertex and UV coordinates
+		{
+			using namespace gl;
+
+			font->renderObject = new RenderObject();
+			glBindVertexArray(font->renderObject->vertexArrayObject);
+
+			GLuint uvBuffer = 0; glGenBuffers(1, &uvBuffer);
+			GLuint vertBuffer = 0; glGenBuffers(1, &vertBuffer);
+
+			font->renderObject->buffers = { uvBuffer, vertBuffer };
+
+			std::vector<lx::vec2> verts;
+			std::vector<lx::vec2> uvs;
+
+			// make the VBO.
+			for(uint32_t ch = firstChar; ch < firstChar + numChars; ch++)
+			{
+				auto fgp = font->getGlyphMetrics(ch);
+
+				verts.push_back(lx::round(lx::vec2(fgp.x1, fgp.y0)));	// 3
+				verts.push_back(lx::round(lx::vec2(fgp.x0, fgp.y1)));	// 2
+				verts.push_back(lx::round(lx::vec2(fgp.x0, fgp.y0)));	// 1
+
+				verts.push_back(lx::round(lx::vec2(fgp.x0, fgp.y1)));
+				verts.push_back(lx::round(lx::vec2(fgp.x1, fgp.y0)));
+				verts.push_back(lx::round(lx::vec2(fgp.x1, fgp.y1)));
+
+				uvs.push_back(lx::vec2(fgp.u1, fgp.v0));	// 3
+				uvs.push_back(lx::vec2(fgp.u0, fgp.v1));	// 2
+				uvs.push_back(lx::vec2(fgp.u0, fgp.v0));	// 1
+
+				uvs.push_back(lx::vec2(fgp.u0, fgp.v1));
+				uvs.push_back(lx::vec2(fgp.u1, fgp.v0));
+				uvs.push_back(lx::vec2(fgp.u1, fgp.v1));
+			}
+
+			glEnableVertexAttribArray(0);
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
+				glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(lx::vec2), &verts[0], GL_STATIC_DRAW);
+
+				glVertexAttribPointer(
+					0,			// location
+					2,			// size
+					GL_FLOAT,	// type
+					GL_FALSE,	// normalized?
+					0,			// stride
+					(void*) 0	// array buffer offset
+				);
+			}
+
+			glEnableVertexAttribArray(1);
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+				glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(lx::vec2), &uvs[0], GL_STATIC_DRAW);
+
+				glVertexAttribPointer(
+					1,			// location
+					2,			// size
+					GL_FLOAT,	// type
+					GL_FALSE,	// normalized?
+					0,			// stride
+					(void*) 0	// array buffer offset
+				);
+			}
+
+			font->renderObject->arrayLength = verts.size();
+			font->renderObject->renderType = RenderType::Text;
+			font->renderObject->material = Material(util::colour::white(), font->fontAtlas, font->fontAtlas, 1);
+
+
+			glBindVertexArray(0);
+		}
 
 		fontMap[tup] = font;
 		return font;
@@ -164,7 +238,7 @@ namespace rx
 //
 		stbtt_aligned_quad quad;
 
-		stbtt_GetPackedQuad(this->charInfo, this->atlasWidth, this->atlasHeight, character - this->firstChar,
+		stbtt_GetPackedQuad(this->charInfo, this->fontAtlas->width, this->fontAtlas->height, character - this->firstChar,
 			&xpos, &ypos, &quad, 0);
 
 		auto x0 = quad.x0;
@@ -204,7 +278,7 @@ namespace rx
 		for(auto pair : fontMap)
 		{
 			delete[] pair.second->ttfBuffer;
-			delete[] pair.second->atlas;
+			delete[] pair.second->fontAtlas;
 			delete[] ((stbtt_packedchar*) pair.second->charInfo);
 		}
 	}

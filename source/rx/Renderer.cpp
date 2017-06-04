@@ -74,7 +74,7 @@ namespace rx
 
 		// one completely white pixel.
 		static uint8_t white[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
-		this->placeholderTexture = new Texture(new Surface(white, 1, 1, ImageFormat::RGBA), this);
+		this->placeholderTexture = new Texture(white, 1, 1, ImageFormat::RGBA);
 	}
 
 
@@ -126,15 +126,6 @@ namespace rx
 	void Renderer::clearRenderList()
 	{
 		this->renderList.clear();
-	}
-
-	void Renderer::clearScreen(util::colour colour)
-	{
-		RenderCommand rc;
-		rc.type = RenderCommand::CommandType::Clear;
-		rc.colours.push_back(colour);
-
-		this->renderList.push_back(rc);
 	}
 
 	void Renderer::updateWindowSize(double width, double height)
@@ -210,32 +201,27 @@ namespace rx
 
 
 	// render things
-
-	void Renderer::renderColouredVertices(std::vector<lx::vec3> verts, std::vector<lx::vec4> colours, std::vector<lx::vec3> normals)
+	void Renderer::renderObject(rx::RenderObject* ro, const lx::mat4& transform)
 	{
 		RenderCommand rc;
-		rc.type			= RenderCommand::CommandType::RenderColouredVertices;
-		rc.wireframe	= false;
-		rc.vertices		= verts;
-		rc.colours		= colours;
-		rc.normals		= normals;
-		rc.uvs			= { };
-
-		rc.dimensions = 3;
-		rc.isInScreenSpace = false;
+		rc.renderObject = ro;
+		rc.modelMatrix = transform;
 
 		this->renderList.push_back(rc);
 	}
 
-	void Renderer::renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, lx::vec2 pos, TextAlignment align)
+
+	void Renderer::renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, lx::vec2 pos,
+		util::colour colour, TextAlignment align)
 	{
 		pos.x *= this->_width;
 		pos.y *= this->_height;
 
-		this->renderStringInScreenSpace(txt, font, size, pos);
+		this->renderStringInScreenSpace(txt, font, size, pos, colour, align);
 	}
 
-	void Renderer::renderStringInScreenSpace(std::string str, rx::Font* font, float size, lx::vec2 pos, TextAlignment align)
+	void Renderer::renderStringInScreenSpace(std::string str, rx::Font* font, float size, lx::vec2 pos,
+		util::colour colour, TextAlignment align)
 	{
 		bool rightAlign = (align == TextAlignment::RightAligned);
 
@@ -284,6 +270,11 @@ namespace rx
 		}
 
 
+		// std::vector<lx::vec3> vertices;
+		// std::vector<lx::vec2> uvs;
+
+		std::vector<size_t> indices;
+		std::vector<lx::vec2> positions;
 
 		for(size_t i = 0; i < codepoints.size(); i++)
 		{
@@ -305,103 +296,62 @@ namespace rx
 
 				if(codepoint != ' ')
 				{
-					RenderCommand rc;
-
-					rc.type = RenderCommand::CommandType::RenderText;
-					rc.wireframe = false;
-
-					rc.dimensions = 2;
-					rc.isInScreenSpace = true;
-					rc.textureToBind = font->glTextureID;
-
 					// fill it up.
 					auto pos = lx::vec2(round(xPos), round(yPos));
 
-					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y0), 0, 1)).xyz());	// 3
-					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y1), 0, 1)).xyz());	// 2
-					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y0), 0, 1)).xyz());	// 1
+					// vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y0), 0, 1)).xyz());	// 3
+					// vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y1), 0, 1)).xyz());	// 2
+					// vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y0), 0, 1)).xyz());	// 1
 
-					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y1), 0, 1)).xyz());
-					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y0), 0, 1)).xyz());
-					rc.vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y1), 0, 1)).xyz());
+					// vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x0, gpos.y1), 0, 1)).xyz());
+					// vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y0), 0, 1)).xyz());
+					// vertices.push_back(lx::round(lx::vec4(pos + scale * lx::vec2(gpos.x1, gpos.y1), 0, 1)).xyz());
 
-					rc.uvs = {
-								lx::vec2(gpos.u1, gpos.v0),	// 3
-								lx::vec2(gpos.u0, gpos.v1),	// 2
-								lx::vec2(gpos.u0, gpos.v0),	// 1
+					// uvs.insert(uvs.end(), {
+					// 			lx::vec2(gpos.u1, gpos.v0),	// 3
+					// 			lx::vec2(gpos.u0, gpos.v1),	// 2
+					// 			lx::vec2(gpos.u0, gpos.v0),	// 1
 
-								lx::vec2(gpos.u0, gpos.v1),
-								lx::vec2(gpos.u1, gpos.v0),
-								lx::vec2(gpos.u1, gpos.v1)
-							};
+					// 			lx::vec2(gpos.u0, gpos.v1),
+					// 			lx::vec2(gpos.u1, gpos.v0),
+					// 			lx::vec2(gpos.u1, gpos.v1)
+					// 		});
 
-					this->renderList.push_back(rc);
+					indices.push_back(codepoint - font->firstChar);
+					positions.push_back(pos);
 				}
 
 				xPos += (rightAlign ? -1 : 1) * scale * gpos.xAdvance;
 			}
 		}
-	}
 
+		// // auto normals = std::vector<lx::vec3>(vertices.size(), lx::vec3(0, 0, 1));
+		// auto renderObject = RenderObject::fromTexturedVertices(vertices, uvs, { });
 
+		// renderObject->material = Material(util::colour::white(), font->fontAtlas, font->fontAtlas, 32);
+		// renderObject->renderType = RenderType::Text;
 
+		// RenderCommand rc;
+		// rc.renderObject = renderObject;
 
+		// this->renderList.push_back(rc);
+		// this->autoGeneratedRenderObjects.push_back(renderObject);
 
-
-
-	void Renderer::renderMesh(const Mesh& mesh, const Material& m, lx::mat4 transform)
-	{
-		Material mat = m;
 		RenderCommand rc;
-
-		auto placeholderColour = util::colour::white();
-
-		if(!mat.diffuseMap)
-		{
-			placeholderColour = mat.diffuseColour;
-			rc.type = RenderCommand::CommandType::RenderColouredVertices;
-		}
-		else
-		{
-			rc.type = RenderCommand::CommandType::RenderTexturedVertices;
-		}
-
-		rc.dimensions = 3;
-		rc.isInScreenSpace = false;
-
-		rc.material = mat;
-		rc.modelMatrix = transform;
-
-		if(mesh.faces.empty())
-			ERROR("mesh (id %zu) needs at least one face", mesh.id);
-
-		for(auto face : mesh.faces)
-		{
-			if(face.vertices.empty())
-				ERROR("face needs at least one vertex");
-
-			for(auto v : face.vertices)
-				rc.vertices.push_back(v);
-
-			for(auto t : face.uvs)
-				rc.uvs.push_back(t);
-
-			for(auto n : face.normals)
-				rc.normals.push_back(n);
-
-			// add some white colours
-			rc.colours.insert(rc.colours.begin(), rc.vertices.size(), placeholderColour);
-		}
+		rc.renderObject = font->renderObject;
+		rc.positions = positions;
+		rc.indices = indices;
+		rc.textScale = scale;
+		rc.textColour = colour.vec4();
 
 		this->renderList.push_back(rc);
 	}
 
 
-	void Renderer::renderModel(const Model& model, lx::mat4 transform)
-	{
-		for(auto mesh : model.objects)
-			this->renderMesh(mesh.first, mesh.second, transform);
-	}
+
+
+
+
 
 
 
@@ -554,27 +504,14 @@ namespace rx
 		double rscale = this->_resolutionScale;
 		glViewport(0, 0, (int) (this->_width * rscale), (int) (this->_height * rscale));
 
-		// generate one buffer, once.
-
-		static GLuint uvBuffer = -1;
-		static GLuint vertBuffer = -1;
-		static GLuint colourBuffer = -1;
-		static GLuint normalBuffer = -1;
-
-		if(uvBuffer == (GLuint) -1)		glGenBuffers(1, &uvBuffer);
-		if(vertBuffer == (GLuint) -1)	glGenBuffers(1, &vertBuffer);
-		if(colourBuffer == (GLuint) -1)	glGenBuffers(1, &colourBuffer);
-		if(normalBuffer == (GLuint) -1)	glGenBuffers(1, &normalBuffer);
-
-
-
 		// render a cube at every point light
+		static auto cubeRO = RenderObject::fromMesh(Mesh::getUnitCube(), Material(util::colour::white(),
+			util::colour::white(), util::colour::white(), 1));
+
 		for(auto pl : this->pointLights)
 		{
-			this->renderMesh(Mesh::getUnitCube(), Material(util::colour::white(), util::colour::white(), util::colour::white(), 1),
-				lx::mat4().scale(0.1).translate(pl.position));
+			this->renderObject(cubeRO, lx::scale(0.1).translate(pl.position));
 		}
-
 
 		// sort the lights by distance to the camera
 		{
@@ -589,21 +526,14 @@ namespace rx
 
 		for(auto rc : this->renderList)
 		{
-			using CType = RenderCommand::CommandType;
+			assert(rc.renderObject);
+			auto renderObj = rc.renderObject;
 
-			switch(rc.type)
+			glBindVertexArray(renderObj->vertexArrayObject);
+
+			switch(renderObj->renderType)
 			{
-				case CType::Clear: {
-
-					assert(rc.colours.size() == 1);
-					auto col = rc.colours[0];
-
-					glClearColor(col.r, col.g, col.b, col.a);
-					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-				} break;
-
-				case CType::RenderColouredVertices: {
+				case RenderType::Coloured: {
 
 					auto& sprog = this->colourShaderProgram;
 					sprog.use();
@@ -612,65 +542,10 @@ namespace rx
 					sprog.setUniform("viewMatrix", this->cameraMatrix);
 					sprog.setUniform("projMatrix", this->projectionMatrix);
 
-					glEnableVertexAttribArray(0);
-					{
-						// we always have vertices
-						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(lx::vec3), &rc.vertices[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							0,			// location
-							3,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
-					}
-
-					// we must have colours
-					assert(rc.colours.size() > 0);
-					{
-						glEnableVertexAttribArray(1);
-
-						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(lx::vec4), &rc.colours[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							1,			// location
-							4,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
-					}
-
-					// if we have normals:
-					if(rc.normals.size() > 0)
-					{
-						glEnableVertexAttribArray(2);
-
-						glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.normals.size() * sizeof(lx::vec3), &rc.normals[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							2,			// location
-							3,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
-					}
-
 					// if we have a material
-					if(rc.material.hasValue)
+					if(renderObj->material.hasValue)
 					{
-						auto& mat = rc.material;
+						auto& mat = renderObj->material;
 						sprog.setUniform("material.shine", mat.shine);
 
 						// set the colours
@@ -703,13 +578,7 @@ namespace rx
 						glBindTexture(GL_TEXTURE_2D, this->placeholderTexture->glTextureID);
 					}
 
-
-
-					glDrawArrays(rc.wireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
-
-					glDisableVertexAttribArray(0);
-					glDisableVertexAttribArray(1);
-					glDisableVertexAttribArray(2);
+					glDrawArrays(renderObj->wireframe ? GL_LINES : GL_TRIANGLES, 0, renderObj->arrayLength);
 
 				} break;
 
@@ -723,7 +592,7 @@ namespace rx
 
 
 
-				case CType::RenderTexturedVertices: {
+				case RenderType::Textured: {
 
 					auto& sprog = this->textureShaderProgram;
 					sprog.use();
@@ -732,83 +601,7 @@ namespace rx
 					sprog.setUniform("viewMatrix", this->cameraMatrix);
 					sprog.setUniform("projMatrix", this->projectionMatrix);
 
-					glEnableVertexAttribArray(0);
-					{
-						// we always have vertices
-						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(lx::vec3), &rc.vertices[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							0,			// location
-							3,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
-					}
-
-					// we still need to upload a bunch of white colours, so our texture doesn't get multiplied by 0 and disappear
-					// this should be handled by the mesh-maker, because it's not performant to do this every frame
-					assert(rc.colours.size() > 0);
-					{
-						glEnableVertexAttribArray(1);
-
-						glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.colours.size() * sizeof(lx::vec4), &rc.colours[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							1,			// location
-							4,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
-					}
-
-					// if we have normals:
-					assert(rc.normals.size() > 0);
-					{
-						glEnableVertexAttribArray(2);
-
-						glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.normals.size() * sizeof(lx::vec3), &rc.normals[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							2,			// location
-							3,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
-					}
-
-					// uvs. the texture we're using depends on whether we have a material or not (see below)
-					assert(rc.uvs.size() > 0);
-					{
-						glEnableVertexAttribArray(3);
-
-						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(lx::vec2), &rc.uvs[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							3,			// location
-							2,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
-					}
-
-
-					auto& mat = rc.material;
+					auto& mat = renderObj->material;
 					{
 						// i presume this sets which texture unit to use
 						sprog.setUniform("material.diffuseTexture", 0);
@@ -816,11 +609,10 @@ namespace rx
 
 						sprog.setUniform("material.shine", mat.hasValue ? mat.shine : 32.0f);
 
-						if(!mat.hasValue) assert(rc.textureToBind != (GLuint) -1);
-
 						// diffuse map is compulsory
 						glActiveTexture(GL_TEXTURE0);
-						glBindTexture(GL_TEXTURE_2D, mat.hasValue ? mat.diffuseMap->glTextureID : rc.textureToBind);
+						glBindTexture(GL_TEXTURE_2D, (mat.hasValue && mat.diffuseMap)
+							? mat.diffuseMap->glTextureID : this->placeholderTexture->glTextureID);
 
 						// specular is not
 						if(mat.specularMap != 0)
@@ -834,107 +626,44 @@ namespace rx
 						sprog.setUniform("material.specularColour", lx::vec4(1.0));
 					}
 
-
-
-
-					glDrawArrays(rc.wireframe ? GL_LINES : GL_TRIANGLES, 0, rc.vertices.size());
-
-					glDisableVertexAttribArray(0);
-					glDisableVertexAttribArray(1);
-					glDisableVertexAttribArray(2);
-					glDisableVertexAttribArray(3);
+					glDrawArrays(renderObj->wireframe ? GL_LINES : GL_TRIANGLES, 0, renderObj->arrayLength);
 
 				} break;
 
 
 
-				case CType::RenderText: {
+				case RenderType::Text: {
 
 					this->textShaderProgram.use();
 
 					lx::mat4 orthoProj = lx::orthographic(0.0, this->_width, this->_height, 0.0);
 					this->textShaderProgram.setUniform("projectionMatrix", orthoProj);
+					this->textShaderProgram.setUniform("fontScale", rc.textScale);
+					this->textShaderProgram.setUniform("fontColour", rc.textColour);
 
-					glEnableVertexAttribArray(0);
+					glBindTexture(GL_TEXTURE_2D, renderObj->material.diffuseMap->glTextureID);
+
+					for(size_t i = 0; i < rc.indices.size(); i++)
 					{
-						// we always have vertices
-						glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.vertices.size() * sizeof(lx::vec3), &rc.vertices[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							0,			// location
-							3,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
+						this->textShaderProgram.setUniform("offsetPosition", rc.positions[i]);
+						glDrawArrays(GL_TRIANGLES, rc.indices[i] * 6, 6);
 					}
 
-					GL::pushTextureBinding(rc.textureToBind);
-
-					glEnableVertexAttribArray(1);
-					{
-						assert(rc.uvs.size() > 0);
-
-						glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-						glBufferData(GL_ARRAY_BUFFER, rc.uvs.size() * sizeof(lx::vec2), &rc.uvs[0],
-							GL_STATIC_DRAW);
-
-						glVertexAttribPointer(
-							1,			// location
-							2,			// size
-							GL_FLOAT,	// type
-							GL_FALSE,	// normalized?
-							0,			// stride
-							(void*) 0	// array buffer offset
-						);
-					}
-
-					glDrawArrays(GL_TRIANGLES, 0, rc.vertices.size());
-
-					glDisableVertexAttribArray(0);
-					glDisableVertexAttribArray(1);
-
-					GL::popTextureBinding();
+					glBindTexture(GL_TEXTURE_2D, 0);
 
 				} break;
 
-				case CType::Invalid:
+				case RenderType::Invalid:
 					ERROR("Invalid render command type");
 			}
 		}
 
 		this->clearRenderList();
+		for(auto ro : this->autoGeneratedRenderObjects)
+			delete ro;
+
+		this->autoGeneratedRenderObjects.clear();
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -973,277 +702,7 @@ namespace rx
 
 
 
-
-	#if 0
-
-
-	// split the RenderDrawLists function into separate parts.
-	// part 1 sets up the opengl stuff
-	// part 2 does the rendering of the imgui drawlist
-	// part 3 renders *OUR* things
-	// part 4 finishes the opengl stuff
-
-	void SetupOpenGL2D(ImDrawData* draw_data, int* fb_width, int* fb_height)
-	{
-		using namespace gl;
-
-		// We are using the OpenGL fixed pipeline to make the example code simpler to read!
-		// A probable faster way to render would be to collate all vertices from all cmd_lists into a single vertex buffer.
-		// Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, vertex/texcoord/color pointers.
-		glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_TRANSFORM_BIT);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_CULL_FACE);
-		// glDisable(GL_DEPTH_TEST);
-		glEnable(GL_SCISSOR_TEST);
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
-		glEnableClientState(GL_NORMAL_ARRAY);
-
-
-		glEnable(GL_TEXTURE_2D);
-		// glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context
-
-
-		// Handle cases of screen coordinates != from framebuffer coordinates (e.g. retina displays)
-		ImGuiIO& io = ImGui::GetIO();
-		*fb_width = (int) (io.DisplaySize.x * io.DisplayFramebufferScale.x);
-		*fb_height = (int) (io.DisplaySize.y * io.DisplayFramebufferScale.y);
-
-
-		draw_data->ScaleClipRects(io.DisplayFramebufferScale);
-
-		// Setup viewport, orthographic projection matrix
-		glViewport(0, 0, (GLsizei) *fb_width, (GLsizei) *fb_height);
-
-		// Setup orthographic projection matrix
-		lxatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-
-		// glOrtho(0.0f, io.DisplaySize.x, io.DisplaySize.y, 0.0f, -1.0f, +1.0f);
-
-		double fov = lx::radians(70.0);
-		double near = -1000;
-
-		double top = tan(0.5 * fov) * near;
-		double bottom = -1 * top;
-
-		double aspect = (double) io.DisplaySize.x / (double) io.DisplaySize.y;
-
-		double left = aspect * bottom;
-		double right = aspect * top;
-
-		glFrustum(left, right, bottom, top, -1000.0, 1000);
-		// gluPerspective(60.0, (float) io.DisplaySize.x / (float) io.DisplaySize.y, 1.0, 50000000000.0);
-
-		lxatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-	}
-
-	void RenderImGui(ImDrawData* draw_data, int fb_height)
-	{
-		glEnable(GL_SCISSOR_TEST);
-
-		// Render command lists
-		#define OFFSETOF(TYPE, ELEMENT) ((size_t) &(((TYPE*) 0)->ELEMENT))
-		for(int n = 0; n < draw_data->CmdListsCount; n++)
-		{
-			const ImDrawList* cmd_list = draw_data->CmdLists[n];
-			const unsigned char* vtx_buffer = (const unsigned char*) &cmd_list->VtxBuffer.front();
-			const ImDrawIdx* idx_buffer = &cmd_list->IdxBuffer.front();
-
-			glVertexPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, pos)));
-			glTexCoordPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, uv)));
-			glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(ImDrawVert), (void*) (vtx_buffer + OFFSETOF(ImDrawVert, col)));
-
-			for(int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.size(); cmd_i++)
-			{
-				const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-				if(pcmd->UserCallback)
-				{
-					pcmd->UserCallback(cmd_list, pcmd);
-				}
-				else
-				{
-					// call into our own state handler
-					// so we can keep track of shit.
-
-					GL::pushTextureBinding((GLuint) (uintptr_t) pcmd->TextureId);
-
-
-					glScissor((int) pcmd->ClipRect.x, (int) (fb_height - pcmd->ClipRect.w),
-						(int) (pcmd->ClipRect.z - pcmd->ClipRect.x), (int) (pcmd->ClipRect.w - pcmd->ClipRect.y));
-
-					glDrawElements(GL_TRIANGLES, (GLsizei) pcmd->ElemCount, GL_UNSIGNED_SHORT, idx_buffer);
-
-
-					GL::popTextureBinding();
-				}
-				idx_buffer += pcmd->ElemCount;
-			}
-		}
-		#undef OFFSETOF
-	}
-
-
-	void FinishOpenGL2D()
-	{
-		// Restore modified state
-		glDisableClientState(GL_COLOR_ARRAY);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_VERTEX_ARRAY);
-
-		lxatrixMode(GL_MODELVIEW);
-		glPopMatrix();
-		lxatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		glPopAttrib();
-	}
-
-
-
-	void SetupOpenGL3D()
-	{
-		glEnable(GL_DEPTH_TEST);
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Accept fragment if it closer to the camera than the former one
-		glDepthFunc(GL_LESS);
-
-		// Cull triangles which normal is not towards the camera
-		glEnable(GL_CULL_FACE);
-	}
-
-	void FinishOpenGL3D()
-	{
-	}
-	#endif
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-	#if 0
-	void Renderer::RenderCircle(Math::Circle circ, bool fill)
-	{
-		int32_t x = circ.radius;
-		int32_t y = 0;
-		double radiusError = 1.0 - x;
-
-		// who needs trigo?
-		while(x >= y)
-		{
-			auto nxpy = Vector2(-x + circ.origin.x, +y + circ.origin.y);
-			auto pxpy = Vector2(+x + circ.origin.x, +y + circ.origin.y);
-			auto nypx = Vector2(-y + circ.origin.x, +x + circ.origin.y);
-			auto pypx = Vector2(+y + circ.origin.x, +x + circ.origin.y);
-			auto nynx = Vector2(-y + circ.origin.x, -x + circ.origin.y);
-			auto pynx = Vector2(+y + circ.origin.x, -x + circ.origin.y);
-			auto nxny = Vector2(-x + circ.origin.x, -y + circ.origin.y);
-			auto pxny = Vector2(+x + circ.origin.x, -y + circ.origin.y);
-
-
-			if(fill)
-			{
-				this->RenderLine(Vector2(nxpy), Vector2(pxpy));
-				this->RenderLine(Vector2(nypx), Vector2(pypx));
-				this->RenderLine(Vector2(nynx), Vector2(pynx));
-				this->RenderLine(Vector2(nxny), Vector2(pxny));
-			}
-			else
-			{
-				this->RenderPoint(nxpy);
-				this->RenderPoint(pxpy);
-
-				this->RenderPoint(nypx);
-				this->RenderPoint(pypx);
-
-				this->RenderPoint(nynx);
-				this->RenderPoint(pynx);
-
-				this->RenderPoint(nxny);
-				this->RenderPoint(pxny);
-			}
-
-			y++;
-
-			if(radiusError < 0)
-			{
-				radiusError += 2.0 * y + 1.0;
-			}
-			else
-			{
-				x--;
-				radiusError += 2.0 * (y - x + 1.0);
-			}
-		}
-	}
-	#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-	#if 0
-	void Renderer::renderStringRightAligned(std::string txt, rx::Font font, float size, Math::Vector2 pt)
-	{
-		// auto cmd = RenderCommand::createRenderString(txt, font, size, this->drawColour, Math::Vector2(0, pt.y));
-
-		// // the starting position (top-left)
-		// double sx = this->window->width - fabs(cmd.bounds.second.x - cmd.bounds.first.x) - pt.x;
-
-		// // offset all vertices to the right by that amount.
-		// for(size_t i = 0; i < cmd.vertices.size(); i += 4)
-		// {
-		// 	// 4 verts per character; first 2 are x and y, second 2 are u and v
-		// 	auto& x = cmd.vertices[i + 0];
-		// 	auto& y = cmd.vertices[i + 1];
-
-		// 	x.x += sx;
-		// 	y.x += sx;
-		// }
-
-		// cmd.bounds.first.x += sx;
-		// cmd.bounds.second.x += sx;
-
-		// this->renderList.push_back(cmd);
-	}
-
-	size_t Renderer::getStringWidthInPixels(std::string txt, rx::Font font, float size)
-	{
-		#if 0
-		if(txt.empty()) return 0;
-
-		// note: this is basically going through each glyph twice, so only use when necessary.
-		auto cmd = RenderCommand::createRenderString(txt, font, size, this->drawColour, Math::Vector2(0, 0));
-		return (size_t) fabs(cmd.bounds.second.x - cmd.bounds.first.x);
-		#endif
-
-		return 0;
-	}
-	#endif
 
 
 

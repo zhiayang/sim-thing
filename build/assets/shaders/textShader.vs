@@ -10,13 +10,20 @@ layout(location = 1) in vec2 vertexUV;
 
 // Output data ; will be interpolated for each fragment.
 out vec2 UV;
+out vec4 fragmentColour;
 
 uniform mat4 projectionMatrix;
 
+uniform vec2 offsetPosition;
+uniform vec4 fontColour;
+uniform float fontScale;
+
 void main()
 {
-	gl_Position = projectionMatrix * vec4(vertexPosition, 0, 1);
+	vec2 vert = offsetPosition + (fontScale * vertexPosition);
+	gl_Position = projectionMatrix * vec4(vert, 0, 1);
 
 	// UV of the vertex. No special space for this one.
 	UV = vertexUV;
+	fragmentColour = fontColour;
 }

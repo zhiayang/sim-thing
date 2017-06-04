@@ -50,6 +50,10 @@ namespace lx
 	mat4x4 perspective(float fov, float aspect, float near, float far);
 	mat4x4 orthographic(float left, float right, float bottom, float top);
 	mat4x4 orthographic(float left, float right, float bottom, float top, float near, float far);
+
+	mat4x4 translate(const vec3& v);
+	mat4x4 scale(const vec3& v);
+	mat4x4 scale(float s);
 }
 
 

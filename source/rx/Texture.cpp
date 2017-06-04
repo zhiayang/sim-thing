@@ -11,17 +11,23 @@
 
 namespace rx
 {
-	Texture::Texture(std::string path, Renderer* r) : Texture(AssetLoader::Load(path.c_str()), r)
+	Texture::Texture(std::string path) : Texture(AssetLoader::Load(path.c_str()))
 	{
 
 	}
 
-	Texture::Texture(AssetLoader::Asset* ass, Renderer* r) : Texture(new Surface(ass), r)
+	Texture::Texture(AssetLoader::Asset* ass) : Texture(new Surface(ass))
 	{
 		this->ownSurface = true;
 	}
 
-	Texture::Texture(Surface* surf, Renderer*)
+	Texture::Texture(uint8_t* bytes, size_t width, size_t height, ImageFormat format, bool autotex)
+		: Texture(new Surface(bytes, width, height, format), autotex)
+	{
+		this->ownSurface = true;
+	}
+
+	Texture::Texture(Surface* surf, bool autotex)
 	{
 		using namespace gl;
 		assert(surf);
@@ -30,34 +36,43 @@ namespace rx
 
 		this->width = this->surf->width;
 		this->height = this->surf->height;
-		this->format = this->surf->format;
 
 		// do opengl shit.
-
-		glGenTextures(1, &this->glTextureID);
-		GL::pushTextureBinding(this->glTextureID);
-
-		GLenum texmode;
-		if(this->format == ImageFormat::RGBA)
+		if(autotex)
 		{
-			texmode = GL_RGBA;
-		}
-		else if(this->format == ImageFormat::RGB)
-		{
-			texmode = GL_RGB;
+			glGenTextures(1, &this->glTextureID);
+			glBindTexture(GL_TEXTURE_2D, this->glTextureID);
+
+			GLenum texmode;
+			if(surf->format == ImageFormat::RGBA)
+			{
+				texmode = GL_RGBA;
+			}
+			else if(surf->format == ImageFormat::RGB)
+			{
+				texmode = GL_RGB;
+			}
+			else if(surf->format == ImageFormat::GREYSCALE)
+			{
+				texmode = GL_RED;
+			}
+			else
+			{
+				texmode = GL_INVALID_ENUM;
+				ERROR("Unsupported surface format for texture");
+			}
+
+			glTexImage2D(GL_TEXTURE_2D, 0, texmode, this->width, this->height, 0, texmode, GL_UNSIGNED_BYTE, this->surf->data);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 		else
 		{
-			texmode = GL_INVALID_ENUM;
-			ERROR("Unsupported surface format for texture");
+			this->glTextureID = 0;
 		}
-
-		glTexImage2D(GL_TEXTURE_2D, 0, texmode, this->width, this->height, 0, texmode, GL_UNSIGNED_BYTE, this->surf->data);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		GL::popTextureBinding();
 	}
 
 	Texture::~Texture()

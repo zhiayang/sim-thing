@@ -34,6 +34,21 @@ namespace lx
 
 
 
+	mat4x4 translate(const vec3& v)
+	{
+		return mat4().translate(v);
+	}
+
+	mat4x4 scale(const vec3& v)
+	{
+		return mat4().scale(v);
+	}
+
+	mat4x4 scale(float s)
+	{
+		return mat4().scale(s);
+	}
+
 
 
 

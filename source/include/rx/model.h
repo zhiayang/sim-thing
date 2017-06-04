@@ -15,6 +15,9 @@
 
 namespace rx
 {
+	struct RenderObject;
+
+
 	struct Face
 	{
 		std::vector<lx::vec3> vertices;
@@ -26,7 +29,7 @@ namespace rx
 
 	struct Material
 	{
-		Material() { }
+		Material() : hasValue(false) { }
 		Material(lx::vec4 amb, lx::vec4 dif, lx::vec4 spc, float s)
 			: hasValue(true), ambientColour(amb), diffuseColour(dif), specularColour(spc), shine(s) { }
 

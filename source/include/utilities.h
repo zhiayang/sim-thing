@@ -92,7 +92,7 @@ namespace util
 			return *this;
 		}
 
-		operator lx::vec4() const { return this->toGL(); }
+		operator lx::vec4() const { return this->vec4(); }
 
 		colour(float red, float green, float blue, float alpha) : r(red), g(green), b(blue), a(alpha) { }
 		colour(float red, float green, float blue) : r(red), g(green), b(blue), a(1.0) { }
@@ -110,7 +110,7 @@ namespace util
 				std::max(this->b + other.b, 1.0f), std::max(this->a + other.a, 1.0f));
 		}
 
-		lx::vec4 toGL() const
+		lx::vec4 vec4() const
 		{
 			return lx::vec4(this->r, this->g, this->b, this->a);
 		}
