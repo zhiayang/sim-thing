@@ -21,6 +21,13 @@ namespace rx
 		this->ownSurface = true;
 	}
 
+	Texture::Texture(gl::GLuint textureid, size_t width, size_t height, ImageFormat format)
+	{
+		this->ownSurface = false;
+		this->surf = new Surface(0, width, height, format);
+		this->glTextureID = textureid;
+	}
+
 	Texture::Texture(uint8_t* bytes, size_t width, size_t height, ImageFormat format, bool autotex)
 		: Texture(new Surface(bytes, width, height, format), autotex)
 	{

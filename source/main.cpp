@@ -157,6 +157,14 @@ int main(int argc, char** argv)
 		.fragmentShaderPath = "shaders/deferred/lighting.fs",
 	});
 
+	// 5. screen-filling quad shader
+	auto screenQuadProg = rx::ShaderProgram("screenQuadShader", rx::ShaderSource {
+
+		.glslVersion = "330 core",
+		.vertexShaderPath = "shaders/deferred/screenquad.vs",
+		.fragmentShaderPath = "shaders/deferred/screenquad.fs",
+	});
+
 
 
 	rx::ShaderPipeline pipeline {
@@ -165,7 +173,9 @@ int main(int argc, char** argv)
 		.deferredLightingShader = deferredLightProg,
 
 		.forwardShader = forwardProg,
-		.textShader = textProg
+		.textShader = textProg,
+
+		.screenQuadShader = screenQuadProg
 	};
 
 
@@ -263,6 +273,9 @@ int main(int argc, char** argv)
 	// auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col1, col2, col3, 0.4 * 128));
 
 
+
+	double avgFrameTime = 0;
+
 	// Main loop
 	bool done = false;
 	while(!done)
@@ -348,10 +361,10 @@ int main(int argc, char** argv)
 
 		if((true))
 		{
-			std::string fpsstr = tfm::format("%.2f fps / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)", currentFps,
-				theRenderer->getCamera().position.x, theRenderer->getCamera().position.y, theRenderer->getCamera().position.z,
-				input::getMousePos(&gameState->inputState).x, input::getMousePos(&gameState->inputState).y,
-				theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
+			std::string fpsstr = tfm::format("%.2f fps (%.1f ms) / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)", currentFps,
+				avgFrameTime / (1000.0 * 1000.0), theRenderer->getCamera().position.x, theRenderer->getCamera().position.y,
+				theRenderer->getCamera().position.z, input::getMousePos(&gameState->inputState).x,
+				input::getMousePos(&gameState->inputState).y, theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
 
 			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, lx::vec2(5, 5), util::colour::white());
 
@@ -421,6 +434,9 @@ int main(int argc, char** argv)
 		{
 			double end = util::Time::ns();
 			frameTime = end - frameBegin;
+
+			static const double _alpha = 0.8;
+			avgFrameTime = _alpha * frameTime + (1 - _alpha) * avgFrameTime;
 
 			// don't kill the CPU
 			// todo: nanosleep() makes us die and hang.

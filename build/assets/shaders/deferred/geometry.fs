@@ -3,7 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #version 330 core
-#pragma include "lighting.fs"
+#pragma include "include/material.fs"
 
 in vec2 fragmentUV;
 in vec4 fragmentColour;
@@ -13,19 +13,17 @@ in vec3 fragmentPosition;
 // Ouput data
 layout (location = 0) out vec4 gPosition;
 layout (location = 1) out vec4 gNormal;
-layout (location = 2) out vec4 gColour;
+layout (location = 2) out vec4 gDiffuse;
+layout (location = 3) out vec4 gSpecular;
 
 uniform vec3 cameraPosition;
 
 void main()
 {
-	vec4 baseColour = ambientLightColour * ambientLightIntensity * material.ambientColour;
-	baseColour *= fragmentColour;
-
 	gPosition	= vec4(fragmentPosition, 1);
 	gNormal		= vec4(normalize(fragmentNormal), 1);
-	gColour.rgb	= (baseColour * texture(material.diffuseTexture, fragmentUV)).rgb;
-	gColour.a	= texture(material.specularTexture, fragmentUV).r;
+	gDiffuse	= texture(material.diffuseTexture, fragmentUV) * fragmentColour;
+	gSpecular	= texture(material.specularTexture, fragmentUV);
 }
 
 

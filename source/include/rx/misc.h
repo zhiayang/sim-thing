@@ -74,6 +74,7 @@ namespace rx
 		Texture(std::string path);
 		Texture(AssetLoader::Asset* ass);
 		Texture(uint8_t* bytes, size_t width, size_t height, ImageFormat format, bool autoGenGLTexture = true);
+		Texture(unsigned int glTexture, size_t width, size_t height, ImageFormat format);
 		~Texture();
 
 		gl::GLuint glTextureID;

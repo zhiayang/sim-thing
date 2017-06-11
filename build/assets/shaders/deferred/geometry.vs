@@ -4,7 +4,6 @@
 
 #version 330 core
 
-// Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec4 vertexColour;
 layout(location = 2) in vec3 vertexNormal;
@@ -23,11 +22,12 @@ uniform mat4 projMatrix;
 void main()
 {
 	// Output position of the vertex, in clip space : MVP * position
-	gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(vertexPosition, 1);
 
 	fragmentUV = vertexUV;
 	fragmentNormal = vertexNormal;
 	fragmentColour = vertexColour;
-	fragmentPosition = vec3(modelMatrix * vec4(vertexPosition, 1.0));
+	fragmentPosition = (modelMatrix * vec4(vertexPosition, 1.0)).xyz;
+
+	gl_Position = projMatrix * viewMatrix * vec4(fragmentPosition, 1.0);
 }
 

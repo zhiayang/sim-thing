@@ -47,24 +47,6 @@ uniform int spotLightCount;
 uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 
-
-
-struct Material
-{
-	vec4 ambientColour;
-
-	vec4 diffuseColour;
-	vec4 specularColour;
-
-	sampler2D diffuseTexture;
-	sampler2D specularTexture;
-
-	float shine;
-};
-
-uniform Material material;
-
-
 // lighting nonsense.
 // note: there's actually two separate "ambient" lightings that we're talking about here.
 // the first, which is controlled by the 2 uniforms below, is the global background lighting that stops everything from being
@@ -81,7 +63,7 @@ uniform float ambientLightIntensity;
 
 
 // point lighting
-vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample)
+vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample, float shine)
 {
 	vec4 result = vec4(0, 0, 0, 1);
 	for(int i = 0; i < pointLightCount; i++)
@@ -96,7 +78,7 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 d
 
 		// Specular lighting
 		// vec3 reflectDir = reflect(-1 * lightDir, normal);
-		float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shine);
+		float spec = pow(max(dot(normal, halfwayDir), 0.0), shine);
 
 		// Attenuation
 		float dist = max(length(pointLights[i].position - fragPosition), 0);
@@ -118,7 +100,7 @@ vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 d
 	return result;
 }
 
-vec4 applySpotLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample)
+vec4 applySpotLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample, float shine)
 {
 	vec4 result = vec4(0, 0, 0, 1);
 	for(int i = 0; i < spotLightCount; i++)
@@ -136,7 +118,7 @@ vec4 applySpotLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 di
 
 			// Specular lighting
 			vec3 reflectDir = reflect(-1 * lightDir, normal);
-			float spec = pow(max(dot(viewDirection, reflectDir), 0.0), material.shine);
+			float spec = pow(max(dot(viewDirection, reflectDir), 0.0), shine);
 
 
 			float smoothIntensity = clamp((theta - spotLights[i].outerCutoffCosine) / epsilon, 0.0, 1.0);

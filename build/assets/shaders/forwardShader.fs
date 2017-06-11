@@ -3,7 +3,8 @@
 // Licensed under the Apache License Version 2.0.
 
 #version 330 core
-#pragma include "lighting.fs"
+#pragma include "include/lighting.fs"
+#pragma include "include/material.fs"
 
 in vec2 fragmentUV;
 in vec4 fragmentColour;
@@ -16,8 +17,8 @@ out vec4 colour;
 uniform vec3 cameraPosition;
 
 // it's here so we know how to call it.
-vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample);
-vec4 applySpotLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample);
+vec4 applyPointLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample, float shine);
+vec4 applySpotLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 diffuseSample, vec4 specularSample, float shine);
 
 void main()
 {
@@ -27,8 +28,8 @@ void main()
 	vec4 diffSample = texture(material.diffuseTexture, fragmentUV) * material.diffuseColour;
 	vec4 specSample = texture(material.specularTexture, fragmentUV) * material.specularColour;
 
-	base += applyPointLights(normalize(fragmentNormal), fragmentPosition, viewDirection, diffSample, specSample);
-	base += applySpotLights(normalize(fragmentNormal), fragmentPosition, viewDirection, diffSample, specSample);
+	base += applyPointLights(normalize(fragmentNormal), fragmentPosition, viewDirection, diffSample, specSample, material.shine);
+	base += applySpotLights(normalize(fragmentNormal), fragmentPosition, viewDirection, diffSample, specSample, material.shine);
 
 	colour = base * fragmentColour * texture(material.diffuseTexture, fragmentUV).rgba;
 }

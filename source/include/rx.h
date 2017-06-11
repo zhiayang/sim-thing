@@ -59,6 +59,7 @@ namespace rx
 
 		Text,
 		Vertices,
+		ScreenQuad,
 	};
 
 	struct RenderObject
@@ -108,7 +109,8 @@ namespace rx
 
 		gl::GLuint depthBuffer;
 		gl::GLuint normalBuffer;
-		gl::GLuint colourBuffer;
+		gl::GLuint diffuseBuffer;
+		gl::GLuint specularBuffer;
 		gl::GLuint positionBuffer;
 
 		static GBuffer* create(Renderer* renderer);
@@ -125,6 +127,8 @@ namespace rx
 
 		ShaderProgram forwardShader;
 		ShaderProgram textShader;
+
+		ShaderProgram screenQuadShader;
 	};
 
 	struct Renderer
@@ -211,6 +215,8 @@ namespace rx
 
 			ShaderProgram forwardShaderProgram;
 			ShaderProgram textShaderProgram;
+
+			ShaderProgram screenQuadProgram;
 
 			std::vector<RenderCommand> forwardList;
 			std::vector<RenderCommand> deferredList;
