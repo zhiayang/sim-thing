@@ -33,7 +33,7 @@ namespace rx
 		{
 			glGenTextures(1, &gbuf->normalBuffer);
 			glBindTexture(GL_TEXTURE_2D, gbuf->normalBuffer);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8_SNORM, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gbuf->normalBuffer, 0);
@@ -60,7 +60,7 @@ namespace rx
 		}
 
 
-		// - tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
+		// tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
 		GLenum attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 		glDrawBuffers(4, attachments);
 

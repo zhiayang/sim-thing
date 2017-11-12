@@ -101,8 +101,8 @@ static std::pair<double, double> determineCurrentFPS(double previous, double fra
 
 int main(int argc, char** argv)
 {
-	Config::setResX(1024);
-	Config::setResY(640);
+	Config::setResX(1240);
+	Config::setResY(720);
 
 	prof::enable();
 
@@ -198,8 +198,8 @@ int main(int argc, char** argv)
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
-		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 10, 10), util::colour::white(), util::colour::white(), 1.7, 15.0));
+		theRenderer->setAmbientLighting(util::colour::white(), 0.0);
+		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 10, 10), util::colour::white(), util::colour::white(), 0.7, 15.0));
 
 		theRenderer->addSpotLight(rx::SpotLight(lx::vec3(0, -4, 0), lx::vec3(0, 1, 0), util::colour::white(), util::colour::white(),
 			0.3, 2.0, 12.5, 30));
@@ -368,45 +368,45 @@ int main(int argc, char** argv)
 
 			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, lx::vec2(5, 5), util::colour::white());
 
-			auto psys = gameState->playerStation->powerSystem;
-			auto lss = gameState->playerStation->lifeSupportSystem;
+			// auto psys = gameState->playerStation->powerSystem;
+			// auto lss = gameState->playerStation->lifeSupportSystem;
 
-			double stor = Units::convertJoulesToWattHours(psys->getTotalStorageInJoules());
-			double cap = Units::convertJoulesToWattHours(psys->getTotalCapacityInJoules());
-			double prod = psys->getTotalProductionInWatts();
+			// double stor = Units::convertJoulesToWattHours(psys->getTotalStorageInJoules());
+			// double cap = Units::convertJoulesToWattHours(psys->getTotalCapacityInJoules());
+			// double prod = psys->getTotalProductionInWatts();
 
-			double percentage = (stor / cap) * 100.0;
+			// double percentage = (stor / cap) * 100.0;
 
-			// divide stor and cap by system voltage to get a number in amp-hours.
-			// we divide by 3600 to convert from amp-seconds to amp-hours
+			// // divide stor and cap by system voltage to get a number in amp-hours.
+			// // we divide by 3600 to convert from amp-seconds to amp-hours
 
-			auto str = tfm::format("%s / %s (%.1f%%)  |  +%s / -%s", Units::formatWithUnits(stor, 2, "Wh"),
-				Units::formatWithUnits(cap, 2, "Wh"), percentage,
-				Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
+			// auto str = tfm::format("%s / %s (%.1f%%)  |  +%s / -%s", Units::formatWithUnits(stor, 2, "Wh"),
+			// 	Units::formatWithUnits(cap, 2, "Wh"), percentage,
+			// 	Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
 
-			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, 5), util::colour::white(),
-				rx::TextAlignment::RightAligned);
+			// theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, 5), util::colour::white(),
+			// 	rx::TextAlignment::RightAligned);
 
 
-			size_t ofs = 5;
+			// size_t ofs = 5;
 
-			for(auto batt : psys->storage)
-			{
-				double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
-				double cap = Units::convertJoulesToWattHours(batt->getCapacityInJoules());
+			// for(auto batt : psys->storage)
+			// {
+			// 	double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
+			// 	double cap = Units::convertJoulesToWattHours(batt->getCapacityInJoules());
 
-				auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
-					Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
+			// 	auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
+			// 		Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
 
-				theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, ofs += 15), util::colour::white(),
-					rx::TextAlignment::RightAligned);
-			}
+			// 	theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, ofs += 15), util::colour::white(),
+			// 		rx::TextAlignment::RightAligned);
+			// }
 
-			str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
-				Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
+			// str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
+			// 	Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
 
-			theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, ofs += 15), util::colour::white(),
-				rx::TextAlignment::RightAligned);
+			// theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, ofs += 15), util::colour::white(),
+			// 	rx::TextAlignment::RightAligned);
 		}
 
 		rx::EndFrame(theRenderer);
@@ -435,7 +435,7 @@ int main(int argc, char** argv)
 			double end = util::Time::ns();
 			frameTime = end - frameBegin;
 
-			static const double _alpha = 0.8;
+			static const double _alpha = 0.2;
 			avgFrameTime = _alpha * frameTime + (1 - _alpha) * avgFrameTime;
 
 			// don't kill the CPU

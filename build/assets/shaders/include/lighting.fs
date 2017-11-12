@@ -58,7 +58,7 @@ uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 uniform vec4 ambientLightColour;
 uniform float ambientLightIntensity;
 
-#define SPECULAR_POWER 1.5
+#define SPECULAR_POWER 0.3
 
 
 

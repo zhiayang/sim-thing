@@ -12,6 +12,8 @@
 #include "units.h"
 #include "profile.h"
 
+#include "stx/string_view.hpp"
+
 struct ImFont;
 
 namespace stx
@@ -27,6 +29,12 @@ namespace stx
 
 	template <typename T>
 	reversion_wrapper<T> reverse (T&& iterable) { return { iterable }; }
+
+	template <typename T>
+	std::basic_string<T> to_string(const stx::basic_string_view<T>& sv)
+	{
+		return std::basic_string<T>(sv.data(), sv.size());
+	}
 }
 
 namespace util

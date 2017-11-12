@@ -22,8 +22,8 @@ void main()
 {
 	gPosition	= vec4(fragmentPosition, 1);
 	gNormal		= vec4(normalize(fragmentNormal), 1);
-	gDiffuse	= texture(material.diffuseTexture, fragmentUV) * fragmentColour;
-	gSpecular	= texture(material.specularTexture, fragmentUV);
+	gDiffuse	= texture(material.diffuseTexture, fragmentUV) * fragmentColour * material.diffuseColour;
+	gSpecular	= texture(material.specularTexture, fragmentUV) * material.specularColour;
 }
 
 

@@ -82,7 +82,7 @@ namespace rx
 							kind.c_str(), path.c_str(), linenum);
 					}
 
-					std::string incPath = line.to_string();
+					std::string incPath = stx::to_string(line);
 					incPath.pop_back();
 
 					// load the asset, hopefully.
@@ -92,12 +92,12 @@ namespace rx
 					{
 						// insert the inc into the vsrc
 						for(auto il : inclines)
-							finalLines.push_back(il.to_string());
+							finalLines.push_back(stx::to_string(il));
 					}
 				}
 				else
 				{
-					finalLines.push_back(line.to_string());
+					finalLines.push_back(stx::to_string(line));
 				}
 
 				linenum++;

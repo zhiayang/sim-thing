@@ -72,6 +72,17 @@ namespace rx
 		this->placeholderTexture = new Texture(white, 1, 1, ImageFormat::RGBA);
 
 		this->gBuffer = GBuffer::create(this);
+
+
+		auto& lprog = this->deferredLightingShaderProgram;
+		{
+			lprog.setUniform("gPosition", 0);
+			lprog.setUniform("gNormal", 1);
+			lprog.setUniform("gDiffuse", 2);
+			lprog.setUniform("gSpecular", 3);
+		}
+
+		glClearColor(this->clearColour.r, this->clearColour.g, this->clearColour.b, this->clearColour.a);
 	}
 
 
@@ -518,12 +529,11 @@ namespace rx
 		}
 
 		this->deferredList.clear();
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void Renderer::renderDeferredLightingPass()
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, /*this->gBuffer->gFramebuffer*/ 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		auto& sprog = this->deferredLightingShaderProgram;
@@ -541,22 +551,20 @@ namespace rx
 			glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, this->gBuffer->specularBuffer);
 
-			sprog.setUniform("gPosition", 0);
-			sprog.setUniform("gNormal", 1);
-			sprog.setUniform("gDiffuse", 2);
-			sprog.setUniform("gSpecular", 3);
+			glActiveTexture(GL_TEXTURE0);
 	    }
 
 
+	    {
+			sprog.setUniform("cameraPosition", this->camera.position);
+
+			this->sortAndUpdatePointLights(this->camera.position);
+			this->sortAndUpdateSpotLights(this->camera.position);
+		}
 
 
 
-
-
-
-
-
-		auto ro = RenderObject::fromTexturedVertices({
+		static RenderObject* ro = RenderObject::fromTexturedVertices({
 			lx::vec3(1, -1, 0),
 			lx::vec3(-1, 1, 0),
 			lx::vec3(-1, -1, 0),
@@ -574,32 +582,11 @@ namespace rx
 			lx::vec2(1, 1),
 		}, { });
 
-		RenderCommand rc;
-
-		rc.renderObject = ro;
-		rc.modelMatrix = lx::mat4();
-		rc.renderObject->renderType = RenderType::ScreenQuad;
-
-		{
-			static Texture* tmp = new Texture(gBuffer->diffuseBuffer, this->_width, this->_height, ImageFormat::RGBA);
-			// static Texture* tmp = new Texture("textures/box.png");
-			ro->material = Material(util::colour::white(), tmp, tmp, 1);
-		}
-
-
 		// render the screen-quad
 		{
 			glBindVertexArray(ro->vertexArrayObject);
 
-			auto& sprog = this->screenQuadProgram;
-			sprog.use();
-
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, ro->material.diffuseMap->glTextureID);
-
 			glDrawArrays(GL_TRIANGLES, 0, ro->arrayLength);
-
-			glBindTexture(GL_TEXTURE_2D, 0);
 
 			glBindVertexArray(0);
 		}
@@ -607,29 +594,17 @@ namespace rx
 
 
 
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, this->gBuffer->gFramebuffer);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
 
-
-		// while(glGetError() != GL_NO_ERROR);
-
-		// glBindFramebuffer(GL_READ_FRAMEBUFFER, this->gBuffer->gFramebuffer);
-  //       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
-  //       // blit to default framebuffer. Note that this may or may not work as the internal formats of both the FBO and default framebuffer have to match.
-  //       // the internal formats are implementation defined. This works on all of my systems, but if it doesn't on yours you'll likely have to write to the
-  //       // depth buffer in another shader stage (or somehow see to match the default framebuffer's internal format with the FBO's internal format).
-
-  //       auto w = this->_width * this->_resolutionScale;
-  //       auto h = this->_height * this->_resolutionScale;
-  //       glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-  //       glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		auto w = this->_width * this->_resolutionScale;
+		auto h = this->_height * this->_resolutionScale;
+		glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void Renderer::renderForward()
 	{
-		// glClearColor(0.5, 0.5, 0.5, 1);
-		// glClearColor(this->clearColour.r, this->clearColour.g, this->clearColour.b, this->clearColour.a);
-		// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		// render a cube at every point light
 		static auto cubeRO = RenderObject::fromMesh(Mesh::getUnitCube(), Material(util::colour::white(),
 			util::colour::white(), util::colour::white(), 1));
@@ -638,18 +613,6 @@ namespace rx
 		{
 			this->renderObject(cubeRO, lx::scale(0.1).translate(pl.position));
 		}
-
-		// sort the lights by distance to the camera
-		{
-			this->forwardShaderProgram.setUniform("cameraPosition", this->camera.position);
-			// this->deferredGeometryShaderProgram.setUniform("cameraPosition", this->camera.position);
-			// this->deferredLightingShaderProgram.setUniform("cameraPosition", this->camera.position);
-
-			this->sortAndUpdatePointLights(this->camera.position);
-			this->sortAndUpdateSpotLights(this->camera.position);
-		}
-
-
 
 		for(auto rc : this->forwardList)
 		{
@@ -728,19 +691,6 @@ namespace rx
 
 
 				case RenderType::ScreenQuad: {
-
-					// auto& sprog = this->screenQuadProgram;
-					// sprog.use();
-
-					// // sprog.setUniform("projectionMatrix", this->projectionMatrix);
-					// // sprog.setUniform("viewMatrix", this->cameraMatrix);
-
-					// glActiveTexture(GL_TEXTURE0);
-					// glBindTexture(GL_TEXTURE_2D, renderObj->material.diffuseMap->glTextureID);
-
-					// glDrawArrays(GL_TRIANGLES, 0, renderObj->arrayLength);
-
-					// glBindTexture(GL_TEXTURE_2D, 0);
 
 				} break;
 

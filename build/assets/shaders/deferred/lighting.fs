@@ -31,10 +31,10 @@ void main()
 	vec3 viewDirection = normalize(cameraPosition - position);
 	vec4 base = ambientLightColour * ambientLightIntensity * diffuse;
 
-	base += applyPointLights(normalize(normal), position, viewDirection, diffuse, specular, 16);
-	base += applySpotLights(normalize(normal), position, viewDirection, diffuse, specular, 16);
+	base += applyPointLights(normalize(normal), position, viewDirection, diffuse, specular, 1);
+	base += applySpotLights(normalize(normal), position, viewDirection, diffuse, specular, 1);
 
-	colour = vec4(0, 0.5, 1, 1);
+	colour = base;
 }
 
 

@@ -86,7 +86,7 @@ namespace rx
 				double x = 0;
 				double y = 0;
 				double z = 0;
-				int res = sscanf(line.to_string().c_str(), "v %lf %lf %lf", &x, &y, &z);
+				int res = sscanf(stx::to_string(line).c_str(), "v %lf %lf %lf", &x, &y, &z);
 				if(res != 3)
 					ERROR("Malformed vertex on line %zu", ln);
 
@@ -98,7 +98,7 @@ namespace rx
 				double u = 0;
 				double v = 0;
 
-				int res = sscanf(line.to_string().c_str(), "vt %lf %lf", &u, &v);
+				int res = sscanf(stx::to_string(line).c_str(), "vt %lf %lf", &u, &v);
 				if(res != 2)
 					ERROR("Malformed UV coordinates on line %zu", ln);
 
@@ -111,7 +111,7 @@ namespace rx
 				double y = 0;
 				double z = 0;
 
-				int res = sscanf(line.to_string().c_str(), "vn %lf %lf %lf", &x, &y, &z);
+				int res = sscanf(stx::to_string(line).c_str(), "vn %lf %lf %lf", &x, &y, &z);
 				if(res != 3)
 					ERROR("Malformed normal on line %zu", ln);
 
@@ -134,7 +134,7 @@ namespace rx
 					double v = 0; double t = 0; double n = 0;
 
 					int didread = 0;
-					int res = sscanf(line.to_string().c_str(), "%lf/%lf/%lf%n",
+					int res = sscanf(stx::to_string(line).c_str(), "%lf/%lf/%lf%n",
 						&v, &t, &n, &didread);
 
 					if(res > 0)
@@ -173,7 +173,7 @@ namespace rx
 				// not sure if OBJ files *need* a group...
 
 				ObjectGroup og;
-				og.name = line.substr(2).to_string();
+				og.name = stx::to_string(line.substr(2));
 				objs.push_back(og);
 			}
 			else if(line.find("g") == 0 || line.find("s") == 0)
@@ -184,7 +184,7 @@ namespace rx
 			else
 			{
 				WARN("Malformed OBJ file; unexpected token <%d/%s> at beginning of line <%zu>",
-					line[0], line.substr(0, line.find(' ')).to_string().c_str(), ln);
+					line[0], stx::to_string(line.substr(0, line.find(' '))).c_str(), ln);
 			}
 
 			ln++;
