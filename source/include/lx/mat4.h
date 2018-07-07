@@ -16,7 +16,7 @@ namespace lx
 		#pragma clang diagnostic ignored "-Wzero-length-array"
 		union
 		{
-			float ptr[0];
+			double ptr[0];
 			vec4 vecs[4];
 		};
 		#pragma clang diagnostic pop
@@ -30,13 +30,13 @@ namespace lx
 		mat4x4& operator += (const mat4x4& m);
 		mat4x4& operator -= (const mat4x4& m);
 
-		mat4x4& operator *= (float s);
-		mat4x4& operator /= (float s);
+		mat4x4& operator *= (double s);
+		mat4x4& operator /= (double s);
 
 		mat4x4 translate(const vec3& v);
-		mat4x4 rotate(float radians, const vec3& axis);
+		mat4x4 rotate(double radians, const vec3& axis);
 		mat4x4 scale(const vec3& v);
-		mat4x4 scale(float s);
+		mat4x4 scale(double s);
 
 		static mat4x4 identity();
 		static mat4x4 zero();
@@ -46,11 +46,11 @@ namespace lx
 	vec4 operator * (const mat4x4& m, const vec4& v);
 	mat4x4 operator * (const mat4x4& a, const mat4x4& b);
 
-	mat4x4 operator * (const mat4x4& a, float s);
-	mat4x4 operator * (float s, const mat4x4& a);
+	mat4x4 operator * (const mat4x4& a, double s);
+	mat4x4 operator * (double s, const mat4x4& a);
 
-	mat4x4 operator / (const mat4x4& a, float s);
-	mat4x4 operator / (float s, const mat4x4& a);
+	mat4x4 operator / (const mat4x4& a, double s);
+	mat4x4 operator / (double s, const mat4x4& a);
 
 	bool operator == (const mat4x4& a, const mat4x4& b);
 

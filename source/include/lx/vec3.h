@@ -12,35 +12,35 @@ namespace lx
 {
 	struct vec3
 	{
-		vec3(float a, float b, float c) : x(a), y(b), z(c) { }
+		vec3(double a, double b, double c) : x(a), y(b), z(c) { }
 
 		explicit vec3() : x(0.0f), y(0.0f), z(0.0f) { }
-		explicit vec3(float a) : x(a), y(a), z(a) { }
-		explicit vec3(const vec2& v2, float c) : x(v2.x), y(v2.y), z(c) { }
+		explicit vec3(double a) : x(a), y(a), z(a) { }
+		explicit vec3(const vec2& v2, double c) : x(v2.x), y(v2.y), z(c) { }
 
 
 		#pragma clang diagnostic push
 		#pragma clang diagnostic ignored "-Wzero-length-array"
 		union
 		{
-			float ptr[0];
-			struct { float x; float y; float z; };
-			struct { float r; float g; float b; };
-			struct { float s; float t; float u; };
+			double ptr[0];
+			struct { double x; double y; double z; };
+			struct { double r; double g; double b; };
+			struct { double s; double t; double u; };
 		};
 		#pragma clang diagnostic pop
 
-		float& operator[] (size_t i);
-		const float& operator[] (size_t i) const;
+		double& operator[] (size_t i);
+		const double& operator[] (size_t i) const;
 		vec3& operator += (const vec3& v);
 		vec3& operator -= (const vec3& v);
 		vec3& operator *= (const vec3& v);
 		vec3& operator /= (const vec3& v);
 
-		vec3& operator *= (float s);
-		vec3& operator /= (float s);
+		vec3& operator *= (double s);
+		vec3& operator /= (double s);
 
-		float magnitude() const;
+		double magnitude() const;
 		vec3 normalised() const;
 
 
@@ -77,19 +77,19 @@ namespace lx
 	vec3 operator / (const vec3& a, const vec3& b);
 	bool operator == (const vec3& a, const vec3& b);
 
-	vec3 operator * (const vec3& a, float b);
-	vec3 operator / (const vec3& a, float b);
-	vec3 operator * (float a, const vec3& b);
-	vec3 operator / (float a, const vec3& b);
+	vec3 operator * (const vec3& a, double b);
+	vec3 operator / (const vec3& a, double b);
+	vec3 operator * (double a, const vec3& b);
+	vec3 operator / (double a, const vec3& b);
 
 	vec3 round(const vec3& v);
 	vec3 normalise(const vec3& v);
 	vec3 normalize(const vec3& v);
-	float magnitude(const vec3& v);
+	double magnitude(const vec3& v);
 	vec3 cross(const vec3& a, const vec3& b);
 
-	float dot(const vec3& a, const vec3& b);
-	float distance(const vec3& a, const vec3& b);
+	double dot(const vec3& a, const vec3& b);
+	double distance(const vec3& a, const vec3& b);
 }
 
 

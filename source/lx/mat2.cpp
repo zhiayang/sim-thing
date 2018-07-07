@@ -60,25 +60,25 @@ namespace lx
 		return *this;
 	}
 
-	mat2x2& mat2x2::operator *= (float s)
+	mat2x2& mat2x2::operator *= (double s)
 	{
 		this->vecs[0] *= s;
 		this->vecs[1] *= s;
 		return *this;
 	}
 
-	mat2x2& mat2x2::operator /= (float s)
+	mat2x2& mat2x2::operator /= (double s)
 	{
 		this->vecs[0] /= s;
 		this->vecs[1] /= s;
 		return *this;
 	}
 
-	mat2x2 mat2x2::rotate(float angle)
+	mat2x2 mat2x2::rotate(double angle)
 	{
-		float c = lx::cos(angle);
-		float s = lx::sin(angle);
-		float S = lx::sin(angle); // bad form, bla bla
+		double c = lx::cos(angle);
+		double s = lx::sin(angle);
+		double S = lx::sin(angle); // bad form, bla bla
 
 		mat2x2 result;
 		/*
@@ -124,7 +124,7 @@ namespace lx
 		return result;
 	}
 
-	mat2x2 mat2x2::scale(float s)
+	mat2x2 mat2x2::scale(double s)
 	{
 		return this->scale(vec2(s));
 	}
@@ -150,11 +150,11 @@ namespace lx
 		return ret;
 	}
 
-	mat2x2 operator * (const mat2x2& a, float s) { return mat2x2(a.vecs[0] * s, a.vecs[1] * s); }
-	mat2x2 operator * (float s, const mat2x2& a) { return a * s; }
+	mat2x2 operator * (const mat2x2& a, double s) { return mat2x2(a.vecs[0] * s, a.vecs[1] * s); }
+	mat2x2 operator * (double s, const mat2x2& a) { return a * s; }
 
-	mat2x2 operator / (const mat2x2& a, float s) { return mat2x2(a.vecs[0] / s, a.vecs[1] / s); }
-	mat2x2 operator / (float s, const mat2x2& a) { return a / s; }
+	mat2x2 operator / (const mat2x2& a, double s) { return mat2x2(a.vecs[0] / s, a.vecs[1] / s); }
+	mat2x2 operator / (double s, const mat2x2& a) { return a / s; }
 
 	bool operator == (const mat2x2& a, const mat2x2& b)
 	{

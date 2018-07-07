@@ -36,7 +36,6 @@ namespace platform
 
 		SDL_GL_SetSwapInterval(1);
 
-
 		return userdata;
 	}
 
@@ -66,6 +65,8 @@ namespace platform
 		sud->glContext = SDL_GL_CreateContext(sdlWindow);
 		if(sud->glContext == 0)
 			ERROR("Failed to create OpenGL context. SDL Error: '%s'", SDL_GetError());
+
+		SDL_SetWindowGrab(sdlWindow, SDL_TRUE);
 
 		return sdlWindow;
 	}
@@ -108,6 +109,11 @@ namespace platform
 	void endFrame(void* userdata, void* userwindow)
 	{
 		SDL_GL_SwapWindow((SDL_Window*) userwindow);
+		// int w = 0;
+		// int h = 0;
+
+		// SDL_GetWindowSize((SDL_Window*) userwindow, &w, &h);
+		// SDL_WarpMouseInWindow((SDL_Window*) userwindow, w / 2, h / 2);
 	}
 
 
@@ -195,6 +201,14 @@ namespace platform
 					event.type = ET::MouseMotion;
 					event.motionX = sdle.motion.x;
 					event.motionY = sdle.motion.y;
+
+					auto win = SDL_GetWindowFromID(sdle.motion.windowID);
+					int w = 0;
+					int h = 0;
+
+					SDL_GetWindowSize(win, &w, &h);
+					SDL_WarpMouseInWindow(win, w / 2, h / 2);
+					// SDL_Mouse
 
 				} break;
 

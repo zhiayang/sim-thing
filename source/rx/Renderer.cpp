@@ -26,7 +26,9 @@ using namespace gl;
 namespace rx
 {
 	Renderer::Renderer(Window* win, util::colour clearCol, Camera cam, ShaderPipeline pipeline, double fov, double near, double far)
-		: forwardShaderProgram(pipeline.forwardShader), textShaderProgram(pipeline.textShader), deferredGeometryShaderProgram(pipeline.deferredGeometryShader), deferredLightingShaderProgram(pipeline.deferredLightingShader), screenQuadProgram(pipeline.screenQuadShader)
+		: screenQuadProgram(pipeline.screenQuadShader), forwardShaderProgram(pipeline.forwardShader),
+			textShaderProgram(pipeline.textShader)
+
 	{
 		assert(win);
 		this->window = win;
@@ -65,22 +67,12 @@ namespace rx
 		glPushMatrix();
 		glLoadIdentity();
 
-		this->setAmbientLighting(lx::vec4(1.0), 0.2);
+		this->setAmbientLighting(util::colour::white(), 0.2);
 
 		// one completely white pixel.
 		static uint8_t white[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 		this->placeholderTexture = new Texture(white, 1, 1, ImageFormat::RGBA);
 
-		this->gBuffer = GBuffer::create(this);
-
-
-		auto& lprog = this->deferredLightingShaderProgram;
-		{
-			lprog.setUniform("gPosition", 0);
-			lprog.setUniform("gNormal", 1);
-			lprog.setUniform("gDiffuse", 2);
-			lprog.setUniform("gSpecular", 3);
-		}
 
 		glClearColor(this->clearColour.r, this->clearColour.g, this->clearColour.b, this->clearColour.a);
 	}
@@ -134,7 +126,6 @@ namespace rx
 	void Renderer::clearRenderList()
 	{
 		this->forwardList.clear();
-		this->deferredList.clear();
 	}
 
 	void Renderer::updateWindowSize(double width, double height)
@@ -173,10 +164,10 @@ namespace rx
 
 	// lighting
 
-	void Renderer::setAmbientLighting(lx::vec4 colour, float intensity)
+	void Renderer::setAmbientLighting(const util::colour& colour, float intensity)
 	{
 		// set for both
-		for(auto* prog : { &this->forwardShaderProgram, &this->deferredLightingShaderProgram })
+		for(auto* prog : { &this->forwardShaderProgram })
 		{
 			prog->use();
 			prog->setUniform("ambientLightColour", colour);
@@ -184,12 +175,12 @@ namespace rx
 		}
 	}
 
-	void Renderer::addPointLight(rx::PointLight light)
+	void Renderer::addPointLight(const rx::PointLight& light)
 	{
 		this->pointLights.push_back(light);
 	}
 
-	void Renderer::addSpotLight(rx::SpotLight light)
+	void Renderer::addSpotLight(const rx::SpotLight& light)
 	{
 		this->spotLights.push_back(light);
 	}
@@ -219,22 +210,22 @@ namespace rx
 		if(!rc.renderObject->material.hasValue)
 			rc.renderObject->material = Material(util::colour::white(), this->placeholderTexture, this->placeholderTexture, 1);
 
-		this->deferredList.push_back(rc);
-		// this->forwardList.push_back(rc);
+		this->forwardList.push_back(rc);
 	}
 
 
-	void Renderer::renderStringInNormalisedScreenSpace(std::string txt, rx::Font* font, float size, lx::vec2 pos,
-		util::colour colour, TextAlignment align)
+	void Renderer::renderStringInNormalisedScreenSpace(const std::string& txt, rx::Font* font, float size, const lx::fvec2& _pos,
+		const util::colour& colour, TextAlignment align)
 	{
+		auto pos = _pos;
 		pos.x *= this->_width;
 		pos.y *= this->_height;
 
 		this->renderStringInScreenSpace(txt, font, size, pos, colour, align);
 	}
 
-	void Renderer::renderStringInScreenSpace(std::string str, rx::Font* font, float size, lx::vec2 pos,
-		util::colour colour, TextAlignment align)
+	void Renderer::renderStringInScreenSpace(const std::string& str, rx::Font* font, float size, const lx::fvec2& pos,
+		const util::colour& colour, TextAlignment align)
 	{
 		bool rightAlign = (align == TextAlignment::RightAligned);
 
@@ -248,8 +239,6 @@ namespace rx
 			assert(errs == UTF8_ERR_NONE);
 		}
 
-
-
 		// todo: this produces one rendercommand per character,
 		// might be slightly inefficient...
 
@@ -261,7 +250,7 @@ namespace rx
 		// (0, 0) in font-space is the bottom left, because :shrug:, so flip it.
 		double yPos = lx::round(pos).y + (scale * font->ascent);
 
-		lx::vec4 cliprect;
+		// lx::fvec4 cliprect;
 		{
 			float x0 = xPos;
 			float y0 = yPos + (scale * font->descent);
@@ -279,7 +268,7 @@ namespace rx
 			float x1 = x0 + advx;
 			float y1 = y0 + advy;
 
-			cliprect = lx::vec4(0, y0, x1, y1);
+			// cliprect = lx::fvec4(0, y0, x1, y1);
 		}
 
 
@@ -287,7 +276,7 @@ namespace rx
 		// std::vector<lx::vec2> uvs;
 
 		std::vector<size_t> indices;
-		std::vector<lx::vec2> positions;
+		std::vector<lx::fvec2> positions;
 
 		for(size_t i = 0; i < codepoints.size(); i++)
 		{
@@ -310,7 +299,7 @@ namespace rx
 				if(codepoint != ' ')
 				{
 					// fill it up.
-					auto pos = lx::vec2(round(xPos), round(yPos));
+					auto pos = lx::fvec2(round(xPos), round(yPos));
 
 					indices.push_back(codepoint - font->firstChar);
 					positions.push_back(pos);
@@ -325,7 +314,7 @@ namespace rx
 		rc.positions = positions;
 		rc.indices = indices;
 		rc.textScale = scale;
-		rc.textColour = colour.vec4();
+		rc.textColour = colour;
 
 		this->forwardList.push_back(rc);
 	}
@@ -370,7 +359,7 @@ namespace rx
 
 
 
-	std::vector<PointLight> Renderer::sortAndUpdatePointLights(lx::vec3 vert)
+	std::vector<PointLight> Renderer::sortAndUpdatePointLights(const lx::fvec3& vert)
 	{
 		// sort by distance, take the first N only.
 		std::vector<PointLight> lights(this->pointLights.begin(), this->pointLights.end());
@@ -381,7 +370,7 @@ namespace rx
 		if(lights.size() > MAX_POINT_LIGHTS)
 			lights.erase(lights.begin() + MAX_POINT_LIGHTS, lights.end());
 
-		for(auto* shaderProg : { &this->forwardShaderProgram, &this->deferredLightingShaderProgram })
+		for(auto* shaderProg : { &this->forwardShaderProgram })
 		{
 			assert(shaderProg);
 			shaderProg->use();
@@ -411,7 +400,7 @@ namespace rx
 
 
 
-	std::vector<SpotLight> Renderer::sortAndUpdateSpotLights(lx::vec3 vert)
+	std::vector<SpotLight> Renderer::sortAndUpdateSpotLights(const lx::fvec3& vert)
 	{
 		// sort by distance, take the first N only.
 		std::vector<SpotLight> lights(this->spotLights.begin(), this->spotLights.end());
@@ -422,7 +411,7 @@ namespace rx
 		if(lights.size() > MAX_SPOT_LIGHTS)
 			lights.erase(lights.begin() + MAX_SPOT_LIGHTS, lights.end());
 
-		for(auto* shaderProg : { &this->forwardShaderProgram, &this->deferredLightingShaderProgram })
+		for(auto* shaderProg : { &this->forwardShaderProgram })
 		{
 			assert(shaderProg);
 			shaderProg->use();
@@ -463,155 +452,22 @@ namespace rx
 
 
 	// main render pusher
-
-	void Renderer::renderDeferredGeometryPass()
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, this->gBuffer->gFramebuffer);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		double rscale = this->_resolutionScale;
-		glViewport(0, 0, (int) (this->_width * rscale), (int) (this->_height * rscale));
-
-		auto& sprog = this->deferredGeometryShaderProgram;
-		sprog.use();
-
-		for(auto rc : this->deferredList)
-		{
-			auto* renderObj = rc.renderObject;
-			glBindVertexArray(renderObj->vertexArrayObject);
-
-			switch(renderObj->renderType)
-			{
-				case RenderType::Vertices: {
-
-					sprog.setUniform("modelMatrix", rc.modelMatrix);
-					sprog.setUniform("viewMatrix", this->cameraMatrix);
-					sprog.setUniform("projMatrix", this->projectionMatrix);
-
-					assert(renderObj->material.hasValue);
-					{
-						auto& mat = renderObj->material;
-						sprog.setUniform("material.shine", mat.shine);
-
-						// set the colours
-						sprog.setUniform("material.ambientColour", mat.ambientColour);
-						sprog.setUniform("material.diffuseColour", mat.diffuseColour);
-						sprog.setUniform("material.specularColour", mat.specularColour);
-					}
-
-					{
-						// i presume this sets which texture unit to use
-						sprog.setUniform("material.diffuseTexture", 0);
-						sprog.setUniform("material.specularTexture", 1);
-
-						auto& mat = renderObj->material;
-						Texture* diff = (mat.diffuseMap ? mat.diffuseMap : this->placeholderTexture);
-						Texture* spec = (mat.specularMap ? mat.specularMap : this->placeholderTexture);
-
-						// use the placeholder white texture
-						glActiveTexture(GL_TEXTURE1);
-						glBindTexture(GL_TEXTURE_2D, spec->glTextureID);
-
-						glActiveTexture(GL_TEXTURE0);
-						glBindTexture(GL_TEXTURE_2D, diff->glTextureID);
-					}
-
-					glDrawArrays(renderObj->wireframe ? GL_LINES : GL_TRIANGLES, 0, renderObj->arrayLength);
-
-				} break;
-
-				default:
-					LOG("not handled");
-					break;
-			}
-
-			// glBindVertexArray(0);
-		}
-
-		this->deferredList.clear();
-	}
-
-	void Renderer::renderDeferredLightingPass()
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		auto& sprog = this->deferredLightingShaderProgram;
-		sprog.use();
-		{
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, this->gBuffer->positionBuffer);
-
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, this->gBuffer->normalBuffer);
-
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, this->gBuffer->diffuseBuffer);
-
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, this->gBuffer->specularBuffer);
-
-			glActiveTexture(GL_TEXTURE0);
-	    }
-
-
-	    {
-			sprog.setUniform("cameraPosition", this->camera.position);
-
-			this->sortAndUpdatePointLights(this->camera.position);
-			this->sortAndUpdateSpotLights(this->camera.position);
-		}
-
-
-
-		static RenderObject* ro = RenderObject::fromTexturedVertices({
-			lx::vec3(1, -1, 0),
-			lx::vec3(-1, 1, 0),
-			lx::vec3(-1, -1, 0),
-
-			lx::vec3(-1, 1, 0),
-			lx::vec3(1, -1, 0),
-			lx::vec3(1, 1, 0),
-		}, {
-			lx::vec2(1, 0),
-			lx::vec2(0, 1),
-			lx::vec2(0, 0),
-
-			lx::vec2(0, 1),
-			lx::vec2(1, 0),
-			lx::vec2(1, 1),
-		}, { });
-
-		// render the screen-quad
-		{
-			glBindVertexArray(ro->vertexArrayObject);
-
-			glDrawArrays(GL_TRIANGLES, 0, ro->arrayLength);
-
-			glBindVertexArray(0);
-		}
-
-
-
-
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, this->gBuffer->gFramebuffer);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
-
-		auto w = this->_width * this->_resolutionScale;
-		auto h = this->_height * this->_resolutionScale;
-		glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
-
 	void Renderer::renderForward()
 	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		// render a cube at every point light
 		static auto cubeRO = RenderObject::fromMesh(Mesh::getUnitCube(), Material(util::colour::white(),
 			util::colour::white(), util::colour::white(), 1));
 
+		this->sortAndUpdatePointLights(tof(this->camera.position));
+		this->sortAndUpdateSpotLights(tof(this->camera.position));
+
+
 		for(auto pl : this->pointLights)
 		{
-			this->renderObject(cubeRO, lx::scale(0.1).translate(pl.position));
+			this->renderObject(cubeRO, lx::scale(0.1).translate(fromf(pl.position)));
 		}
 
 		for(auto rc : this->forwardList)
@@ -628,9 +484,9 @@ namespace rx
 					auto& sprog = this->forwardShaderProgram;
 					sprog.use();
 
-					sprog.setUniform("modelMatrix", rc.modelMatrix);
-					sprog.setUniform("viewMatrix", this->cameraMatrix);
-					sprog.setUniform("projMatrix", this->projectionMatrix);
+					sprog.setUniform("modelMatrix", tof(rc.modelMatrix));
+					sprog.setUniform("viewMatrix", tof(this->cameraMatrix));
+					sprog.setUniform("projMatrix", tof(this->projectionMatrix));
 
 					assert(renderObj->material.hasValue);
 					{
@@ -638,9 +494,9 @@ namespace rx
 						sprog.setUniform("material.shine", mat.shine);
 
 						// set the colours
-						sprog.setUniform("material.ambientColour", mat.ambientColour);
-						sprog.setUniform("material.diffuseColour", mat.diffuseColour);
-						sprog.setUniform("material.specularColour", mat.specularColour);
+						sprog.setUniform("material.ambientColour", tof(mat.ambientColour));
+						sprog.setUniform("material.diffuseColour", tof(mat.diffuseColour));
+						sprog.setUniform("material.specularColour", tof(mat.specularColour));
 					}
 
 					{
@@ -672,7 +528,7 @@ namespace rx
 					this->textShaderProgram.use();
 
 					lx::mat4 orthoProj = lx::orthographic(0.0, this->_width, this->_height, 0.0);
-					this->textShaderProgram.setUniform("projectionMatrix", orthoProj);
+					this->textShaderProgram.setUniform("projectionMatrix", tof(orthoProj));
 					this->textShaderProgram.setUniform("fontScale", rc.textScale);
 					this->textShaderProgram.setUniform("fontColour", rc.textColour);
 
@@ -700,10 +556,6 @@ namespace rx
 		}
 
 		this->clearRenderList();
-		for(auto ro : this->autoGeneratedRenderObjects)
-			delete ro;
-
-		this->autoGeneratedRenderObjects.clear();
 	}
 
 
@@ -730,23 +582,22 @@ namespace rx
 
 	void BeginFrame(rx::Renderer* r)
 	{
-		platform::preFrame(r->window->platformData, r->window->platformWindow);
+		platform::beginFrame(r->window->platformData, r->window->platformWindow);
 	}
 
 	void EndFrame(rx::Renderer* r)
 	{
-		r->renderDeferredGeometryPass();
-		r->renderDeferredLightingPass();
-
 		r->renderForward();
 		platform::endFrame(r->window->platformData, r->window->platformWindow);
 	}
-
-
-
-
-
 }
+
+
+
+
+
+
+
 
 
 

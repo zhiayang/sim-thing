@@ -7,12 +7,12 @@
 WARNINGS		:= -Wno-unused-parameter -Wno-sign-conversion -Wno-padded -Wno-old-style-cast -Wno-conversion -Wno-shadow -Wno-missing-noreturn -Wno-unused-macros -Wno-switch-enum -Wno-deprecated -Wno-format-nonliteral -Wno-trigraphs -Wno-unused-const-variable -Wno-c99-extensions -Wno-disabled-macro-expansion
 
 
-CLANGWARNINGS	:= -Wno-undefined-func-template -Wno-comma -Wno-nullability-completeness -Wno-redundant-move -Wno-nested-anon-types -Wno-gnu-anonymous-struct -Wno-reserved-id-macro -Wno-extra-semi -Wno-gnu-zero-variadic-macro-arguments -Wno-shift-sign-overflow -Wno-exit-time-destructors -Wno-global-constructors -Wno-c++98-compat-pedantic -Wno-documentation-unknown-command -Wno-weak-vtables -Wno-c++98-compat -Wno-float-equal -Wno-double-promotion -Wno-format-pedantic -Wno-missing-variable-declarations -Wno-implicit-fallthrough -Wno-reorder
+CLANGWARNINGS	:= -Wno-undefined-func-template -Wno-comma -Wno-nullability-completeness -Wno-redundant-move -Wno-nested-anon-types -Wno-gnu-anonymous-struct -Wno-reserved-id-macro -Wno-extra-semi -Wno-gnu-zero-variadic-macro-arguments -Wno-shift-sign-overflow -Wno-exit-time-destructors -Wno-global-constructors -Wno-c++98-compat-pedantic -Wno-documentation-unknown-command -Wno-weak-vtables -Wno-c++98-compat -Wno-float-equal -Wno-double-promotion -Wno-format-pedantic -Wno-missing-variable-declarations -Wno-implicit-fallthrough -Wno-reorder -Wno-zero-as-null-pointer-constant -Wno-documentation -Wno-cast-qual -Wno-cast-align
 
 
 SYSROOT			:= .
 PREFIX			:= build
-OUTPUTBIN		:= sotv
+OUTPUTBIN		:= sas
 
 OUTPUT			:= $(SYSROOT)/$(PREFIX)/bin/$(OUTPUTBIN)
 
@@ -34,10 +34,10 @@ FRAMEWORKS		:= -framework GLUT -framework OpenGL -framework CoreVideo -framework
 
 SANITISE		:=
 
-CXXFLAGS		+= -std=c++1z -O0 -g -c -Wall -frtti -fexceptions -fno-omit-frame-pointer -Wno-old-style-cast
+CXXFLAGS		+= -std=c++17 -O0 -g -c -Wall -frtti -fexceptions -fno-omit-frame-pointer -Wno-old-style-cast
 CFLAGS			+= -std=c11 -O0 -g -c -Wall -fno-omit-frame-pointer -Wno-overlength-strings
 
-LDFLAGS			+= $(SANITISE)
+LDFLAGS			+= $(SANITISE) -lsdl2 -lglbinding
 
 INCLUDES 		:= -Isource/include -Isource/imgui
 

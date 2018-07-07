@@ -17,13 +17,13 @@ namespace rx
 {
 	struct PointLight
 	{
-		PointLight(lx::vec3 p, lx::vec4 dc, lx::vec4 sc, float i, float r)
+		PointLight(const lx::fvec3& p, const lx::fvec4& dc, const lx::fvec4& sc, float i, float r)
 			: position(p), diffuseColour(dc), specularColour(sc), intensity(i), lightRadius(r) { }
 
-		lx::vec3 position;
+		lx::fvec3 position;
 
-		lx::vec4 diffuseColour;
-		lx::vec4 specularColour;
+		lx::fvec4 diffuseColour;
+		lx::fvec4 specularColour;
 
 		float intensity = 0;
 		float lightRadius = 0;
@@ -31,18 +31,18 @@ namespace rx
 
 	struct SpotLight
 	{
-		SpotLight(lx::vec3 p, lx::vec3 dir, lx::vec4 dc, lx::vec4 sc, float i, float r, float inner, float outer)
+		SpotLight(const lx::fvec3& p, const lx::fvec3& dir, const lx::fvec4& dc, const lx::fvec4& sc, float i, float r, float inner, float outer)
 			: position(p), direction(dir), diffuseColour(dc), specularColour(sc), intensity(i), lightRadius(r)
 		{
 			this->innerCutoffCosine = lx::cos(lx::toRadians(inner));
 			this->outerCutoffCosine = lx::cos(lx::toRadians(outer));
 		}
 
-		lx::vec3 position;
-		lx::vec3 direction;
+		lx::fvec3 position;
+		lx::fvec3 direction;
 
-		lx::vec4 diffuseColour;
-		lx::vec4 specularColour;
+		lx::fvec4 diffuseColour;
+		lx::fvec4 specularColour;
 
 		float innerCutoffCosine = 0;
 		float outerCutoffCosine = 0;

@@ -65,7 +65,7 @@ namespace lx
 		return *this;
 	}
 
-	mat3x3& mat3x3::operator *= (float s)
+	mat3x3& mat3x3::operator *= (double s)
 	{
 		this->vecs[0] *= s;
 		this->vecs[1] *= s;
@@ -73,7 +73,7 @@ namespace lx
 		return *this;
 	}
 
-	mat3x3& mat3x3::operator /= (float s)
+	mat3x3& mat3x3::operator /= (double s)
 	{
 		this->vecs[0] /= s;
 		this->vecs[1] /= s;
@@ -104,16 +104,16 @@ namespace lx
 		return result;
 	}
 
-	mat3x3 mat3x3::rotate(float radians, const vec3& axis)
+	mat3x3 mat3x3::rotate(double radians, const vec3& axis)
 	{
-		float c = lx::cos(radians);
-		float s = lx::sin(radians);
+		double c = lx::cos(radians);
+		double s = lx::sin(radians);
 
 		// bad form, i guess
-		float C = (1 - c);
-		float L = axis.x;
-		float M = axis.y;
-		float N = axis.z;
+		double C = (1 - c);
+		double L = axis.x;
+		double M = axis.y;
+		double N = axis.z;
 
 		mat3x3 ret;
 		/*
@@ -152,7 +152,7 @@ namespace lx
 		return result;
 	}
 
-	mat3x3 mat3x3::scale(float s)
+	mat3x3 mat3x3::scale(double s)
 	{
 		return this->scale(vec3(s));
 	}
@@ -181,11 +181,11 @@ namespace lx
 		return ret;
 	}
 
-	mat3x3 operator * (const mat3x3& a, float s) { return mat3x3(a.vecs[0] * s, a.vecs[1] * s, a.vecs[2] * s); }
-	mat3x3 operator * (float s, const mat3x3& a) { return a * s; }
+	mat3x3 operator * (const mat3x3& a, double s) { return mat3x3(a.vecs[0] * s, a.vecs[1] * s, a.vecs[2] * s); }
+	mat3x3 operator * (double s, const mat3x3& a) { return a * s; }
 
-	mat3x3 operator / (const mat3x3& a, float s) { return mat3x3(a.vecs[0] / s, a.vecs[1] / s, a.vecs[2] / s); }
-	mat3x3 operator / (float s, const mat3x3& a) { return a / s; }
+	mat3x3 operator / (const mat3x3& a, double s) { return mat3x3(a.vecs[0] / s, a.vecs[1] / s, a.vecs[2] / s); }
+	mat3x3 operator / (double s, const mat3x3& a) { return a / s; }
 
 	bool operator == (const mat3x3& a, const mat3x3& b)
 	{

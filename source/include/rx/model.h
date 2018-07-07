@@ -40,7 +40,6 @@ namespace rx
 		bool hasValue = false;
 
 		lx::vec4 ambientColour;
-		float shine = 0;
 
 		// possible to use colours
 		lx::vec4 diffuseColour;
@@ -49,6 +48,8 @@ namespace rx
 		// or textures
 		Texture* diffuseMap = 0;
 		Texture* specularMap = 0;
+
+		float shine = 0;
 	};
 
 	struct Mesh

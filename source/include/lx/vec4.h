@@ -13,34 +13,34 @@ namespace lx
 {
 	struct vec4
 	{
-		vec4(float a, float b, float c, float d) : x(a), y(b), z(c), w(d) { }
+		vec4(double a, double b, double c, double d) : x(a), y(b), z(c), w(d) { }
 
 		explicit vec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) { }
-		explicit vec4(float a) : x(a), y(a), z(a), w(a) { }
-		explicit vec4(const vec2& v2, float c, float d) : x(v2.x), y(v2.y), z(c), w(d) { }
-		explicit vec4(const vec3& v3, float d) : x(v3.x), y(v3.y), z(v3.z), w(d) { }
+		explicit vec4(double a) : x(a), y(a), z(a), w(a) { }
+		explicit vec4(const vec2& v2, double c, double d) : x(v2.x), y(v2.y), z(c), w(d) { }
+		explicit vec4(const vec3& v3, double d) : x(v3.x), y(v3.y), z(v3.z), w(d) { }
 
 		#pragma clang diagnostic push
 		#pragma clang diagnostic ignored "-Wzero-length-array"
 		union
 		{
-			float ptr[0];
-			struct { float x; float y; float z; float w; };
-			struct { float r; float g; float b; float a; };
+			double ptr[0];
+			struct { double x; double y; double z; double w; };
+			struct { double r; double g; double b; double a; };
 		};
 		#pragma clang diagnostic pop
 
-		float& operator[] (size_t i);
-		const float& operator[] (size_t i) const;
+		double& operator[] (size_t i);
+		const double& operator[] (size_t i) const;
 		vec4& operator += (const vec4& v);
 		vec4& operator -= (const vec4& v);
 		vec4& operator *= (const vec4& v);
 		vec4& operator /= (const vec4& v);
 
-		vec4& operator *= (float s);
-		vec4& operator /= (float s);
+		vec4& operator *= (double s);
+		vec4& operator /= (double s);
 
-		float magnitude() const;
+		double magnitude() const;
 		vec4 normalised() const;
 
 		// dammit. 24???
@@ -115,18 +115,18 @@ namespace lx
 	vec4 operator / (const vec4& a, const vec4& b);
 	bool operator == (const vec4& a, const vec4& b);
 
-	vec4 operator * (const vec4& a, float b);
-	vec4 operator / (const vec4& a, float b);
-	vec4 operator * (float a, const vec4& b);
-	vec4 operator / (float a, const vec4& b);
+	vec4 operator * (const vec4& a, double b);
+	vec4 operator / (const vec4& a, double b);
+	vec4 operator * (double a, const vec4& b);
+	vec4 operator / (double a, const vec4& b);
 
 	vec4 round(const vec4& v);
 	vec4 normalise(const vec4& v);
 	vec4 normalize(const vec4& v);
-	float magnitude(const vec4& v);
+	double magnitude(const vec4& v);
 
-	float dot(const vec4& a, const vec4& b);
-	float distance(const vec4& a, const vec4& b);
+	double dot(const vec4& a, const vec4& b);
+	double distance(const vec4& a, const vec4& b);
 }
 
 

@@ -17,7 +17,7 @@ namespace lx
 		#pragma clang diagnostic ignored "-Wzero-length-array"
 		union
 		{
-			float ptr[0];
+			double ptr[0];
 			vec3 vecs[3];
 		};
 		#pragma clang diagnostic pop
@@ -32,13 +32,13 @@ namespace lx
 		mat3x3& operator += (const mat3x3& m);
 		mat3x3& operator -= (const mat3x3& m);
 
-		mat3x3& operator *= (float s);
-		mat3x3& operator /= (float s);
+		mat3x3& operator *= (double s);
+		mat3x3& operator /= (double s);
 
 		mat4x4 translate(const vec3& v);
-		mat3x3 rotate(float radians, const vec3& axis);
+		mat3x3 rotate(double radians, const vec3& axis);
 		mat3x3 scale(const vec3& v);
-		mat3x3 scale(float s);
+		mat3x3 scale(double s);
 
 		static mat3x3 identity();
 		static mat3x3 zero();
@@ -52,11 +52,11 @@ namespace lx
 	vec3 operator * (const mat3x3& m, const vec3& v);
 	mat3x3 operator * (const mat3x3& a, const mat3x3& b);
 
-	mat3x3 operator * (const mat3x3& a, float s);
-	mat3x3 operator * (float s, const mat3x3& a);
+	mat3x3 operator * (const mat3x3& a, double s);
+	mat3x3 operator * (double s, const mat3x3& a);
 
-	mat3x3 operator / (const mat3x3& a, float s);
-	mat3x3 operator / (float s, const mat3x3& a);
+	mat3x3 operator / (const mat3x3& a, double s);
+	mat3x3 operator / (double s, const mat3x3& a);
 
 	bool operator == (const mat3x3& a, const mat3x3& b);
 }

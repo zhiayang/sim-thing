@@ -6,6 +6,7 @@
 
 namespace lx
 {
+
 	// vec2
 	vec2 vec2::xy() const { return *this; }
 	vec2 vec2::yx() const { return vec2(y, x); }
@@ -97,6 +98,103 @@ namespace lx
 	vec4 vec4::yyyy() const { return vec4(y); }
 	vec4 vec4::zzzz() const { return vec4(z); }
 	vec4 vec4::wwww() const { return vec4(w); }
+
+
+
+
+
+
+	// fvec2
+	fvec2 fvec2::xy() const { return *this; }
+	fvec2 fvec2::yx() const { return fvec2(y, x); }
+
+	fvec2 fvec2::xx() const { return fvec2(x); }
+	fvec2 fvec2::yy() const { return fvec2(y); }
+
+
+
+	// fvec3
+	fvec2 fvec3::xy() const { return fvec2(x, y); }
+	fvec2 fvec3::yx() const { return fvec2(y, x); }
+
+	fvec3 fvec3::xyz() const { return fvec3(x, y, z); }
+	fvec3 fvec3::xzy() const { return fvec3(x, z, y); }
+	fvec3 fvec3::yxz() const { return fvec3(y, x, z); }
+	fvec3 fvec3::yzx() const { return fvec3(y, z, x); }
+	fvec3 fvec3::zxy() const { return fvec3(z, x, y); }
+	fvec3 fvec3::zyx() const { return fvec3(z, y, x); }
+
+	fvec3 fvec3::rgb() const { return fvec3(r, g, b); }
+	fvec3 fvec3::bgr() const { return fvec3(b, g, r); }
+
+	fvec2 fvec3::xx() const { return fvec2(x); }
+	fvec2 fvec3::yy() const { return fvec2(y); }
+	fvec2 fvec3::zz() const { return fvec2(z); }
+
+	fvec3 fvec3::xxx() const { return fvec3(x); }
+	fvec3 fvec3::yyy() const { return fvec3(y); }
+	fvec3 fvec3::zzz() const { return fvec3(z); }
+
+
+
+	// fvec4
+	fvec2 fvec4::xy() const { return fvec2(x, y); }
+	fvec2 fvec4::yx() const { return fvec2(y, x); }
+
+	fvec3 fvec4::xyz() const { return fvec3(x, y, z); }
+	fvec3 fvec4::xzy() const { return fvec3(x, z, y); }
+	fvec3 fvec4::yxz() const { return fvec3(y, x, z); }
+	fvec3 fvec4::yzx() const { return fvec3(y, z, x); }
+	fvec3 fvec4::zxy() const { return fvec3(z, x, y); }
+	fvec3 fvec4::zyx() const { return fvec3(z, y, x); }
+
+	fvec3 fvec4::rgb() const { return fvec3(r, g, b); }
+	fvec3 fvec4::bgr() const { return fvec3(b, g, r); }
+
+	fvec4 fvec4::xyzw() const { return fvec4(x, y, z, w); }
+	fvec4 fvec4::xywz() const { return fvec4(x, y, w, z); }
+	fvec4 fvec4::xzyw() const { return fvec4(x, z, y, w); }
+	fvec4 fvec4::xzwy() const { return fvec4(x, z, w, y); }
+	fvec4 fvec4::xwyz() const { return fvec4(x, w, y, z); }
+	fvec4 fvec4::xwzy() const { return fvec4(x, w, z, y); }
+	fvec4 fvec4::yxwz() const { return fvec4(y, x, w, z); }
+	fvec4 fvec4::yxzw() const { return fvec4(y, x, z, w); }
+	fvec4 fvec4::yzwx() const { return fvec4(y, z, w, x); }
+	fvec4 fvec4::yzxw() const { return fvec4(y, z, x, w); }
+	fvec4 fvec4::ywzx() const { return fvec4(y, w, z, x); }
+	fvec4 fvec4::ywxz() const { return fvec4(y, w, x, z); }
+	fvec4 fvec4::zxyw() const { return fvec4(z, x, y, w); }
+	fvec4 fvec4::zxwy() const { return fvec4(z, x, w, y); }
+	fvec4 fvec4::zyxw() const { return fvec4(z, y, x, w); }
+	fvec4 fvec4::zywx() const { return fvec4(z, y, w, x); }
+	fvec4 fvec4::zwxy() const { return fvec4(z, w, x, y); }
+	fvec4 fvec4::zwyx() const { return fvec4(z, w, y, x); }
+	fvec4 fvec4::wxzy() const { return fvec4(w, x, z, y); }
+	fvec4 fvec4::wxyz() const { return fvec4(w, x, y, z); }
+	fvec4 fvec4::wyzx() const { return fvec4(w, y, z, x); }
+	fvec4 fvec4::wyxz() const { return fvec4(w, y, x, z); }
+	fvec4 fvec4::wzyx() const { return fvec4(w, z, y, x); }
+	fvec4 fvec4::wzxy() const { return fvec4(w, z, x, y); }
+
+	fvec4 fvec4::rgba() const { return fvec4(r, g, b, a); }
+	fvec4 fvec4::bgra() const { return fvec4(b, g, r, a); }
+	fvec4 fvec4::argb() const { return fvec4(a, r, g, b); }
+	fvec4 fvec4::abgr() const { return fvec4(a, b, g, r); }
+
+	fvec2 fvec4::xx() const { return fvec2(x); }
+	fvec2 fvec4::yy() const { return fvec2(y); }
+	fvec2 fvec4::zz() const { return fvec2(z); }
+	fvec2 fvec4::ww() const { return fvec2(w); }
+
+	fvec3 fvec4::xxx() const { return fvec3(x); }
+	fvec3 fvec4::yyy() const { return fvec3(y); }
+	fvec3 fvec4::zzz() const { return fvec3(z); }
+	fvec3 fvec4::www() const { return fvec3(w); }
+
+	fvec4 fvec4::xxxx() const { return fvec4(x); }
+	fvec4 fvec4::yyyy() const { return fvec4(y); }
+	fvec4 fvec4::zzzz() const { return fvec4(z); }
+	fvec4 fvec4::wwww() const { return fvec4(w); }
 }
 
 

@@ -26,12 +26,11 @@ namespace rx
 		glDeleteVertexArrays(1, &this->vertexArrayObject);
 	}
 
-	RenderObject* RenderObject::fromTexturedVertices(std::vector<lx::vec3> verts, std::vector<lx::vec2> uvs, std::vector<lx::vec3> normals)
+	RenderObject* RenderObject::fromTexturedVertices(const std::vector<lx::fvec3>& verts, const std::vector<lx::fvec2>& uvs,
+		const std::vector<lx::fvec3>& normals)
 	{
-		using namespace gl;
-
 		// leverage the `fromColouredVertices` method
-		auto colours = std::vector<lx::vec4>(verts.size(), util::colour::white());
+		auto colours = std::vector<lx::fvec4>(verts.size(), util::colour::white());
 		auto ret = RenderObject::fromColouredVertices(verts, colours, normals);
 
 		GLuint uvBuffer;
@@ -43,7 +42,7 @@ namespace rx
 		glEnableVertexAttribArray(3);
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-			glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(lx::vec2), &uvs[0],
+			glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(lx::fvec2), &uvs[0],
 				GL_STATIC_DRAW);
 
 			glVertexAttribPointer(
@@ -60,7 +59,8 @@ namespace rx
 		return ret;
 	}
 
-	RenderObject* RenderObject::fromColouredVertices(std::vector<lx::vec3> verts, std::vector<lx::vec4> colours, std::vector<lx::vec3> normals)
+	RenderObject* RenderObject::fromColouredVertices(const std::vector<lx::fvec3>& verts, const std::vector<lx::fvec4>& colours,
+		const std::vector<lx::fvec3>& normals)
 	{
 		using namespace gl;
 
@@ -76,7 +76,7 @@ namespace rx
 		{
 			// we always have vertices
 			glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-			glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(lx::vec3), &verts[0],
+			glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(lx::fvec3), &verts[0],
 				GL_STATIC_DRAW);
 
 			glVertexAttribPointer(
@@ -92,7 +92,7 @@ namespace rx
 		glEnableVertexAttribArray(1);
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, colourBuffer);
-			glBufferData(GL_ARRAY_BUFFER, colours.size() * sizeof(lx::vec4), &colours[0],
+			glBufferData(GL_ARRAY_BUFFER, colours.size() * sizeof(lx::fvec4), &colours[0],
 				GL_STATIC_DRAW);
 
 			glVertexAttribPointer(
@@ -111,7 +111,7 @@ namespace rx
 			glEnableVertexAttribArray(2);
 
 			glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-			glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(lx::vec3), &normals[0],
+			glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(lx::fvec3), &normals[0],
 				GL_STATIC_DRAW);
 
 			glVertexAttribPointer(
@@ -147,22 +147,22 @@ namespace rx
 	{
 		assert(!mesh.faces.empty());
 
-		std::vector<lx::vec3> vertices;
-		std::vector<lx::vec3> normals;
-		std::vector<lx::vec2> uvs;
+		std::vector<lx::fvec3> vertices;
+		std::vector<lx::fvec3> normals;
+		std::vector<lx::fvec2> uvs;
 
 		for(auto face : mesh.faces)
 		{
 			assert(!face.vertices.empty());
 
 			for(auto v : face.vertices)
-				vertices.push_back(v);
+				vertices.push_back(tof(v));
 
 			for(auto t : face.uvs)
-				uvs.push_back(t);
+				uvs.push_back(tof(t));
 
 			for(auto n : face.normals)
-				normals.push_back(n);
+				normals.push_back(tof(n));
 		}
 
 		auto ret = RenderObject::fromTexturedVertices(vertices, uvs, normals);

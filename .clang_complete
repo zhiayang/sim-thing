@@ -1,0 +1,15 @@
+-I/usr/local/include
+-I/usr/local
+-I/Users/zhiayang/Desktop/Stuff/Code/sas/source/include
+-I/Users/zhiayang/Desktop/Stuff/Code/sas/source/utf8rewind/include/utf8rewind/
+-framework GLUT
+-framework OpenGL
+-framework CoreVideo
+-framework Cocoa
+-lglfw3
+-std=c++17
+-Wno-zero-as-null-pointer-constant
+-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/
+-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1
+-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/9.1.0/include
+-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include

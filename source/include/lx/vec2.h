@@ -10,24 +10,24 @@ namespace lx
 {
 	struct vec2
 	{
-		vec2(float a, float b) : x(a), y(b) { }
+		vec2(double a, double b) : x(a), y(b) { }
 
 		explicit vec2() : x(0.0f), y(0.0f) { }
-		explicit vec2(float a) : x(a), y(a) { }
+		explicit vec2(double a) : x(a), y(a) { }
 
 
 		#pragma clang diagnostic push
 		#pragma clang diagnostic ignored "-Wzero-length-array"
 		union
 		{
-			float ptr[0];
-			struct { float x; float y; };
-			struct { float u; float v; };
+			double ptr[0];
+			struct { double x; double y; };
+			struct { double u; double v; };
 		};
 		#pragma clang diagnostic pop
 
-		float& operator[] (size_t i);
-		const float& operator[] (size_t i) const;
+		double& operator[] (size_t i);
+		const double& operator[] (size_t i) const;
 
 		vec2& operator += (const vec2& v);
 		vec2& operator -= (const vec2& v);
@@ -35,10 +35,10 @@ namespace lx
 		vec2& operator *= (const vec2& v);
 		vec2& operator /= (const vec2& v);
 
-		vec2& operator *= (float s);
-		vec2& operator /= (float s);
+		vec2& operator *= (double s);
+		vec2& operator /= (double s);
 
-		float magnitude() const;
+		double magnitude() const;
 		vec2 normalised() const;
 
 		// swizzle
@@ -59,19 +59,19 @@ namespace lx
 	vec2 operator / (const vec2& a, const vec2& b);
 	bool operator == (const vec2& a, const vec2& b);
 
-	vec2 operator * (const vec2& a, float b);
-	vec2 operator / (const vec2& a, float b);
-	vec2 operator * (float a, const vec2& b);
-	vec2 operator / (float a, const vec2& b);
+	vec2 operator * (const vec2& a, double b);
+	vec2 operator / (const vec2& a, double b);
+	vec2 operator * (double a, const vec2& b);
+	vec2 operator / (double a, const vec2& b);
 
 
 	vec2 round(const vec2& v);
 	vec2 normalise(const vec2& v);
 	vec2 normalize(const vec2& v);
-	float magnitude(const vec2& v);
+	double magnitude(const vec2& v);
 
-	float dot(const vec2& a, const vec2& b);
-	float distance(const vec2& a, const vec2& b);
+	double dot(const vec2& a, const vec2& b);
+	double distance(const vec2& a, const vec2& b);
 }
 
 

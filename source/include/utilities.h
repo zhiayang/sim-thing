@@ -101,6 +101,7 @@ namespace util
 		}
 
 		operator lx::vec4() const { return this->vec4(); }
+		operator lx::fvec4() const { return this->fvec4(); }
 
 		colour(float red, float green, float blue, float alpha) : r(red), g(green), b(blue), a(alpha) { }
 		colour(float red, float green, float blue) : r(red), g(green), b(blue), a(1.0) { }
@@ -122,6 +123,12 @@ namespace util
 		{
 			return lx::vec4(this->r, this->g, this->b, this->a);
 		}
+
+		lx::fvec4 fvec4() const
+		{
+			return lx::fvec4(this->r, this->g, this->b, this->a);
+		}
+
 
 		static colour fromHex(uint32_t hex)
 		{

@@ -53,7 +53,7 @@ namespace rx
 		return lines;
 	}
 
-	static std::string loadShaderSource(std::string path, std::string kind)
+	static std::string loadShaderSource(const std::string& path, const std::string& kind)
 	{
 		Asset* shaderAsset = AssetLoader::Load(path.c_str());
 		auto lines = splitString((const char*) shaderAsset->raw, shaderAsset->length);
@@ -106,13 +106,13 @@ namespace rx
 		AssetLoader::Unload(shaderAsset);
 
 		std::string source;
-		for(auto l : finalLines)
+		for(const auto& l : finalLines)
 			source += l + "\n";
 
 		return source;
 	}
 
-	static gl::GLuint compileAndLinkGLShaderProgram(ShaderSource source)
+	static gl::GLuint compileAndLinkGLShaderProgram(const ShaderSource& source)
 	{
 		using namespace gl;
 
@@ -205,7 +205,7 @@ namespace rx
 
 
 
-	ShaderProgram::ShaderProgram(std::string sname, ShaderSource source)
+	ShaderProgram::ShaderProgram(const std::string& sname, const ShaderSource& source)
 	{
 		using namespace gl;
 		this->name = sname;
@@ -248,7 +248,7 @@ namespace rx
 	static gl::GLuint currentlyInUse = 0;
 
 
-	gl::GLuint ShaderProgram::getUniformLocation(std::string name)
+	gl::GLuint ShaderProgram::getUniformLocation(const std::string& name)
 	{
 		if(this->uniformLocations.find(name) == this->uniformLocations.end())
 			ERROR("No such uniform named '%s' in shader program '%s'", name.c_str(), this->name.c_str());
@@ -257,7 +257,7 @@ namespace rx
 	}
 
 
-	void ShaderProgram::setUniform(std::string name, lx::vec4 v4)
+	void ShaderProgram::setUniform(const std::string& name, const lx::fvec4& v4)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
@@ -266,7 +266,7 @@ namespace rx
 		gl::glUniform4fv(loc, 1, v4.ptr);
 	}
 
-	void ShaderProgram::setUniform(std::string name, lx::vec3 v3)
+	void ShaderProgram::setUniform(const std::string& name, const lx::fvec3& v3)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
@@ -275,7 +275,7 @@ namespace rx
 		gl::glUniform3fv(loc, 1, v3.ptr);
 	}
 
-	void ShaderProgram::setUniform(std::string name, lx::vec2 v2)
+	void ShaderProgram::setUniform(const std::string& name, const lx::fvec2& v2)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
@@ -285,7 +285,7 @@ namespace rx
 	}
 
 
-	void ShaderProgram::setUniform(std::string name, lx::mat4 m4)
+	void ShaderProgram::setUniform(const std::string& name, const lx::fmat4& m4)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
@@ -294,7 +294,7 @@ namespace rx
 		gl::glUniformMatrix4fv(loc, 1, gl::GL_FALSE, m4.ptr);
 	}
 
-	void ShaderProgram::setUniform(std::string name, lx::mat3 m3)
+	void ShaderProgram::setUniform(const std::string& name, const lx::fmat3& m3)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
@@ -303,7 +303,7 @@ namespace rx
 		gl::glUniformMatrix3fv(loc, 1, gl::GL_FALSE, m3.ptr);
 	}
 
-	void ShaderProgram::setUniform(std::string name, lx::mat2 m2)
+	void ShaderProgram::setUniform(const std::string& name, const lx::fmat2& m2)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
@@ -313,7 +313,7 @@ namespace rx
 	}
 
 
-	void ShaderProgram::setUniform(std::string name, float f)
+	void ShaderProgram::setUniform(const std::string& name, float f)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();
@@ -322,7 +322,7 @@ namespace rx
 		gl::glUniform1f(loc, f);
 	}
 
-	void ShaderProgram::setUniform(std::string name, int i)
+	void ShaderProgram::setUniform(const std::string& name, int i)
 	{
 		if(currentlyInUse != this->progId)
 			this->use();

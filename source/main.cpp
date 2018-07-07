@@ -14,49 +14,19 @@
 #include "platform.h"
 #include "tinyformat.h"
 
-#include "sotv/sotv.h"
-#include "sotv/gui.h"
-
 #include <unistd.h>
 #include <array>
 
-static const double timeSpeedupFactor	= 20.0;
 static const double fixedDeltaTimeNs	= 1.0 * 1000.0 * 1000.0;
 
-// static const double targetFramerate		= 120.0;
-// static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
+static const double targetFramerate		= 61.0;
+static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
-static Sotv::GameState* gameState = 0;
 static rx::Renderer* theRenderer = 0;
+static input::State* inputState = 0;
 
 namespace rx
 {
-	// std::pair<SDL_Event, bool> ProcessEvents()
-	// {
-	// 	bool done = false;
-
-	// 	SDL_Event event;
-	// 	while(SDL_PollEvent(&event))
-	// 	{
-	// 		if(event.type == SDL_KEYUP || event.type == SDL_KEYDOWN)
-	// 			Input::handleKeyInput(&gameState->inputState, &event);
-
-	// 		else if(event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEBUTTONDOWN)
-	// 			Input::handleMouseInput(&gameState->inputState, &event);
-
-	// 		if(event.type == SDL_QUIT)
-	// 		{
-	// 			done = true;
-	// 		}
-	// 		else if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-	// 		{
-	// 			assert(theRenderer);
-	// 			theRenderer->updateWindowSize(event.window.data1, event.window.data2);
-	// 		}
-	// 	}
-
-	// 	return { event, done };
-	// }
 }
 
 
@@ -104,8 +74,6 @@ int main(int argc, char** argv)
 	Config::setResX(1240);
 	Config::setResY(720);
 
-	prof::enable();
-
 
 	// Setup the platform
 	auto platformData = platform::Initialise();
@@ -118,6 +86,8 @@ int main(int argc, char** argv)
 
 	double prevTimestamp = util::Time::ns();
 	double renderDelta = 0;
+
+	inputState = new input::State();
 
 	// setup the shader... this is more involved than i'd like, but it's more flexible.
 	// sidenote: designated initialisers are amazing, fuck c++ for not having it.
@@ -140,23 +110,6 @@ int main(int argc, char** argv)
 		.fragmentShaderPath = "shaders/textShader.fs",
 	});
 
-
-	// 3. deferred geometry shader
-	auto deferredGeomProg = rx::ShaderProgram("deferredGeometryShader", rx::ShaderSource {
-
-		.glslVersion = "330 core",
-		.vertexShaderPath = "shaders/deferred/geometry.vs",
-		.fragmentShaderPath = "shaders/deferred/geometry.fs",
-	});
-
-	// 4. deferred lighting shader
-	auto deferredLightProg = rx::ShaderProgram("deferredLightingShader", rx::ShaderSource {
-
-		.glslVersion = "330 core",
-		.vertexShaderPath = "shaders/deferred/lighting.vs",
-		.fragmentShaderPath = "shaders/deferred/lighting.fs",
-	});
-
 	// 5. screen-filling quad shader
 	auto screenQuadProg = rx::ShaderProgram("screenQuadShader", rx::ShaderSource {
 
@@ -166,11 +119,7 @@ int main(int argc, char** argv)
 	});
 
 
-
 	rx::ShaderPipeline pipeline {
-
-		.deferredGeometryShader = deferredGeomProg,
-		.deferredLightingShader = deferredLightProg,
 
 		.forwardShader = forwardProg,
 		.textShader = textProg,
@@ -198,31 +147,15 @@ int main(int argc, char** argv)
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.0);
-		theRenderer->addPointLight(rx::PointLight(lx::vec3(0, 10, 10), util::colour::white(), util::colour::white(), 0.7, 15.0));
+		theRenderer->setAmbientLighting(util::colour::white(), 0.1);
+		theRenderer->addPointLight(rx::PointLight(lx::fvec3(0, 10, 10), util::colour::white(), util::colour::white(), 0.7, 15.0));
 
-		theRenderer->addSpotLight(rx::SpotLight(lx::vec3(0, -4, 0), lx::vec3(0, 1, 0), util::colour::white(), util::colour::white(),
+		theRenderer->addSpotLight(rx::SpotLight(lx::fvec3(0, -4, 0), lx::fvec3(0, 1, 0), util::colour::white(), util::colour::white(),
 			0.3, 2.0, 12.5, 30));
-
-		// theRenderer->addPointLight(rx::PointLight(lx::vec3(8, 2, 0), util::colour::white(), util::colour::white(),
-		// 	1.0, 1.0, 0.022, 0.0019));
 	}
 
 
-	// initialise some things
-	// todo: this should go into some savefile-parsing system that does the necessary stuff
-	// also should probably be more automatic than this
-	gameState = new Sotv::GameState();
-	gameState->playerStation = Sotv::Station::makeDefaultSpaceStation("");
-
-	// Input::addKeyHandler(&gameState->inputState, Input::Key::Space, 0, [](Input::State* s, Input::Key k, double) -> bool {
-
-	// 	LOG("Life Support: %s", gameState->playerStation->lifeSupportSystem->toggle() ? "on" : "off");
-	// 	return true;
-
-	// }, Input::HandlerKind::PressDown);
-
-	input::addKeyHandler(&gameState->inputState,
+	input::addKeyHandler(inputState,
 		{ input::Key::W, input::Key::S, input::Key::A, input::Key::D, input::Key::ShiftL, input::Key::Space },
 		0, [](input::State* s, input::Key k, double) -> bool {
 
@@ -253,16 +186,12 @@ int main(int argc, char** argv)
 
 
 	auto model = rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"), 1.0 / 20000.0);
-	// rx::Model* cube = rx::Model::getUnitCube();
-	// cube = model;
 
 	auto aColour = util::colour(0.83, 0.20, 0.22);
 	auto box = new rx::Texture("textures/box.png");
 	auto box_spec = new rx::Texture("textures/box_spec.png");
 	auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
 	auto cubeRO1 = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), aColour, aColour, 32));
-
-	// auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour(0.83, 0.20, 0.22), util::colour(0.83, 0.20, 0.22), util::colour::blue(), 32));
 
 
 	//
@@ -271,6 +200,26 @@ int main(int argc, char** argv)
 	// auto col3 = util::colour(0.628281, 0.555802, 0.366065);
 	// auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col, col, util::colour::white(), 1024.0));
 	// auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col1, col2, col3, 0.4 * 128));
+
+
+
+	lx::quat q = lx::quat::fromEulerDegs(lx::vec3(0, 0, 45));
+	lx::quat q1 = lx::quat::fromEulerDegs(lx::vec3(0, 0, 45));
+
+	fprintf(stderr, "%s", tfm::format("q = %s, q * q1 = %s, q * q1 * q1 = %s\n",
+		q, (q * q1), (q * q1 * q1)).c_str());
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -290,7 +239,7 @@ int main(int argc, char** argv)
 			if(event.type == input::Event::Type::WindowResize)
 				theRenderer->updateWindowSize(event.windowWidth, event.windowHeight);
 
-			done = input::processEvent(&gameState->inputState, event);
+			done = input::processEvent(inputState, event);
 			if(done) break;
 		}
 
@@ -305,34 +254,26 @@ int main(int argc, char** argv)
 
 			while(accumulator >= fixedDeltaTimeNs)
 			{
-				// we tell them that 50 ms has passed, when in actual fact only 1 ms has passed.
-				// we still do the same number of updates per second.
-
-				// this requires that we can update at arbitrary deltas, but since we're not doing any real physics,
-				// i don't foresee this being a problem.
-
-				Sotv::Update(*gameState, fixedDeltaTimeNs * timeSpeedupFactor);
 				accumulator -= fixedDeltaTimeNs;
-
 
 				// update the camera based on the mouse, for now.
 				{
-					bool invert = true;
+					bool invert = false;
 
 					double sensitivity = 0.5;
-					auto md = input::getMouseChange(&gameState->inputState);
+					auto md = input::getMouseChange(inputState);
 					auto cam = theRenderer->getCamera();
 
 					// fprintf(stderr, "delta = (%.0f, %.0f)\n", md.x, md.y);
 					cam.pitch = lx::clamp(cam.pitch + md.y * sensitivity * (invert ? -1 : 1), -89.4, +89.4);
-					cam.yaw += md.x * sensitivity;
+					cam.yaw += md.x * sensitivity * -1;
 
 					theRenderer->updateCamera(cam);
 
-					theRenderer->spotLights.back().position = cam.position;
-					theRenderer->spotLights.back().direction = cam.front();
+					theRenderer->spotLights.back().position = tof(cam.position);
+					theRenderer->spotLights.back().direction = tof(cam.front());
 
-					input::Update(&gameState->inputState, theRenderer->window, fixedDeltaTimeNs * timeSpeedupFactor);
+					input::Update(inputState, theRenderer->window, fixedDeltaTimeNs);
 				}
 			}
 		}
@@ -343,70 +284,21 @@ int main(int argc, char** argv)
 		rx::BeginFrame(theRenderer);
 
 
-
-		Sotv::Render(*gameState, renderDelta, theRenderer);
-
-		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::translate(glm::mat4(), lx::vec3(0, -2, 0)), lx::vec4(0.24, 0.59, 0.77, 1.0));
-
-		// theRenderer->renderModel(model, glm::translate(glm::mat4(), lx::vec3(0, 0, 0)), util::colour(0.83, 0.20, 0.22));
-		// theRenderer->renderMesh(rx::Mesh::getUnitCube(), glm::scale(glm::mat4(), lx::vec3(0.5)), lx::vec4(0.24, 0.59, 0.77, 1.0));
 		theRenderer->renderObject(cubeRO, lx::mat4());
 		theRenderer->renderObject(cubeRO1, lx::mat4().translate(lx::vec3(0, -0.3, 0)).scale(lx::vec3(10, 0.01, 10)));
 
-		// theRenderer->renderModel(cube, glm::translate(glm::mat4(), lx::vec3(0, 0, 2)), lx::vec4(0.24, 0.59, 0.77, 1.0));
-		// theRenderer->renderModel(cube, glm::translate(glm::scale(glm::mat4(), lx::vec3(0.1)), lx::vec3(0, 20, 0)), util::colour::white());
-
-
+		// for(const auto& ro : rx::RenderObject::fromModel(model))
+		// 	theRenderer->renderObject(ro, lx::mat4());
 
 
 		if((true))
 		{
-			std::string fpsstr = tfm::format("%.2f fps (%.1f ms) / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)", currentFps,
-				avgFrameTime / (1000.0 * 1000.0), theRenderer->getCamera().position.x, theRenderer->getCamera().position.y,
-				theRenderer->getCamera().position.z, input::getMousePos(&gameState->inputState).x,
-				input::getMousePos(&gameState->inputState).y, theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
+			std::string fpsstr = tfm::format("%.2f fps (%.1f ms) / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)",
+				std::min(currentFps, targetFramerate), avgFrameTime / (1000.0 * 1000.0), theRenderer->getCamera().position.x,
+				theRenderer->getCamera().position.y, theRenderer->getCamera().position.z, input::getMousePos(inputState).x,
+				input::getMousePos(inputState).y, theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
 
-			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, lx::vec2(5, 5), util::colour::white());
-
-			// auto psys = gameState->playerStation->powerSystem;
-			// auto lss = gameState->playerStation->lifeSupportSystem;
-
-			// double stor = Units::convertJoulesToWattHours(psys->getTotalStorageInJoules());
-			// double cap = Units::convertJoulesToWattHours(psys->getTotalCapacityInJoules());
-			// double prod = psys->getTotalProductionInWatts();
-
-			// double percentage = (stor / cap) * 100.0;
-
-			// // divide stor and cap by system voltage to get a number in amp-hours.
-			// // we divide by 3600 to convert from amp-seconds to amp-hours
-
-			// auto str = tfm::format("%s / %s (%.1f%%)  |  +%s / -%s", Units::formatWithUnits(stor, 2, "Wh"),
-			// 	Units::formatWithUnits(cap, 2, "Wh"), percentage,
-			// 	Units::formatWithUnits(prod, 2, "W"), Units::formatWithUnits(psys->getTotalConsumptionInWatts(), 2, "W"));
-
-			// theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, 5), util::colour::white(),
-			// 	rx::TextAlignment::RightAligned);
-
-
-			// size_t ofs = 5;
-
-			// for(auto batt : psys->storage)
-			// {
-			// 	double cur = Units::convertJoulesToWattHours(batt->getEnergyInJoules());
-			// 	double cap = Units::convertJoulesToWattHours(batt->getCapacityInJoules());
-
-			// 	auto str = tfm::format("%s / %s (%.1f%%)", Units::formatWithUnits(cur, 2, "Wh"),
-			// 		Units::formatWithUnits(cap, 2, "Wh"), 100.0 * ((double) cur / (double) cap));
-
-			// 	theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, ofs += 15), util::colour::white(),
-			// 		rx::TextAlignment::RightAligned);
-			// }
-
-			// str = tfm::format("%s / %s", Units::formatWithUnits(lss->getAtmospherePressure(), 2, "Pa"),
-			// 	Units::formatWithUnits(Units::convertKelvinToCelsius(lss->getAtmosphereTemperature()), 1, "°C"));
-
-			// theRenderer->renderStringInScreenSpace(str, primaryFont, 14, lx::vec2(5, ofs += 15), util::colour::white(),
-			// 	rx::TextAlignment::RightAligned);
+			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, lx::fvec2(5, 5), util::colour::white());
 		}
 
 		rx::EndFrame(theRenderer);
@@ -438,33 +330,9 @@ int main(int argc, char** argv)
 			static const double _alpha = 0.2;
 			avgFrameTime = _alpha * frameTime + (1 - _alpha) * avgFrameTime;
 
-			// don't kill the CPU
-			// todo: nanosleep() makes us die and hang.
-			// figure out a way...
-
-			#if 0
-			{
-				double toWait = targetFrameTimeNs - frameTime;
-
-				if(toWait >= 1000 * 1000)
-				{
-					fprintf(stderr, "fps = %.1f // %.2f ns // %.1f, %.1f\n", currentFps, toWait, targetFrameTimeNs, frameTime);
-					struct timespec ts;
-
-					// nanosleep(&ts, 0);
-				}
-				else
-				{
-					// todo: we missed our framerate.
-				}
-			}
-			#endif
-
 			prevTimestamp = frameBegin;
 		}
 	}
-
-	// prof::printResults();
 
 	// cleanup
 	platform::Uninitialise(theRenderer->window, platformData.second);

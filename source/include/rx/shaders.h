@@ -27,23 +27,23 @@ namespace rx
 
 	struct ShaderProgram
 	{
-		ShaderProgram(std::string shaderName, ShaderSource source);
+		ShaderProgram(const std::string& shaderName, const ShaderSource& source);
 
 		void use();
 		bool isInUse();
 
-		gl::GLuint getUniformLocation(std::string name);
+		gl::GLuint getUniformLocation(const std::string& name);
 
-		void setUniform(std::string name, lx::vec4 v4);
-		void setUniform(std::string name, lx::vec3 v3);
-		void setUniform(std::string name, lx::vec2 v2);
+		void setUniform(const std::string& name, const lx::fvec4& v4);
+		void setUniform(const std::string& name, const lx::fvec3& v3);
+		void setUniform(const std::string& name, const lx::fvec2& v2);
 
-		void setUniform(std::string name, lx::mat4 m4);
-		void setUniform(std::string name, lx::mat3 m3);
-		void setUniform(std::string name, lx::mat2 m2);
+		void setUniform(const std::string& name, const lx::fmat4& m4);
+		void setUniform(const std::string& name, const lx::fmat3& m3);
+		void setUniform(const std::string& name, const lx::fmat2& m2);
 
-		void setUniform(std::string name, float f);
-		void setUniform(std::string name, int i);
+		void setUniform(const std::string& name, float f);
+		void setUniform(const std::string& name, int i);
 
 		std::string name;
 		gl::GLuint progId = -1;

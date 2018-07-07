@@ -17,7 +17,7 @@ namespace lx
 		#pragma clang diagnostic ignored "-Wzero-length-array"
 		union
 		{
-			float ptr[0];
+			double ptr[0];
 			vec2 vecs[2];
 		};
 		#pragma clang diagnostic pop
@@ -32,14 +32,14 @@ namespace lx
 		mat2x2& operator += (const mat2x2& m);
 		mat2x2& operator -= (const mat2x2& m);
 
-		mat2x2& operator *= (float s);
-		mat2x2& operator /= (float s);
+		mat2x2& operator *= (double s);
+		mat2x2& operator /= (double s);
 
 		// rotate takes in values in radians, and operates anticlockwise (following the unit circle)
 		mat3x3 translate(const vec2& v);
-		mat2x2 rotate(float radians);
+		mat2x2 rotate(double radians);
 		mat2x2 scale(const vec2& v);
-		mat2x2 scale(float s);
+		mat2x2 scale(double s);
 
 		static mat2x2 identity();
 		static mat2x2 zero();
@@ -48,11 +48,11 @@ namespace lx
 	vec2 operator * (const mat2x2& m, const vec2& v);
 	mat2x2 operator * (const mat2x2& a, const mat2x2& b);
 
-	mat2x2 operator * (const mat2x2& a, float s);
-	mat2x2 operator * (float s, const mat2x2& a);
+	mat2x2 operator * (const mat2x2& a, double s);
+	mat2x2 operator * (double s, const mat2x2& a);
 
-	mat2x2 operator / (const mat2x2& a, float s);
-	mat2x2 operator / (float s, const mat2x2& a);
+	mat2x2 operator / (const mat2x2& a, double s);
+	mat2x2 operator / (double s, const mat2x2& a);
 
 	bool operator == (const mat2x2& a, const mat2x2& b);
 

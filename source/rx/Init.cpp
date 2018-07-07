@@ -15,7 +15,7 @@ namespace platform
 {
 	std::pair<rx::Window*, void*> Initialise()
 	{
-		std::string windowTitle = "SotV";
+		std::string windowTitle = "SAS";
 
 		void* userdata = platform::initialiseUserData();
 		void* userwindow = platform::createWindow(userdata, windowTitle, Config::getResX(), Config::getResY(), true);

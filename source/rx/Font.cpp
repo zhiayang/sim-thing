@@ -160,35 +160,35 @@ namespace rx
 
 			font->renderObject->buffers = { uvBuffer, vertBuffer };
 
-			std::vector<lx::vec2> verts;
-			std::vector<lx::vec2> uvs;
+			std::vector<lx::fvec2> verts;
+			std::vector<lx::fvec2> uvs;
 
 			// make the VBO.
 			for(uint32_t ch = firstChar; ch < firstChar + numChars; ch++)
 			{
 				auto fgp = font->getGlyphMetrics(ch);
 
-				verts.push_back(lx::round(lx::vec2(fgp.x1, fgp.y0)));	// 3
-				verts.push_back(lx::round(lx::vec2(fgp.x0, fgp.y1)));	// 2
-				verts.push_back(lx::round(lx::vec2(fgp.x0, fgp.y0)));	// 1
+				verts.push_back(lx::round(lx::fvec2(fgp.x1, fgp.y0)));	// 3
+				verts.push_back(lx::round(lx::fvec2(fgp.x0, fgp.y1)));	// 2
+				verts.push_back(lx::round(lx::fvec2(fgp.x0, fgp.y0)));	// 1
 
-				verts.push_back(lx::round(lx::vec2(fgp.x0, fgp.y1)));
-				verts.push_back(lx::round(lx::vec2(fgp.x1, fgp.y0)));
-				verts.push_back(lx::round(lx::vec2(fgp.x1, fgp.y1)));
+				verts.push_back(lx::round(lx::fvec2(fgp.x0, fgp.y1)));
+				verts.push_back(lx::round(lx::fvec2(fgp.x1, fgp.y0)));
+				verts.push_back(lx::round(lx::fvec2(fgp.x1, fgp.y1)));
 
-				uvs.push_back(lx::vec2(fgp.u1, fgp.v0));	// 3
-				uvs.push_back(lx::vec2(fgp.u0, fgp.v1));	// 2
-				uvs.push_back(lx::vec2(fgp.u0, fgp.v0));	// 1
+				uvs.push_back(lx::fvec2(fgp.u1, fgp.v0));	// 3
+				uvs.push_back(lx::fvec2(fgp.u0, fgp.v1));	// 2
+				uvs.push_back(lx::fvec2(fgp.u0, fgp.v0));	// 1
 
-				uvs.push_back(lx::vec2(fgp.u0, fgp.v1));
-				uvs.push_back(lx::vec2(fgp.u1, fgp.v0));
-				uvs.push_back(lx::vec2(fgp.u1, fgp.v1));
+				uvs.push_back(lx::fvec2(fgp.u0, fgp.v1));
+				uvs.push_back(lx::fvec2(fgp.u1, fgp.v0));
+				uvs.push_back(lx::fvec2(fgp.u1, fgp.v1));
 			}
 
 			glEnableVertexAttribArray(0);
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-				glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(lx::vec2), &verts[0], GL_STATIC_DRAW);
+				glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(lx::fvec2), &verts[0], GL_STATIC_DRAW);
 
 				glVertexAttribPointer(
 					0,			// location
@@ -203,7 +203,7 @@ namespace rx
 			glEnableVertexAttribArray(1);
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-				glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(lx::vec2), &uvs[0], GL_STATIC_DRAW);
+				glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(lx::fvec2), &uvs[0], GL_STATIC_DRAW);
 
 				glVertexAttribPointer(
 					1,			// location
