@@ -5,8 +5,13 @@
 #include <stdio.h>
 #include <glbinding/gl/gl.h>
 
+// linear algebra
 #include "lx.h"
 
+// physics (rigidbodies)
+#include "px.h"
+
+// renderer
 #include "rx.h"
 #include "rx/model.h"
 
@@ -17,6 +22,7 @@
 #include <unistd.h>
 #include <array>
 
+static const double deltaTimeMultiplier	= 500000.0;
 static const double fixedDeltaTimeNs	= 1.0 * 1000.0 * 1000.0;
 
 static const double targetFramerate		= 61.0;
@@ -132,9 +138,9 @@ int main(int argc, char** argv)
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
 		rx::Camera cam;
-		cam.position = lx::vec3(0, 1, 2);
+		cam.position = lx::vec3(0, 600000000, 0);
 		cam.yaw = -90;
-		cam.pitch = -20;
+		cam.pitch = -85;
 
 		// setup the renderer. there's many parameters here...
 		theRenderer = new rx::Renderer(
@@ -143,15 +149,15 @@ int main(int argc, char** argv)
 			cam,								// camera
 			pipeline,							// shaders for forward rendering, deferred rendering, and text rendering.
 			lx::toRadians(70.0f),				// FOV, 70 degrees
-			0.001, 1000							// near plane, far plane
+			0.001, 100000000000000000			// near plane, far plane
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.1);
-		theRenderer->addPointLight(rx::PointLight(lx::fvec3(0, 10, 10), util::colour::white(), util::colour::white(), 0.7, 15.0));
+		theRenderer->setAmbientLighting(util::colour::white(), 0.4);
+		// theRenderer->addPointLight(rx::PointLight(lx::fvec3(0, 10, 10), util::colour::white(), util::colour::white(), 0.7, 15.0));
 
-		theRenderer->addSpotLight(rx::SpotLight(lx::fvec3(0, -4, 0), lx::fvec3(0, 1, 0), util::colour::white(), util::colour::white(),
-			0.3, 2.0, 12.5, 30));
+		// theRenderer->addSpotLight(rx::SpotLight(lx::fvec3(0, -4, 0), lx::fvec3(0, 1, 0), util::colour::white(), util::colour::white(),
+		// 	0.3, 2.0, 12.5, 30));
 	}
 
 
@@ -162,19 +168,21 @@ int main(int argc, char** argv)
 		using IK = input::Key;
 		auto cam = theRenderer->getCamera();
 
+		double speed = 100000.01;
+
 		if(k == IK::A || k == IK::D || k == IK::W || k == IK::S)
 		{
-			cam.position += ((k == IK::W || k == IK::S) ? cam.front() : cam.right()) * 0.005f * ((k == IK::S || k == IK::A) ? -1.0f : 1.0f);
+			cam.position += ((k == IK::W || k == IK::S) ? cam.front() : cam.right()) * speed * ((k == IK::S || k == IK::A) ? -1.0f : 1.0f);
 		}
 		else
 		{
 			if(k == IK::Space)
 			{
-				cam.position.y += 0.005;
+				cam.position.y += speed;
 			}
 			else
 			{
-				cam.position.y -= 0.005;
+				cam.position.y -= speed;
 			}
 		}
 
@@ -187,40 +195,36 @@ int main(int argc, char** argv)
 
 	auto model = rx::loadModelFromAsset(AssetLoader::Load("models/test/test.obj"), 1.0 / 20000.0);
 
-	auto aColour = util::colour(0.83, 0.20, 0.22);
-	auto box = new rx::Texture("textures/box.png");
-	auto box_spec = new rx::Texture("textures/box_spec.png");
-	auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
-	auto cubeRO1 = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), aColour, aColour, 32));
+	auto col1 = util::colour(0.247, 0.199, 0.075);
+	auto col2 = util::colour(0.752, 0.606, 0.226);
+	auto col3 = util::colour(0.628, 0.556, 0.366);
+	auto col4 = util::colour(0.200, 0.830, 0.220);	// red-dish
+	auto col5 = util::colour(0.992, 0.992, 0.588);	// yellow-ish
 
+	// auto box = new rx::Texture("textures/box.png");
+	// auto box_spec = new rx::Texture("textures/box_spec.png");
+	// auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
 
-	//
-	// auto col1 = util::colour(0.24725, 0.1995, 0.0745);
-	// auto col2 = util::colour(0.75164, 0.60648, 0.22648);
-	// auto col3 = util::colour(0.628281, 0.555802, 0.366065);
-	// auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col, col, util::colour::white(), 1024.0));
-	// auto cubeModel = rx::Model::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col1, col2, col3, 0.4 * 128));
-
-
-
-	lx::quat q = lx::quat::fromEulerDegs(lx::vec3(0, 0, 45));
-	lx::quat q1 = lx::quat::fromEulerDegs(lx::vec3(0, 0, 45));
-
-	fprintf(stderr, "%s", tfm::format("q = %s, q * q1 = %s, q * q1 * q1 = %s\n",
-		q, (q * q1), (q * q1 * q1)).c_str());
+	auto sun = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), col5, col5, 32));
+	auto earth = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), col4, col4, 32));
 
 
 
+	px::World world;
+	{
+		// sun
+		// world.bodies.push_back(px::RigidBody(5000, lx::vec3(0, 0, 0), lx::vec3(0, 0, 0)));
+
+		// earth
+		// world.bodies.push_back(px::RigidBody(5, lx::vec3(25, 0, 0), lx::vec3(0, 0, -30)));
 
 
+		// earth
+		world.bodies.push_back(px::RigidBody(5.972e24, lx::vec3(0, 0, 0), lx::vec3(0, 0, 0)));
 
-
-
-
-
-
-
-
+		// moon
+		world.bodies.push_back(px::RigidBody(7.34767309e22, lx::vec3(3.844e8, 0, 0), lx::vec3(0, 0, -1022)));
+	}
 
 
 	double avgFrameTime = 0;
@@ -256,22 +260,27 @@ int main(int argc, char** argv)
 			{
 				accumulator -= fixedDeltaTimeNs;
 
+				px::simulateWorld(world, NS_TO_S(fixedDeltaTimeNs * deltaTimeMultiplier));
+
 				// update the camera based on the mouse, for now.
 				{
 					bool invert = false;
 
 					double sensitivity = 0.5;
+
 					auto md = input::getMouseChange(inputState);
 					auto cam = theRenderer->getCamera();
 
-					// fprintf(stderr, "delta = (%.0f, %.0f)\n", md.x, md.y);
 					cam.pitch = lx::clamp(cam.pitch + md.y * sensitivity * (invert ? -1 : 1), -89.4, +89.4);
 					cam.yaw += md.x * sensitivity * -1;
 
 					theRenderer->updateCamera(cam);
 
-					theRenderer->spotLights.back().position = tof(cam.position);
-					theRenderer->spotLights.back().direction = tof(cam.front());
+					if(theRenderer->spotLights.size() > 0)
+					{
+						theRenderer->spotLights.back().position = tof(cam.position);
+						theRenderer->spotLights.back().direction = tof(cam.front());
+					}
 
 					input::Update(inputState, theRenderer->window, fixedDeltaTimeNs);
 				}
@@ -284,8 +293,9 @@ int main(int argc, char** argv)
 		rx::BeginFrame(theRenderer);
 
 
-		theRenderer->renderObject(cubeRO, lx::mat4());
-		theRenderer->renderObject(cubeRO1, lx::mat4().translate(lx::vec3(0, -0.3, 0)).scale(lx::vec3(10, 0.01, 10)));
+		theRenderer->renderObject(sun, lx::mat4().translate(world.bodies[0].position()).scale(lx::vec3(6371000)));
+		theRenderer->renderObject(earth, lx::mat4().translate(world.bodies[1].position()).scale(lx::vec3(1737000)));
+		// theRenderer->renderObject(earth, lx::mat4().scale(lx::vec3(1737000)).translate(world.bodies[1].position()));
 
 		// for(const auto& ro : rx::RenderObject::fromModel(model))
 		// 	theRenderer->renderObject(ro, lx::mat4());
