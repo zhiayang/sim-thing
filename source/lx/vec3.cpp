@@ -21,6 +21,8 @@ namespace lx
 		return this->ptr[i];
 	}
 
+	vec3 vec3::operator - () const { return vec3(-this->x, -this->y, -this->z); }
+
 	vec3& vec3::operator += (const vec3& v) { this->x += v.x; this->y += v.y; this->z += v.z; return *this; }
 	vec3& vec3::operator -= (const vec3& v) { this->x -= v.x; this->y -= v.y; this->z -= v.z; return *this; }
 	vec3& vec3::operator *= (const vec3& v) { this->x *= v.x; this->y *= v.y; this->z *= v.z; return *this; }
@@ -37,12 +39,6 @@ namespace lx
 		double ivs = _fastInverseSqrtD(mag);
 		return vec3(this->x * ivs, this->y * ivs, this->z * ivs);
 	}
-
-	#ifdef AMERICAN_SPELLINGS
-		vec3 vec3::normalized() const { return this->normalised(); }
-	#endif
-
-
 
 
 
@@ -74,7 +70,6 @@ namespace lx
 
 	vec3 round(const vec3&v) { return vec3(lx::round(v.x), lx::round(v.y), lx::round(v.z)); }
 	vec3 normalise(const vec3& v) { return v.normalised(); }
-	vec3 normalize(const vec3& v) { return v.normalised(); }
 	double magnitude(const vec3& v) { return v.magnitude(); }
 
 	double dot(const vec3& a, const vec3& b)

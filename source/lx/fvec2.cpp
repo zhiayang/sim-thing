@@ -22,6 +22,8 @@ namespace lx
 		return this->ptr[i];
 	}
 
+	fvec2 fvec2::operator - () const { return fvec2(-this->x, -this->y); }
+
 	fvec2& fvec2::operator += (const fvec2& v) { this->x += v.x; this->y += v.y; return *this; }
 	fvec2& fvec2::operator -= (const fvec2& v) { this->x -= v.x; this->y -= v.y; return *this; }
 	fvec2& fvec2::operator *= (const fvec2& v) { this->x *= v.x; this->y *= v.y; return *this; }
@@ -39,10 +41,6 @@ namespace lx
 		float ivs = _fastInverseSqrtF(mag);
 		return fvec2(this->x * ivs, this->y * ivs);
 	}
-
-	#ifdef AMERICAN_SPELLINGS
-		fvec2 fvec2::normalized() const { return this->normalised(); }
-	#endif
 
 
 
@@ -68,7 +66,6 @@ namespace lx
 
 	fvec2 round(const fvec2&v) { return fvec2(lx::round(v.x), lx::round(v.y)); }
 	fvec2 normalise(const fvec2& v) { return v.normalised(); }
-	fvec2 normalize(const fvec2& v) { return v.normalised(); }
 	float magnitude(const fvec2& v) { return v.magnitude(); }
 
 	float dot(const fvec2& a, const fvec2& b)

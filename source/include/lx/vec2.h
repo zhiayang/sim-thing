@@ -12,7 +12,7 @@ namespace lx
 	{
 		vec2(double a, double b) : x(a), y(b) { }
 
-		explicit vec2() : x(0.0f), y(0.0f) { }
+		vec2() : x(0.0f), y(0.0f) { }
 		explicit vec2(double a) : x(a), y(a) { }
 
 
@@ -28,6 +28,7 @@ namespace lx
 
 		double& operator[] (size_t i);
 		const double& operator[] (size_t i) const;
+		vec2 operator - () const;
 
 		vec2& operator += (const vec2& v);
 		vec2& operator -= (const vec2& v);
@@ -46,10 +47,6 @@ namespace lx
 		vec2 yx() const;
 		vec2 xx() const;
 		vec2 yy() const;
-
-		#ifdef AMERICAN_SPELLINGS
-			vec2 normalized() const;
-		#endif
 	};
 
 
@@ -67,7 +64,6 @@ namespace lx
 
 	vec2 round(const vec2& v);
 	vec2 normalise(const vec2& v);
-	vec2 normalize(const vec2& v);
 	double magnitude(const vec2& v);
 
 	double dot(const vec2& a, const vec2& b);

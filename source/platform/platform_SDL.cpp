@@ -31,7 +31,11 @@ namespace platform
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
+		// SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+		// SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+
 		SDL_CaptureMouse((SDL_bool) true);
+
 		SDL_ShowCursor(false);
 
 		SDL_GL_SetSwapInterval(1);
@@ -67,6 +71,13 @@ namespace platform
 			ERROR("Failed to create OpenGL context. SDL Error: '%s'", SDL_GetError());
 
 		SDL_SetWindowGrab(sdlWindow, SDL_TRUE);
+
+		int w = 0;
+		int h = 0;
+
+		SDL_GetWindowSize(sdlWindow, &w, &h);
+		SDL_WarpMouseInWindow(sdlWindow, w / 2, h / 2);
+
 
 		return sdlWindow;
 	}

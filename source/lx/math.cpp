@@ -36,6 +36,17 @@ namespace lx
 	float atan2(float x, float y) { return ::atan2(x, y); }
 	double atan2(double x, double y) { return ::atan2(x, y); }
 
+	float pow(float x, float n) { return ::pow(x, n); }
+	double pow(double x, double n) { return ::pow(x, n); }
+
+	fvec2 pow(const fvec2& v, float n) { return fvec2(pow(v.x, n), pow(v.y, n)); }
+	fvec3 pow(const fvec3& v, float n) { return fvec3(pow(v.x, n), pow(v.y, n), pow(v.z, n)); }
+	fvec4 pow(const fvec4& v, float n) { return fvec4(pow(v.x, n), pow(v.y, n), pow(v.z, n), pow(v.w, n)); }
+
+	vec2 pow(const vec2& v, double n) { return vec2(pow(v.x, n), pow(v.y, n)); }
+	vec3 pow(const vec3& v, double n) { return vec3(pow(v.x, n), pow(v.y, n), pow(v.z, n)); }
+	vec4 pow(const vec4& v, double n) { return vec4(pow(v.x, n), pow(v.y, n), pow(v.z, n), pow(v.w, n)); }
+
 
 	float toDegrees(float radians) { return radians * 57.295779513082320876798154814105; }
 	float toRadians(float degrees) { return degrees * 0.01745329251994329576923690768489; }
@@ -43,6 +54,19 @@ namespace lx
 	double toDegrees(double radians) { return radians * 57.295779513082320876798154814105; }
 	double toRadians(double degrees) { return degrees * 0.01745329251994329576923690768489; }
 
+
+	vec3 toDegrees(const vec3& v)  { return vec3(toDegrees(v.x), toDegrees(v.y), toDegrees(v.z)); }
+	fvec3 toDegrees(const fvec3& v)  { return fvec3(toDegrees(v.x), toDegrees(v.y), toDegrees(v.z)); }
+
+	vec3 toRadians(const vec3& v) { return vec3(toRadians(v.x), toRadians(v.y), toRadians(v.z)); }
+	fvec3 toRadians(const fvec3& v)  { return fvec3(toRadians(v.x), toRadians(v.y), toRadians(v.z)); }
+
+
 	float sqrt(float x) { return ::sqrt(x); }
 	double sqrt(double x) { return ::sqrt(x); }
 }
+
+
+
+
+

@@ -14,7 +14,7 @@ namespace lx
 	{
 		vec3(double a, double b, double c) : x(a), y(b), z(c) { }
 
-		explicit vec3() : x(0.0f), y(0.0f), z(0.0f) { }
+		vec3() : x(0.0f), y(0.0f), z(0.0f) { }
 		explicit vec3(double a) : x(a), y(a), z(a) { }
 		explicit vec3(const vec2& v2, double c) : x(v2.x), y(v2.y), z(c) { }
 
@@ -32,6 +32,8 @@ namespace lx
 
 		double& operator[] (size_t i);
 		const double& operator[] (size_t i) const;
+		vec3 operator - () const;
+
 		vec3& operator += (const vec3& v);
 		vec3& operator -= (const vec3& v);
 		vec3& operator *= (const vec3& v);
@@ -64,11 +66,6 @@ namespace lx
 		vec3 xxx() const;
 		vec3 yyy() const;
 		vec3 zzz() const;
-
-
-		#ifdef AMERICAN_SPELLINGS
-			vec3 normalized() const;
-		#endif
 	};
 
 	vec3 operator + (const vec3& a, const vec3& b);
@@ -84,7 +81,6 @@ namespace lx
 
 	vec3 round(const vec3& v);
 	vec3 normalise(const vec3& v);
-	vec3 normalize(const vec3& v);
 	double magnitude(const vec3& v);
 	vec3 cross(const vec3& a, const vec3& b);
 

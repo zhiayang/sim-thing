@@ -21,6 +21,8 @@ namespace lx
 		return this->ptr[i];
 	}
 
+	vec4 vec4::operator - () const { return vec4(-this->x, -this->y, -this->z, -this->w); }
+
 	vec4& vec4::operator += (const vec4& v) { this->x += v.x; this->y += v.y; this->z += v.z; this->w += v.w; return *this; }
 	vec4& vec4::operator -= (const vec4& v) { this->x -= v.x; this->y -= v.y; this->z -= v.z; this->w -= v.w; return *this; }
 	vec4& vec4::operator *= (const vec4& v) { this->x *= v.x; this->y *= v.y; this->z *= v.z; this->w *= v.w; return *this; }
@@ -37,10 +39,6 @@ namespace lx
 		double ivs = _fastInverseSqrtD(mag);
 		return vec4(this->x * ivs, this->y * ivs, this->z * ivs, this->w * ivs);
 	}
-
-	#ifdef AMERICAN_SPELLINGS
-		vec4 vec4::normalized() const { return this->normalised(); }
-	#endif
 
 
 
@@ -70,7 +68,6 @@ namespace lx
 
 	vec4 round(const vec4&v) { return vec4(lx::round(v.x), lx::round(v.y), lx::round(v.z), lx::round(v.w)); }
 	vec4 normalise(const vec4& v) { return v.normalised(); }
-	vec4 normalize(const vec4& v) { return v.normalised(); }
 	double magnitude(const vec4& v) { return v.magnitude(); }
 
 	double dot(const vec4& a, const vec4& b)

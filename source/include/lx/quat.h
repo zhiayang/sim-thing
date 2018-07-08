@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include "lx/vec4.h"
+#include "lx/mat3.h"
 
 namespace lx
 {
@@ -37,11 +38,18 @@ namespace lx
 
 		vec3 toEulerDegs() const;
 		vec3 toEulerRads() const;
+		mat3 toRotationMatrix() const;
+
+		quat normalised() const;
+		double magnitude() const;
 
 		static quat fromEulerDegs(const vec3& elr);
 		static quat fromEulerRads(const vec3& elr);
+		static quat fromRotationMatrix(const mat3& r);
 	};
 
+	quat normalise(const quat& q);
+	double magnitude(const vec3& v);
 
 	quat operator + (const quat& a, const quat& b);
 	quat operator - (const quat& a, const quat& b);

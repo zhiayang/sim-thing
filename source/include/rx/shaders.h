@@ -25,9 +25,13 @@ namespace rx
 		std::string fragmentShaderPath;
 	};
 
+	constexpr size_t SHADER_SUPPORTS_NOTHING			= 0x0;
+	constexpr size_t SHADER_SUPPORTS_MATERIALS			= 0x1;
+	constexpr size_t SHADER_SUPPORTS_CAMERA_POSITION	= 0x2;
+
 	struct ShaderProgram
 	{
-		ShaderProgram(const std::string& shaderName, const ShaderSource& source);
+		ShaderProgram(const std::string& shaderName, const ShaderSource& source, size_t caps);
 
 		void use();
 		bool isInUse();
@@ -45,8 +49,23 @@ namespace rx
 		void setUniform(const std::string& name, float f);
 		void setUniform(const std::string& name, int i);
 
+
+		// capabilities
+		size_t capabilities = 0;
+
 		std::string name;
 		gl::GLuint progId = -1;
 		std::unordered_map<std::string, gl::GLuint> uniformLocations;
 	};
 }
+
+
+
+
+
+
+
+
+
+
+

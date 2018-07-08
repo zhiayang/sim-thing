@@ -4,6 +4,8 @@
 
 #pragma once
 #include <random>
+
+#include <vector>
 #include <stdint.h>
 #include <stdlib.h>
 #include <algorithm>
@@ -147,6 +149,77 @@ namespace util
 		static colour magenta() { return colour::blue() + colour::red(); }
 		static colour random() { return colour(util::random::get(0, 1), util::random::get(0, 1), util::random::get(0, 1)); }
 	};
+
+
+
+	template <typename T, class UnaryOp, typename K = typename std::result_of<UnaryOp(T)>::type>
+	std::vector<K> map(const std::vector<T>& input, UnaryOp fn)
+	{
+		std::vector<K> ret;
+		for(auto i : input)
+			ret.push_back(fn(i));
+
+		return ret;
+	}
+
+	template <typename T, class UnaryOp, class Predicate, typename K = typename std::result_of<UnaryOp(T)>::type>
+	std::vector<K> filterMap(const std::vector<T>& input, Predicate cond, UnaryOp fn)
+	{
+		std::vector<K> ret;
+		for(auto i : input)
+		{
+			if(cond(i))
+				ret.push_back(fn(i));
+		}
+
+		return ret;
+	}
+
+	template <typename T, class UnaryOp, class Predicate, typename K = typename std::result_of<UnaryOp(T)>::type>
+	std::vector<K> mapFilter(const std::vector<T>& input, UnaryOp fn, Predicate cond)
+	{
+		std::vector<K> ret;
+		for(auto i : input)
+		{
+			auto k = fn(i);
+			if(cond(k)) ret.push_back(k);
+		}
+
+		return ret;
+	}
+
+	template <typename T, class Predicate>
+	std::vector<T> filter(const std::vector<T>& input, Predicate cond)
+	{
+		std::vector<T> ret;
+		for(const auto& i : input)
+			if(cond(i))
+				ret.push_back(i);
+
+		return ret;
+	}
+
+	template <typename T, class Predicate>
+	std::vector<T> filterUntil(const std::vector<T>& input, Predicate cond)
+	{
+		std::vector<T> ret;
+		for(const auto& i : input)
+		{
+			if(cond(i)) ret.push_back(i);
+			else        break;
+		}
+
+		return ret;
+	}
+
+	template <typename T, class Predicate>
+	size_t indexOf(const std::vector<T>& input, Predicate cond)
+	{
+		for(size_t i = 0; i < input.size(); i++)
+			if(cond(input[i])) return i;
+
+		return -1;
+	}
 }
 
 namespace Logging
@@ -170,16 +243,21 @@ namespace Logging
 
 
 
+#define S_TO_MS(x)				((x) * 1000.0)
+#define S_TO_US(x)				(S_TO_MS(x) * 1000.0)
+#define S_TO_NS(x)				(S_TO_US(x) * 1000.0)
 
-#define NS_TO_US(x)				((x) / 1000)
-#define NS_TO_MS(x)				(NS_TO_US(x) / 1000)
-#define NS_TO_S(x)				(NS_TO_MS(x) / 1000)
+#define MS_TO_S(x)				((x) / 1000.0)
+#define MS_TO_US(x)				((x) * 1000.0)
+#define MS_TO_NS(x)				(MS_TO_US(x) * 1000.0)
 
-#define S_TO_MS(x)				((x) * 1000)
-#define S_TO_US(x)				(S_TO_MS(x) * 1000)
-#define S_TO_NS(x)				(S_TO_US(x) * 1000)
+#define US_TO_NS(x)				((x) * 1000.0)
+#define US_TO_MS(x)				((x) / 1000.0)
+#define US_TO_S(x)				(US_TO_MS(x) / 1000.0)
 
-
+#define NS_TO_US(x)				((x) / 1000.0)
+#define NS_TO_MS(x)				(NS_TO_US(x) / 1000.0)
+#define NS_TO_S(x)				(NS_TO_MS(x) / 1000.0)
 
 
 

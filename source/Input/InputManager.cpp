@@ -56,7 +56,7 @@ namespace input
 				Key k = event.keypress;
 				assert(k < Key::NUM_KEYS);
 
-				bool eventdown = (event.type == ET::KeyDown);
+				bool eventdown = (event.type == ET::KeyDown || event.type == ET::MouseButtonDown);
 
 				bool prev = state->keys.test((size_t) k);
 				if(k != Key::INVALID)

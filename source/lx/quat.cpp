@@ -22,6 +22,35 @@ namespace lx
 		return this->ptr[i];
 	}
 
+
+	mat3 quat::toRotationMatrix() const
+	{
+		return mat3();
+	}
+
+	quat quat::fromRotationMatrix(const mat3& r)
+	{
+		return quat();
+	}
+
+	quat quat::normalised() const
+	{
+		double msq = (this->w * this->w) + (this->x * this->x) + (this->y * this->y) + (this->z * this->z);
+
+		if(abs(1.0 - msq) < 2.107342e-08)
+			return *this * (2.0 / (1.0 + msq));
+		else
+			return *this * (1.0 / sqrt(msq));
+	}
+
+	double quat::magnitude() const
+	{
+		return sqrt((this->w * this->w) + (this->x * this->x) + (this->y * this->y) + (this->z * this->z));
+	}
+
+
+
+
 	vec3 quat::toEulerRads() const
 	{
 		double sinr = +2.0 * (this->w * this->x + this->y * this->z);
@@ -49,24 +78,19 @@ namespace lx
 
 	quat quat::fromEulerDegs(const vec3& elr)
 	{
-		return quat::fromEulerRads(vec3(toRadians(elr.x), toRadians(elr.y), toRadians(elr.z)));
+		return quat::fromEulerRads(toRadians(elr));
 	}
 
 	quat quat::fromEulerRads(const vec3& elr)
 	{
-		double cx = cos(elr.x * 0.5);
-		double sx = sin(elr.x * 0.5);
+		// pitch
+		auto s = vec3(sin(0.5 * elr.x), sin(0.5 * elr.y), sin(0.5 * elr.z));
+		auto c = vec3(cos(0.5 * elr.x), cos(0.5 * elr.y), cos(0.5 * elr.z));
 
-		double cy = cos(elr.y * 0.5);
-		double sy = sin(elr.y * 0.5);
-
-		double cz = cos(elr.z * 0.5);
-		double sz = sin(elr.z * 0.5);
-
-		return quat(cz * cy * cx + sz * sy * sx,
-					cz * sy * cx - sz * cy * sx,
-					cz * cy * sx + sz * sy * cx,
-					sz * cy * cx - cz * sy * sx);
+		return quat(c.x * c.y * c.z - s.x * s.y * s.z,
+					s.x * c.y * c.z + c.x * s.y * s.z,
+					c.x * s.y * c.z - s.x * c.y * s.z,
+					c.x * c.y * s.z + s.x * s.y * c.z);
 	}
 
 	quat& quat::operator += (const quat& v) { this->x += v.x; this->y += v.y; this->z += v.z; this->w += v.w; return *this; }
@@ -86,10 +110,8 @@ namespace lx
 	quat operator * (const quat& a, const quat& b)
 	{
 		return quat(a.real * b.real - dot(a.imag, b.imag),
-					vec3((a.real * b.imag) +
-						(b.real * a.imag) +
-						cross(a.imag, b.imag))
-					);
+					vec3((a.real * b.imag) + (b.real * a.imag) + cross(a.imag, b.imag))
+				).normalised();
 	}
 
 
@@ -98,6 +120,10 @@ namespace lx
 	quat operator * (const quat& a, double b) { return quat(a.x * b, a.y * b, a.z * b, a.w * b); }
 	quat operator / (const quat& a, double b) { return quat(a.x / b, a.y / b, a.z / b, a.w / b); }
 	quat operator * (double a, const quat& b) { return b * a; }
+
+
+	double magnitude(const quat& q) { return q.magnitude(); }
+	quat normalise(const quat& q) { return q.normalised(); }
 }
 
 

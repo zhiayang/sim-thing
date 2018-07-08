@@ -15,7 +15,7 @@ namespace lx
 	{
 		fvec4(float a, float b, float c, float d) : x(a), y(b), z(c), w(d) { }
 
-		explicit fvec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) { }
+		fvec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) { }
 		explicit fvec4(float a) : x(a), y(a), z(a), w(a) { }
 		explicit fvec4(const fvec2& v2, float c, float d) : x(v2.x), y(v2.y), z(c), w(d) { }
 		explicit fvec4(const fvec3& v3, float d) : x(v3.x), y(v3.y), z(v3.z), w(d) { }
@@ -32,6 +32,8 @@ namespace lx
 
 		float& operator[] (size_t i);
 		const float& operator[] (size_t i) const;
+		fvec4 operator - () const;
+
 		fvec4& operator += (const fvec4& v);
 		fvec4& operator -= (const fvec4& v);
 		fvec4& operator *= (const fvec4& v);
@@ -101,11 +103,6 @@ namespace lx
 		fvec4 yyyy() const;
 		fvec4 zzzz() const;
 		fvec4 wwww() const;
-
-
-		#ifdef AMERICAN_SPELLINGS
-			fvec4 normalized() const;
-		#endif
 	};
 
 
@@ -122,7 +119,6 @@ namespace lx
 
 	fvec4 round(const fvec4& v);
 	fvec4 normalise(const fvec4& v);
-	fvec4 normalize(const fvec4& v);
 	float magnitude(const fvec4& v);
 
 	float dot(const fvec4& a, const fvec4& b);

@@ -12,7 +12,7 @@ namespace lx
 	{
 		fvec2(float a, float b) : x(a), y(b) { }
 
-		explicit fvec2() : x(0.0f), y(0.0f) { }
+		fvec2() : x(0.0f), y(0.0f) { }
 		explicit fvec2(float a) : x(a), y(a) { }
 
 
@@ -28,6 +28,7 @@ namespace lx
 
 		float& operator[] (size_t i);
 		const float& operator[] (size_t i) const;
+		fvec2 operator - () const;
 
 		fvec2& operator += (const fvec2& v);
 		fvec2& operator -= (const fvec2& v);
@@ -38,6 +39,8 @@ namespace lx
 		fvec2& operator *= (float s);
 		fvec2& operator /= (float s);
 
+
+
 		float magnitude() const;
 		fvec2 normalised() const;
 
@@ -46,10 +49,6 @@ namespace lx
 		fvec2 yx() const;
 		fvec2 xx() const;
 		fvec2 yy() const;
-
-		#ifdef AMERICAN_SPELLINGS
-			fvec2 normalized() const;
-		#endif
 	};
 
 
@@ -67,7 +66,6 @@ namespace lx
 
 	fvec2 round(const fvec2& v);
 	fvec2 normalise(const fvec2& v);
-	fvec2 normalize(const fvec2& v);
 	float magnitude(const fvec2& v);
 
 	float dot(const fvec2& a, const fvec2& b);

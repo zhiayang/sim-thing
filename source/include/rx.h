@@ -59,7 +59,6 @@ namespace rx
 
 		Text,
 		Vertices,
-		ScreenQuad,
 	};
 
 	struct RenderObject
@@ -76,6 +75,7 @@ namespace rx
 		gl::GLuint vertexArrayObject = -1;
 
 		RenderType renderType = RenderType::Invalid;
+		size_t shaderProgramIndex = 0;
 
 		std::vector<gl::GLuint> buffers;
 
@@ -124,15 +124,14 @@ namespace rx
 
 	struct ShaderPipeline
 	{
-		ShaderProgram forwardShader;
 		ShaderProgram textShader;
-
-		ShaderProgram screenQuadShader;
+		std::vector<ShaderProgram> shaders;
 	};
 
 	struct Renderer
 	{
-		Renderer(Window* win, util::colour clearColour, Camera camera, ShaderPipeline shaderPipeline, double fov, double near, double far);
+		Renderer(Window* win, util::colour clearColour, const Camera& camera, const ShaderPipeline& shaderPipeline,
+			double fov, double near, double far);
 
 		void clearRenderList();
 
@@ -158,8 +157,6 @@ namespace rx
 
 		std::vector<PointLight> sortAndUpdatePointLights(const lx::fvec3& reference);
 		std::vector<SpotLight> sortAndUpdateSpotLights(const lx::fvec3& reference);
-
-
 
 		void renderObject(RenderObject* ro, const lx::mat4& transform);
 
@@ -203,12 +200,7 @@ namespace rx
 
 			Texture* placeholderTexture = 0;
 
-
-			ShaderProgram screenQuadProgram;
-
-			ShaderProgram forwardShaderProgram;
-			ShaderProgram textShaderProgram;
-
+			ShaderPipeline pipeline;
 			std::vector<RenderCommand> forwardList;
 
 

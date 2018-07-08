@@ -22,19 +22,15 @@
 #include <unistd.h>
 #include <array>
 
-static const double deltaTimeMultiplier	= 500000.0;
-static const double fixedDeltaTimeNs	= 1.0 * 1000.0 * 1000.0;
+// static const double deltaTimeMultiplier	= 500000.0;
+static const double deltaTimeMultiplier	= 1.0;
+static const double fixedDeltaTimeNs	= MS_TO_NS(1.0);
 
 static const double targetFramerate		= 61.0;
 static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
 
 static rx::Renderer* theRenderer = 0;
 static input::State* inputState = 0;
-
-namespace rx
-{
-}
-
 
 
 static std::pair<double, double> determineCurrentFPS(double previous, double frameBegin, double frameTime)
@@ -95,42 +91,32 @@ int main(int argc, char** argv)
 
 	inputState = new input::State();
 
-	// setup the shader... this is more involved than i'd like, but it's more flexible.
-	// sidenote: designated initialisers are amazing, fuck c++ for not having it.
-	// constructors do not replace this, especially since it doesn't have named arguments
-	// .stupid.
-
-	// 1. shader for forward rendering
-	auto forwardProg = rx::ShaderProgram("forwardShader", rx::ShaderSource {
-
-		.glslVersion = "330 core",
-		.vertexShaderPath = "shaders/forwardShader.vs",
-		.fragmentShaderPath = "shaders/forwardShader.fs",
-	});
-
-	// 2. text shader
-	auto textProg = rx::ShaderProgram("textShader", rx::ShaderSource {
-
-		.glslVersion = "330 core",
-		.vertexShaderPath = "shaders/textShader.vs",
-		.fragmentShaderPath = "shaders/textShader.fs",
-	});
-
-	// 5. screen-filling quad shader
-	auto screenQuadProg = rx::ShaderProgram("screenQuadShader", rx::ShaderSource {
-
-		.glslVersion = "330 core",
-		.vertexShaderPath = "shaders/deferred/screenquad.vs",
-		.fragmentShaderPath = "shaders/deferred/screenquad.fs",
-	});
-
 
 	rx::ShaderPipeline pipeline {
 
-		.forwardShader = forwardProg,
-		.textShader = textProg,
+		.shaders = {
 
-		.screenQuadShader = screenQuadProg
+			// the main one
+			rx::ShaderProgram("forwardShader", rx::ShaderSource {
+				.glslVersion = "330 core",
+				.vertexShaderPath = "shaders/forward.vs",
+				.fragmentShaderPath = "shaders/forward.fs",
+			}, rx::SHADER_SUPPORTS_MATERIALS | rx::SHADER_SUPPORTS_CAMERA_POSITION),
+
+			// the gridline
+			rx::ShaderProgram("gridlineShader", rx::ShaderSource {
+				.glslVersion = "330 core",
+				.vertexShaderPath = "shaders/gridline.vs",
+				.fragmentShaderPath = "shaders/gridline.fs",
+			}, rx::SHADER_SUPPORTS_CAMERA_POSITION)
+		},
+
+		// for on-screen text.
+		.textShader = rx::ShaderProgram("textShader", rx::ShaderSource {
+			.glslVersion = "330 core",
+			.vertexShaderPath = "shaders/screentext.vs",
+			.fragmentShaderPath = "shaders/screentext.fs",
+		}, rx::SHADER_SUPPORTS_NOTHING)
 	};
 
 
@@ -138,9 +124,9 @@ int main(int argc, char** argv)
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
 		rx::Camera cam;
-		cam.position = lx::vec3(0, 600000000, 0);
-		cam.yaw = -90;
-		cam.pitch = -85;
+		cam.position = lx::vec3(7, 6, 15);// lx::vec3(0, 700000000, 0);
+		cam.yaw = -110;
+		cam.pitch = -18;
 
 		// setup the renderer. there's many parameters here...
 		theRenderer = new rx::Renderer(
@@ -154,36 +140,43 @@ int main(int argc, char** argv)
 
 		// position, colour, intensity
 		theRenderer->setAmbientLighting(util::colour::white(), 0.4);
-		// theRenderer->addPointLight(rx::PointLight(lx::fvec3(0, 10, 10), util::colour::white(), util::colour::white(), 0.7, 15.0));
-
-		// theRenderer->addSpotLight(rx::SpotLight(lx::fvec3(0, -4, 0), lx::fvec3(0, 1, 0), util::colour::white(), util::colour::white(),
-		// 	0.3, 2.0, 12.5, 30));
+		theRenderer->addSpotLight(rx::SpotLight(lx::fvec3(0, -4, 0), lx::fvec3(0, 1, 0), util::colour::white(), util::colour::white(),
+			0.3, 2.0, 12.5, 30));
 	}
 
 
+	px::World world;
+
+
+
 	input::addKeyHandler(inputState,
-		{ input::Key::W, input::Key::S, input::Key::A, input::Key::D, input::Key::ShiftL, input::Key::Space },
-		0, [](input::State* s, input::Key k, double) -> bool {
+		{ input::Key::W, input::Key::S, input::Key::A, input::Key::D, input::Key::ShiftL, input::Key::Space, input::Key::MouseL },
+		0, [&world](input::State* s, input::Key k, double) -> bool {
 
 		using IK = input::Key;
 		auto cam = theRenderer->getCamera();
 
-		double speed = 100000.01;
+		// double speed = 100000.01;
+		double speed = 0.01;
 
 		if(k == IK::A || k == IK::D || k == IK::W || k == IK::S)
 		{
 			cam.position += ((k == IK::W || k == IK::S) ? cam.front() : cam.right()) * speed * ((k == IK::S || k == IK::A) ? -1.0f : 1.0f);
 		}
-		else
+		else if(k == IK::Space)
 		{
-			if(k == IK::Space)
-			{
-				cam.position.y += speed;
-			}
-			else
-			{
-				cam.position.y -= speed;
-			}
+			cam.position.y += speed;
+		}
+		else if(k == IK::ShiftL)
+		{
+			cam.position.y -= speed;
+		}
+		else if(k == IK::MouseL)
+		{
+			auto f = 600 * cam.front();
+			f.y = 0;
+
+			world.bodies[0].addForce(f);
 		}
 
 		theRenderer->updateCamera(cam);
@@ -198,33 +191,66 @@ int main(int argc, char** argv)
 	auto col1 = util::colour(0.247, 0.199, 0.075);
 	auto col2 = util::colour(0.752, 0.606, 0.226);
 	auto col3 = util::colour(0.628, 0.556, 0.366);
-	auto col4 = util::colour(0.200, 0.830, 0.220);	// red-dish
-	auto col5 = util::colour(0.992, 0.992, 0.588);	// yellow-ish
+	auto col4 = util::colour(0.200, 0.830, 0.220);
+	auto col5 = util::colour(0.992, 0.992, 0.588);
+	auto col6 = util::colour(0.830, 0.200, 0.220);
 
 	// auto box = new rx::Texture("textures/box.png");
 	// auto box_spec = new rx::Texture("textures/box_spec.png");
 	// auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
 
-	auto sun = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), col5, col5, 32));
-	auto earth = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), col4, col4, 32));
+	// auto sun = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col5, col5, col5, 32));
+	auto earth = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col6, col6, col6, 32));
 
 
-
-	px::World world;
+	// {
+	// 	// earth and moon.
+		// world.bodies.push_back(px::RigidBody(5.972e24, lx::vec3(0, 0, 0), lx::vec3(0, 0, 0)));
+		// world.bodies.push_back(px::RigidBody(7.34767309e22, lx::vec3(3.844e8, 0, 0), lx::vec3(0, 0, -1022)));
+	// }
 	{
-		// sun
-		// world.bodies.push_back(px::RigidBody(5000, lx::vec3(0, 0, 0), lx::vec3(0, 0, 0)));
-
-		// earth
-		// world.bodies.push_back(px::RigidBody(5, lx::vec3(25, 0, 0), lx::vec3(0, 0, -30)));
-
-
-		// earth
-		world.bodies.push_back(px::RigidBody(5.972e24, lx::vec3(0, 0, 0), lx::vec3(0, 0, 0)));
-
-		// moon
-		world.bodies.push_back(px::RigidBody(7.34767309e22, lx::vec3(3.844e8, 0, 0), lx::vec3(0, 0, -1022)));
+		world.bodies.push_back(px::RigidBody(30, lx::vec3(0, 1.05, 0), lx::vec3(0)));
 	}
+
+
+
+	auto gridlines = rx::RenderObject::fromColouredVertices(
+		lx::tof(rx::triangulateQuadFace(rx::Face {
+			.vertices = {
+				lx::vec3(-10, 0, -10),
+				lx::vec3(-10, 0, +10),
+				lx::vec3(+10, 0, +10),
+				lx::vec3(+10, 0, -10),
+			}
+		}).vertices),
+		{
+			util::colour::random(),
+			util::colour::random(),
+			util::colour::random(),
+			util::colour::random(),
+			util::colour::random(),
+			util::colour::random()
+		},
+		{
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0)
+		}
+	);
+
+	// use the gridline shader.
+	gridlines->shaderProgramIndex = 1;
+
+
+
+
+
+
+
+
 
 
 	double avgFrameTime = 0;
@@ -260,7 +286,7 @@ int main(int argc, char** argv)
 			{
 				accumulator -= fixedDeltaTimeNs;
 
-				px::simulateWorld(world, NS_TO_S(fixedDeltaTimeNs * deltaTimeMultiplier));
+				px::stepSimulation(world, NS_TO_S(fixedDeltaTimeNs * deltaTimeMultiplier));
 
 				// update the camera based on the mouse, for now.
 				{
@@ -293,22 +319,43 @@ int main(int argc, char** argv)
 		rx::BeginFrame(theRenderer);
 
 
-		theRenderer->renderObject(sun, lx::mat4().translate(world.bodies[0].position()).scale(lx::vec3(6371000)));
-		theRenderer->renderObject(earth, lx::mat4().translate(world.bodies[1].position()).scale(lx::vec3(1737000)));
-		// theRenderer->renderObject(earth, lx::mat4().scale(lx::vec3(1737000)).translate(world.bodies[1].position()));
 
-		// for(const auto& ro : rx::RenderObject::fromModel(model))
-		// 	theRenderer->renderObject(ro, lx::mat4());
+
+
+
+
+		theRenderer->renderObject(gridlines, lx::mat4().scale(50));
+		theRenderer->renderObject(earth, lx::mat4().translate(world.bodies[0].position()).scale(2));
+
+
+
+
+		// theRenderer->renderObject(sun, lx::mat4().translate(world.bodies[0].position()).scale(lx::vec3(6371000)));
+		// theRenderer->renderObject(earth, lx::mat4().translate(world.bodies[1].position()).scale(lx::vec3(1737000)));
 
 
 		if((true))
 		{
-			std::string fpsstr = tfm::format("%.2f fps (%.1f ms) / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)",
-				std::min(currentFps, targetFramerate), avgFrameTime / (1000.0 * 1000.0), theRenderer->getCamera().position.x,
-				theRenderer->getCamera().position.y, theRenderer->getCamera().position.z, input::getMousePos(inputState).x,
-				input::getMousePos(inputState).y, theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
+			{
+				auto fpsstr = tfm::format("%.2f fps (%.1f ms) / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)",
+					currentFps, NS_TO_MS(avgFrameTime), theRenderer->getCamera().position.x,
+					theRenderer->getCamera().position.y, theRenderer->getCamera().position.z, input::getMousePos(inputState).x,
+					input::getMousePos(inputState).y, theRenderer->getCamera().yaw, theRenderer->getCamera().pitch);
 
-			theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, lx::fvec2(5, 5), util::colour::white());
+				theRenderer->renderStringInScreenSpace(fpsstr, primaryFont, 12.0, lx::fvec2(5, 5), util::colour::white());
+			}
+
+			{
+				auto timestr = tfm::format("t: %.2f s", world.worldtime);
+				theRenderer->renderStringInScreenSpace(timestr, primaryFont, 12.0, lx::fvec2(5, 5), util::colour::white(),
+					rx::TextAlignment::RightAligned);
+			}
+
+			{
+				auto velstr = tfm::format("vel: %s m/s", world.bodies[0].velocity());
+				theRenderer->renderStringInScreenSpace(velstr, primaryFont, 12.0, lx::fvec2(5, 20), util::colour::white(),
+					rx::TextAlignment::LeftAligned);
+			}
 		}
 
 		rx::EndFrame(theRenderer);

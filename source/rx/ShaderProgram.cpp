@@ -205,8 +205,10 @@ namespace rx
 
 
 
-	ShaderProgram::ShaderProgram(const std::string& sname, const ShaderSource& source)
+	ShaderProgram::ShaderProgram(const std::string& sname, const ShaderSource& source, size_t caps)
 	{
+		this->capabilities = caps;
+
 		using namespace gl;
 		this->name = sname;
 

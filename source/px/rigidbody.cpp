@@ -1,4 +1,4 @@
-// world.cpp
+// rigidbody.cpp
 // Copyright (c) 2014 - 2017, zhiayang@gmail.com
 // Licensed under the Apache License Version 2.0.
 
@@ -17,5 +17,10 @@ namespace px
 		// initial position and velocity
 		this->_pos = p;
 		this->_vel = v;
+	}
+
+	void RigidBody::addForce(const lx::vec3& f)
+	{
+		this->_inforce += f;
 	}
 }

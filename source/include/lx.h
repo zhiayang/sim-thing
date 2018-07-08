@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <vector>
 
 #include "lx/vec2.h"
 #include "lx/vec3.h"
@@ -58,11 +59,28 @@ namespace lx
 	float abs(float x);
 	double abs(double x);
 
+	float pow(float x, float n);
+	double pow(double x, double n);
+
+	fvec2 pow(const fvec2& v, float n);
+	fvec3 pow(const fvec3& v, float n);
+	fvec4 pow(const fvec4& v, float n);
+
+	vec2 pow(const vec2& v, double n);
+	vec3 pow(const vec3& v, double n);
+	vec4 pow(const vec4& v, double n);
+
 	float toDegrees(float radians);
 	float toRadians(float degrees);
 
 	double toDegrees(double radians);
 	double toRadians(double degrees);
+
+	vec3 toRadians(const vec3& degrees);
+	vec3 toDegrees(const vec3& radians);
+
+	fvec3 toRadians(const fvec3& degrees);
+	fvec3 toDegrees(const fvec3& radians);
 
 	float sqrt(float x);
 	double sqrt(double x);
@@ -103,12 +121,20 @@ namespace lx
 	fmat3 tof(const mat3& v);
 	fmat4 tof(const mat4& v);
 
+	std::vector<fvec2> tof(const std::vector<vec2>& vs);
+	std::vector<fvec3> tof(const std::vector<vec3>& vs);
+	std::vector<fvec4> tof(const std::vector<vec4>& vs);
+
 	vec2 fromf(const fvec2& v);
 	vec3 fromf(const fvec3& v);
 	vec4 fromf(const fvec4& v);
 	mat2 fromf(const fmat2& v);
 	mat3 fromf(const fmat3& v);
 	mat4 fromf(const fmat4& v);
+
+	std::vector<vec2> fromf(const std::vector<fvec2>& vs);
+	std::vector<vec3> fromf(const std::vector<fvec3>& vs);
+	std::vector<vec4> fromf(const std::vector<fvec4>& vs);
 }
 
 

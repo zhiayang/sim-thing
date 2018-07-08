@@ -21,6 +21,8 @@ namespace lx
 		return this->ptr[i];
 	}
 
+	fvec4 fvec4::operator - () const { return fvec4(-this->x, -this->y, -this->z, -this->w); }
+
 	fvec4& fvec4::operator += (const fvec4& v) { this->x += v.x; this->y += v.y; this->z += v.z; this->w += v.w; return *this; }
 	fvec4& fvec4::operator -= (const fvec4& v) { this->x -= v.x; this->y -= v.y; this->z -= v.z; this->w -= v.w; return *this; }
 	fvec4& fvec4::operator *= (const fvec4& v) { this->x *= v.x; this->y *= v.y; this->z *= v.z; this->w *= v.w; return *this; }
@@ -37,11 +39,6 @@ namespace lx
 		float ivs = _fastInverseSqrtF(mag);
 		return fvec4(this->x * ivs, this->y * ivs, this->z * ivs, this->w * ivs);
 	}
-
-	#ifdef AMERICAN_SPELLINGS
-		fvec4 fvec4::normalized() const { return this->normalised(); }
-	#endif
-
 
 
 
@@ -70,7 +67,6 @@ namespace lx
 
 	fvec4 round(const fvec4&v) { return fvec4(lx::round(v.x), lx::round(v.y), lx::round(v.z), lx::round(v.w)); }
 	fvec4 normalise(const fvec4& v) { return v.normalised(); }
-	fvec4 normalize(const fvec4& v) { return v.normalised(); }
 	float magnitude(const fvec4& v) { return v.magnitude(); }
 
 	float dot(const fvec4& a, const fvec4& b)

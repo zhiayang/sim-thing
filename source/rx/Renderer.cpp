@@ -25,10 +25,8 @@ using namespace gl;
 
 namespace rx
 {
-	Renderer::Renderer(Window* win, util::colour clearCol, Camera cam, ShaderPipeline pipeline, double fov, double near, double far)
-		: screenQuadProgram(pipeline.screenQuadShader), forwardShaderProgram(pipeline.forwardShader),
-			textShaderProgram(pipeline.textShader)
-
+	Renderer::Renderer(Window* win, util::colour clearCol, const Camera& cam, const ShaderPipeline& pipe, double fov, double near, double far)
+		: pipeline(pipe)
 	{
 		assert(win);
 		this->window = win;
@@ -58,6 +56,7 @@ namespace rx
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// glEnable(GL_FRAMEBUFFER_SRGB);
+		// glEnable(GL_MULTISAMPLE);
 
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
@@ -166,13 +165,8 @@ namespace rx
 
 	void Renderer::setAmbientLighting(const util::colour& colour, float intensity)
 	{
-		// set for both
-		for(auto* prog : { &this->forwardShaderProgram })
-		{
-			prog->use();
-			prog->setUniform("ambientLightColour", colour);
-			prog->setUniform("ambientLightIntensity", intensity);
-		}
+		this->pipeline.shaders[0].setUniform("ambientLightColour", colour);
+		this->pipeline.shaders[0].setUniform("ambientLightIntensity", intensity);
 	}
 
 	void Renderer::addPointLight(const rx::PointLight& light)
@@ -250,7 +244,7 @@ namespace rx
 		// (0, 0) in font-space is the bottom left, because :shrug:, so flip it.
 		double yPos = lx::round(pos).y + (scale * font->ascent);
 
-		// lx::fvec4 cliprect;
+		lx::fvec4 cliprect;
 		{
 			float x0 = xPos;
 			float y0 = yPos + (scale * font->descent);
@@ -268,7 +262,7 @@ namespace rx
 			float x1 = x0 + advx;
 			float y1 = y0 + advy;
 
-			// cliprect = lx::fvec4(0, y0, x1, y1);
+			cliprect = lx::fvec4(0, y0, x1, y1);
 		}
 
 
@@ -370,28 +364,26 @@ namespace rx
 		if(lights.size() > MAX_POINT_LIGHTS)
 			lights.erase(lights.begin() + MAX_POINT_LIGHTS, lights.end());
 
-		for(auto* shaderProg : { &this->forwardShaderProgram })
 		{
-			assert(shaderProg);
-			shaderProg->use();
+			this->pipeline.shaders[0].use();
 
 			size_t ctr = 0;
 			for(auto light : lights)
 			{
 				std::string arraypre = "pointLights[" + std::to_string(ctr) + "].";
 
-				shaderProg->setUniform(arraypre + "position", light.position);
-				shaderProg->setUniform(arraypre + "intensity", light.intensity);
+				this->pipeline.shaders[0].setUniform(arraypre + "position", light.position);
+				this->pipeline.shaders[0].setUniform(arraypre + "intensity", light.intensity);
 
-				shaderProg->setUniform(arraypre + "diffuseColour", light.diffuseColour);
-				shaderProg->setUniform(arraypre + "specularColour", light.specularColour);
+				this->pipeline.shaders[0].setUniform(arraypre + "diffuseColour", light.diffuseColour);
+				this->pipeline.shaders[0].setUniform(arraypre + "specularColour", light.specularColour);
 
-				shaderProg->setUniform(arraypre + "lightRadius", light.lightRadius);
+				this->pipeline.shaders[0].setUniform(arraypre + "lightRadius", light.lightRadius);
 
 				ctr++;
 			}
 
-			shaderProg->setUniform("pointLightCount", (int) ctr);
+			this->pipeline.shaders[0].setUniform("pointLightCount", (int) ctr);
 		}
 
 		return lights;
@@ -411,33 +403,32 @@ namespace rx
 		if(lights.size() > MAX_SPOT_LIGHTS)
 			lights.erase(lights.begin() + MAX_SPOT_LIGHTS, lights.end());
 
-		for(auto* shaderProg : { &this->forwardShaderProgram })
+
 		{
-			assert(shaderProg);
-			shaderProg->use();
+			this->pipeline.shaders[0].use();
 
 			size_t ctr = 0;
 			for(auto light : lights)
 			{
 				std::string arraypre = "spotLights[" + std::to_string(ctr) + "].";
 
-				shaderProg->setUniform(arraypre + "position", light.position);
-				shaderProg->setUniform(arraypre + "direction", light.direction);
+				this->pipeline.shaders[0].setUniform(arraypre + "position", light.position);
+				this->pipeline.shaders[0].setUniform(arraypre + "direction", light.direction);
 
-				shaderProg->setUniform(arraypre + "intensity", light.intensity);
+				this->pipeline.shaders[0].setUniform(arraypre + "intensity", light.intensity);
 
-				shaderProg->setUniform(arraypre + "diffuseColour", light.diffuseColour);
-				shaderProg->setUniform(arraypre + "specularColour", light.specularColour);
+				this->pipeline.shaders[0].setUniform(arraypre + "diffuseColour", light.diffuseColour);
+				this->pipeline.shaders[0].setUniform(arraypre + "specularColour", light.specularColour);
 
-				shaderProg->setUniform(arraypre + "innerCutoffCosine", light.innerCutoffCosine);
-				shaderProg->setUniform(arraypre + "outerCutoffCosine", light.outerCutoffCosine);
+				this->pipeline.shaders[0].setUniform(arraypre + "innerCutoffCosine", light.innerCutoffCosine);
+				this->pipeline.shaders[0].setUniform(arraypre + "outerCutoffCosine", light.outerCutoffCosine);
 
-				shaderProg->setUniform(arraypre + "lightRadius", light.lightRadius);
+				this->pipeline.shaders[0].setUniform(arraypre + "lightRadius", light.lightRadius);
 
 				ctr++;
 			}
 
-			shaderProg->setUniform("spotLightCount", (int) ctr);
+			this->pipeline.shaders[0].setUniform("spotLightCount", (int) ctr);
 		}
 
 		return lights;
@@ -481,39 +472,46 @@ namespace rx
 			{
 				case RenderType::Vertices: {
 
-					auto& sprog = this->forwardShaderProgram;
+					auto& sprog = this->pipeline.shaders[renderObj->shaderProgramIndex];
 					sprog.use();
 
 					sprog.setUniform("modelMatrix", tof(rc.modelMatrix));
 					sprog.setUniform("viewMatrix", tof(this->cameraMatrix));
 					sprog.setUniform("projMatrix", tof(this->projectionMatrix));
 
-					assert(renderObj->material.hasValue);
+					if(sprog.capabilities & SHADER_SUPPORTS_MATERIALS)
 					{
-						auto& mat = renderObj->material;
-						sprog.setUniform("material.shine", mat.shine);
+						assert(renderObj->material.hasValue);
+						{
+							auto& mat = renderObj->material;
+							sprog.setUniform("material.shine", mat.shine);
 
-						// set the colours
-						sprog.setUniform("material.ambientColour", tof(mat.ambientColour));
-						sprog.setUniform("material.diffuseColour", tof(mat.diffuseColour));
-						sprog.setUniform("material.specularColour", tof(mat.specularColour));
+							// set the colours
+							sprog.setUniform("material.ambientColour", tof(mat.ambientColour));
+							sprog.setUniform("material.diffuseColour", tof(mat.diffuseColour));
+							sprog.setUniform("material.specularColour", tof(mat.specularColour));
+						}
+
+						{
+							// i presume this sets which texture unit to use
+							sprog.setUniform("material.diffuseTexture", 0);
+							sprog.setUniform("material.specularTexture", 1);
+
+							auto& mat = renderObj->material;
+							Texture* diff = (mat.diffuseMap ? mat.diffuseMap : this->placeholderTexture);
+							Texture* spec = (mat.specularMap ? mat.specularMap : this->placeholderTexture);
+
+							// use the placeholder white texture
+							glActiveTexture(GL_TEXTURE1);
+							glBindTexture(GL_TEXTURE_2D, spec->glTextureID);
+
+							glActiveTexture(GL_TEXTURE0);
+							glBindTexture(GL_TEXTURE_2D, diff->glTextureID);
+						}
 					}
-
+					if(sprog.capabilities & SHADER_SUPPORTS_CAMERA_POSITION)
 					{
-						// i presume this sets which texture unit to use
-						sprog.setUniform("material.diffuseTexture", 0);
-						sprog.setUniform("material.specularTexture", 1);
-
-						auto& mat = renderObj->material;
-						Texture* diff = (mat.diffuseMap ? mat.diffuseMap : this->placeholderTexture);
-						Texture* spec = (mat.specularMap ? mat.specularMap : this->placeholderTexture);
-
-						// use the placeholder white texture
-						glActiveTexture(GL_TEXTURE1);
-						glBindTexture(GL_TEXTURE_2D, spec->glTextureID);
-
-						glActiveTexture(GL_TEXTURE0);
-						glBindTexture(GL_TEXTURE_2D, diff->glTextureID);
+						sprog.setUniform("cameraPosition", tof(this->camera.position));
 					}
 
 					glDrawArrays(renderObj->wireframe ? GL_LINES : GL_TRIANGLES, 0, renderObj->arrayLength);
@@ -525,18 +523,18 @@ namespace rx
 
 				case RenderType::Text: {
 
-					this->textShaderProgram.use();
+					this->pipeline.textShader.use();
 
 					lx::mat4 orthoProj = lx::orthographic(0.0, this->_width, this->_height, 0.0);
-					this->textShaderProgram.setUniform("projectionMatrix", tof(orthoProj));
-					this->textShaderProgram.setUniform("fontScale", rc.textScale);
-					this->textShaderProgram.setUniform("fontColour", rc.textColour);
+					this->pipeline.textShader.setUniform("projectionMatrix", tof(orthoProj));
+					this->pipeline.textShader.setUniform("fontScale", rc.textScale);
+					this->pipeline.textShader.setUniform("fontColour", rc.textColour);
 
 					glBindTexture(GL_TEXTURE_2D, renderObj->material.diffuseMap->glTextureID);
 
 					for(size_t i = 0; i < rc.indices.size(); i++)
 					{
-						this->textShaderProgram.setUniform("offsetPosition", rc.positions[i]);
+						this->pipeline.textShader.setUniform("offsetPosition", rc.positions[i]);
 						glDrawArrays(GL_TRIANGLES, rc.indices[i] * 6, 6);
 					}
 
@@ -544,11 +542,6 @@ namespace rx
 
 				} break;
 
-
-
-				case RenderType::ScreenQuad: {
-
-				} break;
 
 				case RenderType::Invalid:
 					ERROR("Invalid render command type");

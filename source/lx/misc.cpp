@@ -3,6 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #include "lx.h"
+#include "utilities.h"
 
 namespace lx
 {
@@ -187,6 +188,15 @@ namespace lx
 	mat2 fromf(const fmat2& m)	{ return mat2(fromf(m.vecs[0]), fromf(m.vecs[1])); }
 	mat3 fromf(const fmat3& m)	{ return mat3(fromf(m.vecs[0]), fromf(m.vecs[1]), fromf(m.vecs[2])); }
 	mat4 fromf(const fmat4& m)	{ return mat4(fromf(m.vecs[0]), fromf(m.vecs[1]), fromf(m.vecs[2]), fromf(m.vecs[3])); }
+
+
+	std::vector<fvec2> tof(const std::vector<vec2>& vs) { return util::map(vs, [](const auto& v) -> auto { return tof(v); }); }
+	std::vector<fvec3> tof(const std::vector<vec3>& vs) { return util::map(vs, [](const auto& v) -> auto { return tof(v); }); }
+	std::vector<fvec4> tof(const std::vector<vec4>& vs) { return util::map(vs, [](const auto& v) -> auto { return tof(v); }); }
+
+	std::vector<vec2> fromf(const std::vector<fvec2>& vs) { return util::map(vs, [](const auto& v) -> auto { return fromf(v); }); }
+	std::vector<vec3> fromf(const std::vector<fvec3>& vs) { return util::map(vs, [](const auto& v) -> auto { return fromf(v); }); }
+	std::vector<vec4> fromf(const std::vector<fvec4>& vs) { return util::map(vs, [](const auto& v) -> auto { return fromf(v); }); }
 }
 
 
@@ -224,9 +234,9 @@ namespace tinyformat
 		out << "v4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
 	}
 
-	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::quat& v)
+	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::quat& q)
 	{
-		out << "quat(" << v.w << ", " << v.x << ", " << v.y << ", " << v.z << ")";
+		out << "quat(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
 	}
 }
 

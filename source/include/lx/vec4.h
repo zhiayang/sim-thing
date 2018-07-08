@@ -15,7 +15,7 @@ namespace lx
 	{
 		vec4(double a, double b, double c, double d) : x(a), y(b), z(c), w(d) { }
 
-		explicit vec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) { }
+		vec4() : x(0.0f), y(0.0f), z(0.0f), w(0.0f) { }
 		explicit vec4(double a) : x(a), y(a), z(a), w(a) { }
 		explicit vec4(const vec2& v2, double c, double d) : x(v2.x), y(v2.y), z(c), w(d) { }
 		explicit vec4(const vec3& v3, double d) : x(v3.x), y(v3.y), z(v3.z), w(d) { }
@@ -32,6 +32,8 @@ namespace lx
 
 		double& operator[] (size_t i);
 		const double& operator[] (size_t i) const;
+		vec4 operator - () const;
+
 		vec4& operator += (const vec4& v);
 		vec4& operator -= (const vec4& v);
 		vec4& operator *= (const vec4& v);
@@ -101,11 +103,6 @@ namespace lx
 		vec4 yyyy() const;
 		vec4 zzzz() const;
 		vec4 wwww() const;
-
-
-		#ifdef AMERICAN_SPELLINGS
-			vec4 normalized() const;
-		#endif
 	};
 
 
@@ -122,7 +119,6 @@ namespace lx
 
 	vec4 round(const vec4& v);
 	vec4 normalise(const vec4& v);
-	vec4 normalize(const vec4& v);
 	double magnitude(const vec4& v);
 
 	double dot(const vec4& a, const vec4& b);
