@@ -17,13 +17,17 @@ namespace px
 		world.worldtime += dt;
 		for(auto& body : world.bodies)
 		{
-			body._netforce = integrators::Symplectic4(body, world, dt);
-			body._inforce = lx::vec3(0);
+			integrators::Symplectic4(body, world, dt);
+			body._vel = body._linearMtm / body.mass;
 
-			// for the next frame, apply a slight damping force.
-			body.addForce(-body.velocity() * 5);
+			// zero out the net force for the next step.
+			body._force = lx::vec3(0);
 
 
+			// for the next frame, apply a slight damping force (at the origin).
+			body.addForceAt(lx::vec3(), -body.velocity() * 5);
+
+			// clamp the velocity.
 			if(lx::abs(body._vel.x) < MINIMUM_VELOCITY)	body._vel.x = 0;
 			if(lx::abs(body._vel.y) < MINIMUM_VELOCITY)	body._vel.y = 0;
 			if(lx::abs(body._vel.z) < MINIMUM_VELOCITY)	body._vel.z = 0;
@@ -32,7 +36,7 @@ namespace px
 
 	lx::vec3 getForce(const RigidBody& self, const World& world, double dt)
 	{
-		lx::vec3 net = self._inforce;
+		lx::vec3 net = self._force;
 
 		for(const auto& body : world.bodies)
 		{

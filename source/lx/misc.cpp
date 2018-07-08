@@ -86,14 +86,14 @@ namespace lx
 
 
 
-	mat4x4 translate(const vec3& v)		{ return mat4().translate(v); }
-	fmat4x4 translate(const fvec3& v)	{ return fmat4().translate(v); }
+	mat4x4 translate(const vec3& v)		{ return mat4().translated(v); }
+	fmat4x4 translate(const fvec3& v)	{ return fmat4().translated(v); }
 
-	mat4x4 scale(const vec3& v)			{ return mat4().scale(v); }
-	fmat4x4 scale(const fvec3& v)		{ return fmat4().scale(v); }
+	mat4x4 scale(const vec3& v)			{ return mat4().scaled(v); }
+	fmat4x4 scale(const fvec3& v)		{ return fmat4().scaled(v); }
 
-	mat4x4 scale(double s)				{ return mat4().scale(s); }
-	fmat4x4 scale(float s)				{ return fmat4().scale(s); }
+	mat4x4 scale(double s)				{ return mat4().scaled(s); }
+	fmat4x4 scale(float s)				{ return fmat4().scaled(s); }
 
 
 

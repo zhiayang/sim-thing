@@ -25,6 +25,18 @@ namespace lx
 		this->vecs[3] = d;
 	}
 
+	mat4x4::mat4x4(double a, double b, double c, double d,
+					double e, double f, double g, double h,
+					double i, double j, double k, double l,
+					double m, double n, double o, double p)
+	{
+		this->vecs[0] = vec4(a, e, i, m);
+		this->vecs[1] = vec4(b, f, j, n);
+		this->vecs[2] = vec4(c, g, k, o);
+		this->vecs[3] = vec4(d, h, l, p);
+	}
+
+
 	mat4x4 mat4x4::identity()
 	{
 		return mat4x4();
@@ -90,7 +102,7 @@ namespace lx
 	}
 
 
-	mat4x4 mat4x4::translate(const vec3& v)
+	mat4x4 mat4x4::translated(const vec3& v) const
 	{
 		mat4x4 result = *this;
 		result[3] = this->vecs[0] * v[0] + this->vecs[1] * v[1] + this->vecs[2] * v[2] + this->vecs[3];
@@ -98,7 +110,7 @@ namespace lx
 		return result;
 	}
 
-	mat4x4 mat4x4::rotate(double radians, const vec3& axis)
+	mat4x4 mat4x4::rotated(double radians, const vec3& axis) const
 	{
 		double c = lx::cos(radians);
 		double s = lx::sin(radians);
@@ -128,7 +140,7 @@ namespace lx
 		return ret * (*this);
 	}
 
-	mat4x4 mat4x4::scale(const vec3& v)
+	mat4x4 mat4x4::scaled(const vec3& v) const
 	{
 		mat4x4 result;
 		/*
@@ -147,12 +159,29 @@ namespace lx
 		return result;
 	}
 
-	mat4x4 mat4x4::scale(double s)
+	mat4x4 mat4x4::scaled(double s) const
 	{
-		return this->scale(vec3(s));
+		return this->scaled(vec3(s));
 	}
 
+	mat4x4 mat4x4::transposed() const
+	{
+		mat4x4 result;
 
+		/*
+			a b c d        a e i m
+			e f g h        b f j n
+			i j k l        c g k o
+			m n o p        d h l p
+		*/
+
+		result[3] = vec4(this->vecs[0].w, this->vecs[1].w, this->vecs[2].w, this->vecs[3].w);
+		result[2] = vec4(this->vecs[0].z, this->vecs[1].z, this->vecs[2].z, this->vecs[3].z);
+		result[1] = vec4(this->vecs[0].y, this->vecs[1].y, this->vecs[2].y, this->vecs[3].y);
+		result[0] = vec4(this->vecs[0].x, this->vecs[1].x, this->vecs[2].x, this->vecs[3].x);
+
+		return result;
+	}
 
 
 
@@ -190,6 +219,12 @@ namespace lx
 			&& (a.vecs[2] == b.vecs[2])
 			&& (a.vecs[3] == b.vecs[3]);
 	}
+
+	mat4x4 rotate(const mat4x4& m, const vec3& axis, double rad)    { return m.rotated(rad, axis); }
+	mat4x4 translate(const mat4x4& m, const vec3& v)                { return m.translated(v); }
+	mat4x4 scale(const mat4x4& m, const vec3& v)                    { return m.scaled(v); }
+	mat4x4 scale(const mat4x4& m, double d)                         { return m.scaled(d); }
+	mat4x4 transpose(const mat4x4& m)                               { return m.transposed(); }
 }
 
 

@@ -25,12 +25,61 @@ namespace lx
 
 	mat3 quat::toRotationMatrix() const
 	{
-		return mat3();
+		return mat3(
+			vec3(1 - (2 * y * y) - (2 * z * z), (2 * x * y) + (2 * w * z), (2 * x * z) - (2 * w * y)),
+			vec3((2 * x * y) - (2 * w * z), 1 - (2 * x * x) - (2 * z * z), (2 * y * z) - (2 * w * x)),
+			vec3((2 * x * z) + (2 * w * y), (2 * y * z) - (2 * w * x), 1 - (2 * x * x) - (2 * y * y))
+		);
 	}
 
-	quat quat::fromRotationMatrix(const mat3& r)
+	quat quat::fromRotationMatrix(const mat3& m)
 	{
-		return quat();
+		// copied from glm/include/gtc/quaternion.inl
+
+		double fourXSquaredMinus1 = m[0][0] - m[1][1] - m[2][2];
+		double fourYSquaredMinus1 = m[1][1] - m[0][0] - m[2][2];
+		double fourZSquaredMinus1 = m[2][2] - m[0][0] - m[1][1];
+		double fourWSquaredMinus1 = m[0][0] + m[1][1] + m[2][2];
+
+		int biggestIndex = 0;
+		double fourBiggestSquaredMinus1 = fourWSquaredMinus1;
+		if(fourXSquaredMinus1 > fourBiggestSquaredMinus1)
+		{
+			fourBiggestSquaredMinus1 = fourXSquaredMinus1;
+			biggestIndex = 1;
+		}
+		if(fourYSquaredMinus1 > fourBiggestSquaredMinus1)
+		{
+			fourBiggestSquaredMinus1 = fourYSquaredMinus1;
+			biggestIndex = 2;
+		}
+		if(fourZSquaredMinus1 > fourBiggestSquaredMinus1)
+		{
+			fourBiggestSquaredMinus1 = fourZSquaredMinus1;
+			biggestIndex = 3;
+		}
+
+		double biggestVal = sqrt(fourBiggestSquaredMinus1 + 1) * 0.5;
+		double mult = 0.25 / biggestVal;
+
+		switch(biggestIndex)
+		{
+			case 0:
+				return quat(biggestVal, (m[1][2] - m[2][1]) * mult, (m[2][0] - m[0][2]) * mult, (m[0][1] - m[1][0]) * mult);
+
+			case 1:
+				return quat((m[1][2] - m[2][1]) * mult, biggestVal, (m[0][1] + m[1][0]) * mult, (m[2][0] + m[0][2]) * mult);
+
+			case 2:
+				return quat((m[2][0] - m[0][2]) * mult, (m[0][1] + m[1][0]) * mult, biggestVal, (m[1][2] + m[2][1]) * mult);
+
+			case 3:
+				return quat((m[0][1] - m[1][0]) * mult, (m[2][0] + m[0][2]) * mult, (m[1][2] + m[2][1]) * mult, biggestVal);
+
+			default:
+				assert(false);
+				return quat();
+		}
 	}
 
 	quat quat::normalised() const

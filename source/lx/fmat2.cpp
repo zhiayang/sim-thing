@@ -20,6 +20,12 @@ namespace lx
 		this->vecs[1] = b;
 	}
 
+	fmat2x2::fmat2x2(float a, float b, float c, float d)
+	{
+		this->vecs[0] = fvec2(a, c);
+		this->vecs[1] = fvec2(b, d);
+	}
+
 	fmat2x2 fmat2x2::identity()
 	{
 		return fmat2x2();
@@ -74,7 +80,7 @@ namespace lx
 		return *this;
 	}
 
-	fmat2x2 fmat2x2::rotate(float angle)
+	fmat2x2 fmat2x2::rotated(float angle) const
 	{
 		float c = lx::cos(angle);
 		float s = lx::sin(angle);
@@ -93,7 +99,7 @@ namespace lx
 		return result;
 	}
 
-	fmat3x3 fmat2x2::translate(const fvec2& v)
+	fmat3x3 fmat2x2::translated(const fvec2& v) const
 	{
 		fmat3x3 result;
 		/*
@@ -110,7 +116,7 @@ namespace lx
 		return result;
 	}
 
-	fmat2x2 fmat2x2::scale(const fvec2& v)
+	fmat2x2 fmat2x2::scaled(const fvec2& v) const
 	{
 		fmat2x2 result;
 		/*
@@ -124,13 +130,44 @@ namespace lx
 		return result;
 	}
 
-	fmat2x2 fmat2x2::scale(float s)
+	fmat2x2 fmat2x2::scaled(float s) const
 	{
-		return this->scale(fvec2(s));
+		return this->scaled(fvec2(s));
 	}
 
 
+	fmat2x2 fmat2x2::transposed() const
+	{
+		/*
+			a b     a c
+			c d     b d
+		*/
+		fmat2x2 result;
 
+		result.vecs[1] = fvec2(this->vecs[0].y, this->vecs[1].y);
+		result.vecs[0] = fvec2(this->vecs[0].x, this->vecs[1].x);
+
+		return result;
+	}
+
+	float fmat2x2::determinant() const
+	{
+		return (i11 * i22) - (i21 * i12);
+	}
+
+	fmat2x2 fmat2x2::inversed() const
+	{
+		if(this->determinant() == 0)
+		{
+			assert(false && "cannot invert this matrix");
+			return fmat2x2();
+		}
+
+		return (1.0 / this->determinant()) * fmat2x2(
+			i22, -i12,
+			-i21, i11
+		);
+	}
 
 
 
@@ -161,6 +198,13 @@ namespace lx
 		return (a.vecs[0] == b.vecs[0])
 			&& (a.vecs[1] == b.vecs[1]);
 	}
+
+	fmat3x3 translate(const fmat2x2& m, const fvec2& v) { return m.translated(v); }
+	fmat2x2 rotate(const fmat2x2& m, float rad)         { return m.rotated(rad); }
+	fmat2x2 scale(const fmat2x2& m, const fvec2& v)     { return m.scaled(v); }
+	fmat2x2 scale(const fmat2x2& m, float d)            { return m.scaled(d); }
+	fmat2x2 transpose(const fmat2x2& m)                 { return m.transposed(); }
+	fmat2x2 inverse(const fmat2x2& m)					{ return m.inversed(); }
 }
 
 

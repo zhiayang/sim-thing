@@ -22,16 +22,6 @@
 #include <unistd.h>
 #include <array>
 
-// static const double deltaTimeMultiplier	= 500000.0;
-static const double deltaTimeMultiplier	= 1.0;
-static const double fixedDeltaTimeNs	= MS_TO_NS(1.0);
-
-static const double targetFramerate		= 61.0;
-static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
-
-static rx::Renderer* theRenderer = 0;
-static input::State* inputState = 0;
-
 
 static std::pair<double, double> determineCurrentFPS(double previous, double frameBegin, double frameTime)
 {
@@ -67,7 +57,21 @@ static std::pair<double, double> determineCurrentFPS(double previous, double fra
 
 
 
+static double deltaTimeMultiplier		= 1.0;
+static const double fixedDeltaTimeNs	= MS_TO_NS(1.0);
 
+static const double targetFramerate		= 61.0;
+static const double targetFrameTimeNs	= S_TO_NS(1.0) / targetFramerate;
+
+static rx::Renderer* theRenderer = 0;
+static input::State* inputState = 0;
+
+
+#define EARTH_RADIUS		6371000
+#define MOON_RADIUS			1737000
+
+#define EARTH_MASS			5.972e24
+#define MOON_MASS			7.34767309e22
 
 
 
@@ -124,9 +128,9 @@ int main(int argc, char** argv)
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
 		rx::Camera cam;
-		cam.position = lx::vec3(7, 6, 15);// lx::vec3(0, 700000000, 0);
+		cam.position = lx::vec3(2, 3, 4.5); // lx::vec3(0, 700000000, 0);
 		cam.yaw = -110;
-		cam.pitch = -18;
+		cam.pitch = -20;
 
 		// setup the renderer. there's many parameters here...
 		theRenderer = new rx::Renderer(
@@ -176,7 +180,7 @@ int main(int argc, char** argv)
 			auto f = 600 * cam.front();
 			f.y = 0;
 
-			world.bodies[0].addForce(f);
+			world.bodies[0].addForceAt(lx::vec3(0, 0.25, 0), f);
 		}
 
 		theRenderer->updateCamera(cam);
@@ -199,17 +203,25 @@ int main(int argc, char** argv)
 	// auto box_spec = new rx::Texture("textures/box_spec.png");
 	// auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
 
-	// auto sun = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col5, col5, col5, 32));
+	auto sun = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col5, col5, col5, 32));
 	auto earth = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col6, col6, col6, 32));
 
 
-	// {
-	// 	// earth and moon.
-		// world.bodies.push_back(px::RigidBody(5.972e24, lx::vec3(0, 0, 0), lx::vec3(0, 0, 0)));
-		// world.bodies.push_back(px::RigidBody(7.34767309e22, lx::vec3(3.844e8, 0, 0), lx::vec3(0, 0, -1022)));
-	// }
+	if((false))
 	{
-		world.bodies.push_back(px::RigidBody(30, lx::vec3(0, 1.05, 0), lx::vec3(0)));
+		// earth and moon.
+		world.bodies.push_back(px::RigidBody(EARTH_MASS, lx::vec3(0, 0, 0), lx::vec3(0, 0, 0), lx::quat(),
+			px::getInertiaMomentOfSphere(EARTH_RADIUS)));
+
+		world.bodies.push_back(px::RigidBody(MOON_MASS, lx::vec3(3.844e8, 0, 0), lx::vec3(0, 0, -1022), lx::quat(),
+			px::getInertiaMomentOfSphere(MOON_RADIUS)));
+
+		deltaTimeMultiplier = 500000;
+	}
+	else
+	{
+		world.bodies.push_back(px::RigidBody(60, lx::vec3(0, 0.55, 0), lx::vec3(0), lx::quat(),
+			px::getInertiaMomentOfCuboid(lx::vec3(1))));
 	}
 
 
@@ -324,14 +336,18 @@ int main(int argc, char** argv)
 
 
 
-		theRenderer->renderObject(gridlines, lx::mat4().scale(50));
-		theRenderer->renderObject(earth, lx::mat4().translate(world.bodies[0].position()).scale(2));
+		theRenderer->renderObject(gridlines, lx::mat4().scaled(50));
 
+		if((false))
+		{
+			theRenderer->renderObject(sun, lx::mat4().translated(world.bodies[0].position()).scaled(lx::vec3(2 * EARTH_RADIUS)));
+			theRenderer->renderObject(earth, lx::mat4().translated(world.bodies[1].position()).scaled(lx::vec3(2 * MOON_RADIUS)));
+		}
+		else
+		{
+			theRenderer->renderObject(earth, lx::mat4().translated(world.bodies[0].position()).scaled(1));
+		}
 
-
-
-		// theRenderer->renderObject(sun, lx::mat4().translate(world.bodies[0].position()).scale(lx::vec3(6371000)));
-		// theRenderer->renderObject(earth, lx::mat4().translate(world.bodies[1].position()).scale(lx::vec3(1737000)));
 
 
 		if((true))

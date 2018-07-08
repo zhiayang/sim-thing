@@ -458,7 +458,7 @@ namespace rx
 
 		for(auto pl : this->pointLights)
 		{
-			this->renderObject(cubeRO, lx::scale(0.1).translate(fromf(pl.position)));
+			this->renderObject(cubeRO, lx::scale(0.1).translated(fromf(pl.position)));
 		}
 
 		for(auto rc : this->forwardList)

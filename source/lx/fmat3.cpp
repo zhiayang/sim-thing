@@ -22,6 +22,15 @@ namespace lx
 		this->vecs[2] = c;
 	}
 
+	fmat3x3::fmat3x3(float a, float b, float c,
+					float d, float e, float f,
+					float g, float h, float i)
+	{
+		this->vecs[0] = fvec3(a, d, g);
+		this->vecs[1] = fvec3(b, e, h);
+		this->vecs[2] = fvec3(c, f, i);
+	}
+
 	fmat3x3 fmat3x3::identity()
 	{
 		return fmat3x3();
@@ -82,7 +91,7 @@ namespace lx
 	}
 
 
-	fmat4x4 fmat3x3::translate(const fvec3& v)
+	fmat4x4 fmat3x3::translated(const fvec3& v) const
 	{
 		fmat4x4 result;
 		/*
@@ -104,7 +113,7 @@ namespace lx
 		return result;
 	}
 
-	fmat3x3 fmat3x3::rotate(float radians, const fvec3& axis)
+	fmat3x3 fmat3x3::rotated(float radians, const fvec3& axis) const
 	{
 		float c = lx::cos(radians);
 		float s = lx::sin(radians);
@@ -132,7 +141,7 @@ namespace lx
 		return ret * (*this);
 	}
 
-	fmat3x3 fmat3x3::scale(const fvec3& v)
+	fmat3x3 fmat3x3::scaled(const fvec3& v) const
 	{
 		fmat3x3 result;
 		/*
@@ -152,12 +161,48 @@ namespace lx
 		return result;
 	}
 
-	fmat3x3 fmat3x3::scale(float s)
+	fmat3x3 fmat3x3::scaled(float s) const
 	{
-		return this->scale(fvec3(s));
+		return this->scaled(fvec3(s));
 	}
 
 
+	fmat3x3 fmat3x3::transposed() const
+	{
+		/*
+			a b c         a d g
+			d e f         b e h
+			g h i         c f i
+		*/
+		fmat3x3 result;
+
+		result.vecs[2] = fvec3(this->vecs[0].z, this->vecs[1].z, this->vecs[2].z);
+		result.vecs[1] = fvec3(this->vecs[0].y, this->vecs[1].y, this->vecs[2].y);
+		result.vecs[0] = fvec3(this->vecs[0].x, this->vecs[1].x, this->vecs[2].x);
+
+		return result;
+	}
+
+	float fmat3x3::determinant() const
+	{
+		return (i11 * i22 * i33)
+			+ (i12 * i23 * i31)
+			+ (i13 * i21 * i32)
+			- (i31 * i22 * i13)
+			- (i32 * i23 * i11)
+			- (i33 * i21 * i12);
+	}
+
+	fmat3x3 fmat3x3::inversed() const
+	{
+		if(this->determinant() == 0)
+		{
+			assert(false && "cannot invert this matrix");
+			return fmat3x3();
+		}
+
+		return (1.0 / this->determinant()) * this->transposed();
+	}
 
 
 
@@ -193,6 +238,13 @@ namespace lx
 			&& (a.vecs[1] == b.vecs[1])
 			&& (a.vecs[2] == b.vecs[2]);
 	}
+
+
+	fmat3x3 rotate(const fmat3x3& m, const fvec3& axis, float rad)  { return m.rotated(rad, axis); }
+	fmat4x4 translate(const fmat3x3& m, const fvec3& v)             { return m.translated(v); }
+	fmat3x3 transpose(const fmat3x3& m)                             { return m.transposed(); }
+	fmat3x3 scale(const fmat3x3& m, const fvec3& v)                 { return m.scaled(v); }
+	fmat3x3 scale(const fmat3x3& m, float d)                        { return m.scaled(d); }
 }
 
 

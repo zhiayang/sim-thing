@@ -25,6 +25,18 @@ namespace lx
 		this->vecs[3] = d;
 	}
 
+	fmat4x4::fmat4x4(float a, float b, float c, float d,
+					float e, float f, float g, float h,
+					float i, float j, float k, float l,
+					float m, float n, float o, float p)
+	{
+		this->vecs[0] = fvec4(a, e, i, m);
+		this->vecs[1] = fvec4(b, f, j, n);
+		this->vecs[2] = fvec4(c, g, k, o);
+		this->vecs[3] = fvec4(d, h, l, p);
+	}
+
+
 	fmat4x4 fmat4x4::identity()
 	{
 		return fmat4x4();
@@ -90,7 +102,7 @@ namespace lx
 	}
 
 
-	fmat4x4 fmat4x4::translate(const fvec3& v)
+	fmat4x4 fmat4x4::translated(const fvec3& v) const
 	{
 		fmat4x4 result = *this;
 		result[3] = this->vecs[0] * v[0] + this->vecs[1] * v[1] + this->vecs[2] * v[2] + this->vecs[3];
@@ -98,7 +110,7 @@ namespace lx
 		return result;
 	}
 
-	fmat4x4 fmat4x4::rotate(float radians, const fvec3& axis)
+	fmat4x4 fmat4x4::rotated(float radians, const fvec3& axis) const
 	{
 		float c = lx::cos(radians);
 		float s = lx::sin(radians);
@@ -128,7 +140,7 @@ namespace lx
 		return ret * (*this);
 	}
 
-	fmat4x4 fmat4x4::scale(const fvec3& v)
+	fmat4x4 fmat4x4::scaled(const fvec3& v) const
 	{
 		fmat4x4 result;
 		/*
@@ -147,9 +159,29 @@ namespace lx
 		return result;
 	}
 
-	fmat4x4 fmat4x4::scale(float s)
+	fmat4x4 fmat4x4::scaled(float s) const
 	{
-		return this->scale(fvec3(s));
+		return this->scaled(fvec3(s));
+	}
+
+
+	fmat4x4 fmat4x4::transposed() const
+	{
+		fmat4x4 result;
+
+		/*
+			a b c d        a e i m
+			e f g h        b f j n
+			i j k l        c g k o
+			m n o p        d h l p
+		*/
+
+		result[3] = fvec4(this->vecs[0].w, this->vecs[1].w, this->vecs[2].w, this->vecs[3].w);
+		result[2] = fvec4(this->vecs[0].z, this->vecs[1].z, this->vecs[2].z, this->vecs[3].z);
+		result[1] = fvec4(this->vecs[0].y, this->vecs[1].y, this->vecs[2].y, this->vecs[3].y);
+		result[0] = fvec4(this->vecs[0].x, this->vecs[1].x, this->vecs[2].x, this->vecs[3].x);
+
+		return result;
 	}
 
 
@@ -190,6 +222,12 @@ namespace lx
 			&& (a.vecs[2] == b.vecs[2])
 			&& (a.vecs[3] == b.vecs[3]);
 	}
+
+	fmat4x4 rotate(const fmat4x4& m, const fvec3& axis, float rad)  { return m.rotated(rad, axis); }
+	fmat4x4 translate(const fmat4x4& m, const fvec3& v)             { return m.translated(v); }
+	fmat4x4 transpose(const fmat4x4& m)                             { return m.transposed(); }
+	fmat4x4 scale(const fmat4x4& m, const fvec3& v)                 { return m.scaled(v); }
+	fmat4x4 scale(const fmat4x4& m, float d)                        { return m.scaled(d); }
 }
 
 

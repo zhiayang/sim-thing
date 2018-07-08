@@ -4,9 +4,12 @@
 
 #pragma once
 
-#include <lx.h>
 #include <vector>
 #include <stdint.h>
+
+#include "lx.h"
+
+#include "px/inertia.h"
 
 namespace px
 {
@@ -14,26 +17,35 @@ namespace px
 	{
 		size_t id = 0;
 
+		// intrinsic state of the body
 		double mass;
+		lx::mat3 _bodyInertiaMoment;
 
 		lx::vec3 _pos;
+		lx::quat _rot;
+		lx::vec3 _linearMtm;
+		lx::vec3 _angularMtm;
+
+		// calculated by the integrator
 		lx::vec3 _vel;
 
-		lx::vec3 _inforce;
-		lx::vec3 _netforce;
+		// input forces
+		lx::vec3 _force;
+		lx::vec3 _torque;
 
-		lx::mat3 _rotation;
 
-
-		RigidBody(double m, const lx::vec3& p, const lx::vec3& v);
+		RigidBody(double m, const lx::vec3& p, const lx::vec3& v, const lx::quat& r, const lx::mat3& inertiaMoment);
 
 		const lx::vec3& position() const { return this->_pos; }
 		const lx::vec3& velocity() const { return this->_vel; }
+		const lx::quat& rotation() const { return this->_rot; }
+		const lx::vec3& linearMomentum() const { return this->_linearMtm; }
+		const lx::vec3& angularMomentum() const { return this->_angularMtm; }
 
-		void addForce(const lx::vec3& f);
+		void addForceAt(const lx::vec3& pos, const lx::vec3& force);
 
-		const lx::vec3& getNetForce() const { return this->_netforce; }
-		const lx::vec3& getInputForce() const { return this->_inforce; }
+		const lx::vec3& getForce() const { return this->_force; }
+		const lx::vec3& getTorque() const { return this->_torque; }
 
 		bool operator == (const RigidBody& b) const { return this->id == b.id; }
 	};
@@ -55,11 +67,10 @@ namespace px
 
 	namespace integrators
 	{
-		// returns the net force on the object, at the end of the simulation step.
-		lx::vec3 Symplectic4(RigidBody& body, const World& world, double dt);
-		lx::vec3 Symplectic3(RigidBody& body, const World& world, double dt);
-		lx::vec3 Verlet2(RigidBody& body, const World& world, double dt);
-		lx::vec3 Euler1(RigidBody& body, const World& world, double dt);
+		void Symplectic4(RigidBody& body, const World& world, double dt);
+		void Symplectic3(RigidBody& body, const World& world, double dt);
+		void Verlet2(RigidBody& body, const World& world, double dt);
+		void Euler1(RigidBody& body, const World& world, double dt);
 	}
 
 }

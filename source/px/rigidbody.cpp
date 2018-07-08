@@ -7,20 +7,22 @@
 namespace px
 {
 	static size_t __id = 0;
-	RigidBody::RigidBody(double m, const lx::vec3& p, const lx::vec3& v)
+	RigidBody::RigidBody(double m, const lx::vec3& p, const lx::vec3& v, const lx::quat& r, const lx::mat3& bodyInertia)
 	{
 		this->id = __id++;
 
-		// mass.
+		// constants
 		this->mass = m;
+		this->_bodyInertiaMoment = bodyInertia;
 
-		// initial position and velocity
+		// initial settings
 		this->_pos = p;
-		this->_vel = v;
+		this->_rot = r;
+		this->_linearMtm = this->mass * v;
 	}
 
-	void RigidBody::addForce(const lx::vec3& f)
+	void RigidBody::addForceAt(const lx::vec3& pos, const lx::vec3& force)
 	{
-		this->_inforce += f;
+		this->_force += force;
 	}
 }

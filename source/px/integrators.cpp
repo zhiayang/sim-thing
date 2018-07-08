@@ -7,7 +7,7 @@
 namespace px {
 namespace integrators
 {
-	lx::vec3 Symplectic4(RigidBody& body, const World& world, double dt)
+	void Symplectic4(RigidBody& body, const World& world, double dt)
 	{
 		// constants for 4th order integration.
 		// copied from https://en.wikipedia.org/wiki/Symplectic_integrator
@@ -25,18 +25,14 @@ namespace integrators
 			+0.00000000000000000000000000000000000000
 		};
 
-		auto v0 = body._vel;
 		for(int i = 0; i < 4; i++)
 		{
-			body._vel += (getForce(body, world, dt) / body.mass) * c[i] * dt;
+			body._linearMtm += getForce(body, world, dt) * c[i] * dt;
 			body._pos += body._vel * d[i] * dt;
 		}
-
-		// F = dp/dt
-		return (body.mass * (body._vel - v0)) / dt;
 	}
 
-	lx::vec3 Symplectic3(RigidBody& body, const World& world, double dt)
+	void Symplectic3(RigidBody& body, const World& world, double dt)
 	{
 		// constants for 3rd order integration.
 		// copied from https://en.wikipedia.org/wiki/Symplectic_integrator
@@ -52,37 +48,26 @@ namespace integrators
 			+0.29166666666666666666666666666666666666
 		};
 
-		auto v0 = body._vel;
 		for(int i = 0; i < 3; i++)
 		{
-			body._vel += (getForce(body, world, dt) / body.mass) * c[i] * dt;
+			body._linearMtm += getForce(body, world, dt) * c[i] * dt;
 			body._pos += body._vel * d[i] * dt;
 		}
-
-		return (body.mass * (body._vel - v0)) / dt;
 	}
 
 
-	lx::vec3 Verlet2(RigidBody& body, const World& world, double dt)
+	void Verlet2(RigidBody& body, const World& world, double dt)
 	{
-		auto v0 = body._vel;
-
 		body._pos += body._vel * 0.5 * dt;
-		body._vel += (getForce(body, world, dt) / body.mass) * dt;
+		body._linearMtm += getForce(body, world, dt) * dt;
 		body._pos += body._vel * 0.5 * dt;
-
-		return (body.mass * (body._vel - v0)) / dt;
 	}
 
 
-	lx::vec3 Euler1(RigidBody& body, const World& world, double dt)
+	void Euler1(RigidBody& body, const World& world, double dt)
 	{
-		auto v0 = body._vel;
-
-		body._vel += (getForce(body, world, dt) / body.mass) * dt;
+		body._linearMtm += getForce(body, world, dt) * dt;
 		body._pos += body._vel * dt;
-
-		return (body.mass * (body._vel - v0)) / dt;
 	}
 }
 }

@@ -22,6 +22,16 @@ namespace lx
 		this->vecs[2] = c;
 	}
 
+	mat3x3::mat3x3(double a, double b, double c,
+					double d, double e, double f,
+					double g, double h, double i)
+	{
+		this->vecs[0] = vec3(a, d, g);
+		this->vecs[1] = vec3(b, e, h);
+		this->vecs[2] = vec3(c, f, i);
+	}
+
+
 	mat3x3 mat3x3::identity()
 	{
 		return mat3x3();
@@ -82,7 +92,7 @@ namespace lx
 	}
 
 
-	mat4x4 mat3x3::translate(const vec3& v)
+	mat4x4 mat3x3::translated(const vec3& v) const
 	{
 		mat4x4 result;
 		/*
@@ -104,7 +114,7 @@ namespace lx
 		return result;
 	}
 
-	mat3x3 mat3x3::rotate(double radians, const vec3& axis)
+	mat3x3 mat3x3::rotated(double radians, const vec3& axis) const
 	{
 		double c = lx::cos(radians);
 		double s = lx::sin(radians);
@@ -132,7 +142,7 @@ namespace lx
 		return ret * (*this);
 	}
 
-	mat3x3 mat3x3::scale(const vec3& v)
+	mat3x3 mat3x3::scaled(const vec3& v) const
 	{
 		mat3x3 result;
 		/*
@@ -152,14 +162,48 @@ namespace lx
 		return result;
 	}
 
-	mat3x3 mat3x3::scale(double s)
+	mat3x3 mat3x3::scaled(double s) const
 	{
-		return this->scale(vec3(s));
+		return this->scaled(vec3(s));
+	}
+
+	mat3x3 mat3x3::transposed() const
+	{
+		/*
+			a b c         a d g
+			d e f         b e h
+			g h i         c f i
+		*/
+		mat3x3 result;
+
+		result.vecs[2] = vec3(this->vecs[0].z, this->vecs[1].z, this->vecs[2].z);
+		result.vecs[1] = vec3(this->vecs[0].y, this->vecs[1].y, this->vecs[2].y);
+		result.vecs[0] = vec3(this->vecs[0].x, this->vecs[1].x, this->vecs[2].x);
+
+		return result;
 	}
 
 
+	double mat3x3::determinant() const
+	{
+		return (i11 * i22 * i33)
+			+ (i12 * i23 * i31)
+			+ (i13 * i21 * i32)
+			- (i31 * i22 * i13)
+			- (i32 * i23 * i11)
+			- (i33 * i21 * i12);
+	}
 
+	mat3x3 mat3x3::inversed() const
+	{
+		if(this->determinant() == 0)
+		{
+			assert(false && "cannot invert this matrix");
+			return mat3x3();
+		}
 
+		return (1.0 / this->determinant()) * this->transposed();
+	}
 
 
 
@@ -193,6 +237,12 @@ namespace lx
 			&& (a.vecs[1] == b.vecs[1])
 			&& (a.vecs[2] == b.vecs[2]);
 	}
+
+	mat3x3 rotate(const mat3x3& m, const vec3& axis, double rad)    { return m.rotated(rad, axis); }
+	mat4x4 translate(const mat3x3& m, const vec3& v)                { return m.translated(v); }
+	mat3x3 transpose(const mat3x3& m)                               { return m.transposed(); }
+	mat3x3 scale(const mat3x3& m, const vec3& v)                    { return m.scaled(v); }
+	mat3x3 scale(const mat3x3& m, double d)                         { return m.scaled(d); }
 }
 
 

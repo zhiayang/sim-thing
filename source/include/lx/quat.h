@@ -49,7 +49,7 @@ namespace lx
 	};
 
 	quat normalise(const quat& q);
-	double magnitude(const vec3& v);
+	double magnitude(const quat& v);
 
 	quat operator + (const quat& a, const quat& b);
 	quat operator - (const quat& a, const quat& b);

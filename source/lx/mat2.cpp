@@ -20,6 +20,12 @@ namespace lx
 		this->vecs[1] = b;
 	}
 
+	mat2x2::mat2x2(double a, double b, double c, double d)
+	{
+		this->vecs[0] = vec2(a, c);
+		this->vecs[1] = vec2(b, d);
+	}
+
 	mat2x2 mat2x2::identity()
 	{
 		return mat2x2();
@@ -74,7 +80,7 @@ namespace lx
 		return *this;
 	}
 
-	mat2x2 mat2x2::rotate(double angle)
+	mat2x2 mat2x2::rotated(double angle) const
 	{
 		double c = lx::cos(angle);
 		double s = lx::sin(angle);
@@ -93,7 +99,7 @@ namespace lx
 		return result;
 	}
 
-	mat3x3 mat2x2::translate(const vec2& v)
+	mat3x3 mat2x2::translated(const vec2& v) const
 	{
 		mat3x3 result;
 		/*
@@ -110,7 +116,7 @@ namespace lx
 		return result;
 	}
 
-	mat2x2 mat2x2::scale(const vec2& v)
+	mat2x2 mat2x2::scaled(const vec2& v) const
 	{
 		mat2x2 result;
 		/*
@@ -124,13 +130,43 @@ namespace lx
 		return result;
 	}
 
-	mat2x2 mat2x2::scale(double s)
+	mat2x2 mat2x2::scaled(double s) const
 	{
-		return this->scale(vec2(s));
+		return this->scaled(vec2(s));
 	}
 
+	mat2x2 mat2x2::transposed() const
+	{
+		/*
+			a b     a c
+			c d     b d
+		*/
+		mat2x2 result;
 
+		result.vecs[1] = vec2(this->vecs[0].y, this->vecs[1].y);
+		result.vecs[0] = vec2(this->vecs[0].x, this->vecs[1].x);
 
+		return result;
+	}
+
+	double mat2x2::determinant() const
+	{
+		return (i11 * i22) - (i21 * i12);
+	}
+
+	mat2x2 mat2x2::inversed() const
+	{
+		if(this->determinant() == 0)
+		{
+			assert(false && "cannot invert this matrix");
+			return mat2x2();
+		}
+
+		return (1.0 / this->determinant()) * mat2x2(
+			i22, -i12,
+			-i21, i11
+		);
+	}
 
 
 
@@ -161,6 +197,12 @@ namespace lx
 		return (a.vecs[0] == b.vecs[0])
 			&& (a.vecs[1] == b.vecs[1]);
 	}
+
+	mat3x3 translate(const mat2x2& m, const vec2& v)    { return m.translated(v); }
+	mat2x2 rotate(const mat2x2& m, double rad)          { return m.rotated(rad); }
+	mat2x2 transpose(const mat2x2& m)                   { return m.transposed(); }
+	mat2x2 scale(const mat2x2& m, const vec2& v)        { return m.scaled(v); }
+	mat2x2 scale(const mat2x2& m, double d)             { return m.scaled(d); }
 }
 
 
