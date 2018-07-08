@@ -125,11 +125,48 @@ int main(int argc, char** argv)
 
 
 
+
+	/*
+		TODO list:
+
+		1. !! force applied is in body-space coordinates, including the direction. this should probably
+			remain like this, but then we have an issue.
+
+			if the body is rotated (say a yaw), then a force along the z-axis will actually move the body
+			in its yawed-direction (see current behaviour with the cube)
+
+			the position of the force should be ok, but should we rotate the force to match the body? or leave
+			the rotation of the force as-is??
+
+			if we want to let the force-applier handle the rotation, then we need to rotate the force by the reverse
+			of the body's rotation -- which might feel like exposing too much detail???
+	*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
 		rx::Camera cam;
-		cam.position = lx::vec3(2, 3, 4.5); // lx::vec3(0, 700000000, 0);
-		cam.yaw = -110;
+		cam.position = lx::vec3(0, 3, 4.5);// lx::vec3(2, 3, 4.5); // lx::vec3(0, 700000000, 0);
+		cam.yaw = -90; // cam.yaw = -110;
 		cam.pitch = -20;
 
 		// setup the renderer. there's many parameters here...
@@ -150,8 +187,6 @@ int main(int argc, char** argv)
 
 
 	px::World world;
-
-
 
 	input::addKeyHandler(inputState,
 		{ input::Key::W, input::Key::S, input::Key::A, input::Key::D, input::Key::ShiftL, input::Key::Space, input::Key::MouseL },
@@ -220,7 +255,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		world.bodies.push_back(px::RigidBody(60, lx::vec3(0, 0.55, 0), lx::vec3(0), lx::quat(),
+		world.bodies.push_back(px::RigidBody(60, lx::vec3(0, 0.55, 0), lx::vec3(0), lx::quat::fromEulerDegs(lx::vec3(0, 30, 0)),
 			px::getInertiaMomentOfCuboid(lx::vec3(1))));
 	}
 
@@ -345,7 +380,11 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			theRenderer->renderObject(earth, lx::mat4().translated(world.bodies[0].position()).scaled(1));
+			theRenderer->renderObject(earth, lx::mat4()
+				.rotated(world.bodies[0].rotation().angle(), world.bodies[0].rotation().axis())
+				.translated(world.bodies[0].position())
+				.scaled(1)
+			);
 		}
 
 

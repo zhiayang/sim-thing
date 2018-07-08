@@ -40,6 +40,9 @@ namespace lx
 		vec3 toEulerRads() const;
 		mat3 toRotationMatrix() const;
 
+		double angle() const;
+		vec3 axis() const;
+
 		quat normalised() const;
 		double magnitude() const;
 

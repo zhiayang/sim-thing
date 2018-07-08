@@ -23,6 +23,22 @@ namespace lx
 	}
 
 
+	double quat::angle() const
+	{
+		return 2 * acos(w);
+	}
+
+	vec3 quat::axis() const
+	{
+		double sq = _fastInverseSqrtD(1 - (w * w));
+
+		return vec3(
+			x * sq,
+			y * sq,
+			z * sq
+		);
+	}
+
 	mat3 quat::toRotationMatrix() const
 	{
 		return mat3(
