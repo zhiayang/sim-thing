@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <vector>
 #include <stdint.h>
 
@@ -19,30 +20,43 @@ namespace px
 
 		// intrinsic state of the body
 		double mass;
-		lx::mat3 _bodyInertiaMoment;
+		lx::mat3 _bodyInertiaTensor;
+		lx::mat3 _inverseBodyInertiaTensor;
 
 		lx::vec3 _pos;
 		lx::quat _rot;
+
 		lx::vec3 _linearMtm;
 		lx::vec3 _angularMtm;
 
 		// calculated by the integrator
 		lx::vec3 _vel;
+		lx::vec3 _angVel;
 
 		// input forces
 		lx::vec3 _force;
 		lx::vec3 _torque;
+		lx::vec3 _inputOmega;
 
 
-		RigidBody(double m, const lx::vec3& p, const lx::vec3& v, const lx::quat& r, const lx::mat3& inertiaMoment);
+		RigidBody(double m, const lx::vec3& p, const lx::vec3& v, const lx::quat& r, const lx::mat3& inertiaTensor);
 
 		const lx::vec3& position() const { return this->_pos; }
 		const lx::vec3& velocity() const { return this->_vel; }
-		const lx::quat& rotation() const { return this->_rot; }
 		const lx::vec3& linearMomentum() const { return this->_linearMtm; }
+
+		const lx::quat& rotation() const { return this->_rot; }
+		const lx::vec3& angularVelocity() const { return this->_angVel; }
 		const lx::vec3& angularMomentum() const { return this->_angularMtm; }
 
+
+		void addRelForceAt(const lx::vec3& pos, const lx::vec3& force);
+		void addRelTorque(const lx::vec3& torque);
+
 		void addForceAt(const lx::vec3& pos, const lx::vec3& force);
+		void addTorque(const lx::vec3& torque);
+
+		void addAngularVelocity(const lx::vec3& w);
 
 		const lx::vec3& getForce() const { return this->_force; }
 		const lx::vec3& getTorque() const { return this->_torque; }
@@ -57,7 +71,7 @@ namespace px
 	};
 
 	void stepSimulation(World& world, double dt);
-	lx::vec3 getForce(const RigidBody& body, const World& world, double dt);
+	std::pair<lx::vec3, lx::vec3> calculateForceAndTorque(const RigidBody& body, const World& world, double dt);
 
 
 

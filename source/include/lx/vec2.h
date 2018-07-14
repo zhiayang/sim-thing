@@ -39,6 +39,7 @@ namespace lx
 		vec2& operator *= (double s);
 		vec2& operator /= (double s);
 
+		double magnitudeSquared() const;
 		double magnitude() const;
 		vec2 normalised() const;
 
@@ -65,6 +66,7 @@ namespace lx
 	vec2 round(const vec2& v);
 	vec2 normalise(const vec2& v);
 	double magnitude(const vec2& v);
+	double magnitudeSquared(const vec2& v);
 
 	double dot(const vec2& a, const vec2& b);
 	double distance(const vec2& a, const vec2& b);

@@ -137,7 +137,7 @@ namespace lx
 		ret.vecs[1] = vec4(M * L * C - N * s,	M * M * C + c,		M * N * C + L * s,	0);
 		ret.vecs[0] = vec4(L * L * C + c,		L * M * C + N * s,	L * N * C - M * s,	0);
 
-		return ret * (*this);
+		return (*this) * ret;
 	}
 
 	mat4x4 mat4x4::scaled(const vec3& v) const

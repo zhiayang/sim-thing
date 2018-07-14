@@ -31,7 +31,8 @@ namespace lx
 	vec3& vec3::operator *= (double s) { this->x *= s; this->y *= s; this->z *= s; return *this; }
 	vec3& vec3::operator /= (double s) { this->x /= s; this->y /= s; this->z /= s; return *this; }
 
-	double vec3::magnitude() const { return sqrt((this->x * this->x) + (this->y * this->y) + (this->z * this->z)); }
+	double vec3::magnitude() const { return sqrt(this->magnitudeSquared()); }
+	double vec3::magnitudeSquared() const { return (this->x * this->x) + (this->y * this->y) + (this->z * this->z); }
 
 	vec3 vec3::normalised() const
 	{
@@ -71,6 +72,7 @@ namespace lx
 	vec3 round(const vec3&v) { return vec3(lx::round(v.x), lx::round(v.y), lx::round(v.z)); }
 	vec3 normalise(const vec3& v) { return v.normalised(); }
 	double magnitude(const vec3& v) { return v.magnitude(); }
+	double magnitudeSquared(const vec3& v) { return v.magnitudeSquared(); }
 
 	double dot(const vec3& a, const vec3& b)
 	{

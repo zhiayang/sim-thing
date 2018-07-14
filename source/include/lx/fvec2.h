@@ -40,7 +40,7 @@ namespace lx
 		fvec2& operator /= (float s);
 
 
-
+		float magnitudeSquared() const;
 		float magnitude() const;
 		fvec2 normalised() const;
 
@@ -67,6 +67,7 @@ namespace lx
 	fvec2 round(const fvec2& v);
 	fvec2 normalise(const fvec2& v);
 	float magnitude(const fvec2& v);
+	float magnitudeSquared(const fvec2& v);
 
 	float dot(const fvec2& a, const fvec2& b);
 	float distance(const fvec2& a, const fvec2& b);

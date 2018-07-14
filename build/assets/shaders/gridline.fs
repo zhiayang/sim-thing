@@ -11,8 +11,8 @@ uniform vec3 cameraPosition;
 
 void main(void)
 {
-	if(fract(fragmentPosition.x) < 0.01 || fract(fragmentPosition.x) > 0.99
-		|| fract(fragmentPosition.z) < 0.01 || fract(fragmentPosition.z) > 0.99)
+	if(fract(fragmentPosition.x) < 0.005 || fract(fragmentPosition.x) > 0.995
+		|| fract(fragmentPosition.z) < 0.005 || fract(fragmentPosition.z) > 0.995)
 	{
 		color = vec4(vec3(1), smoothstep(-50, 0, -distance(cameraPosition, fragmentPosition)));
 	}

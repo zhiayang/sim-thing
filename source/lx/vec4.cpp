@@ -31,7 +31,8 @@ namespace lx
 	vec4& vec4::operator *= (double s) { this->x *= s; this->y *= s; this->z *= s; this->w *= s; return *this; }
 	vec4& vec4::operator /= (double s) { this->x /= s; this->y /= s; this->z /= s; this->w /= s; return *this; }
 
-	double vec4::magnitude() const { return sqrt((this->x * this->x) + (this->y * this->y) + (this->z * this->z) + (this->w * this->w)); }
+	double vec4::magnitude() const { return sqrt(this->magnitudeSquared()); }
+	double vec4::magnitudeSquared() const { return (this->x * this->x) + (this->y * this->y) + (this->z * this->z) + (this->w * this->w); }
 
 	vec4 vec4::normalised() const
 	{
@@ -69,6 +70,7 @@ namespace lx
 	vec4 round(const vec4&v) { return vec4(lx::round(v.x), lx::round(v.y), lx::round(v.z), lx::round(v.w)); }
 	vec4 normalise(const vec4& v) { return v.normalised(); }
 	double magnitude(const vec4& v) { return v.magnitude(); }
+	double magnitudeSquared(const vec4& v) { return v.magnitudeSquared(); }
 
 	double dot(const vec4& a, const vec4& b)
 	{

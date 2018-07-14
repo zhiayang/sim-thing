@@ -33,7 +33,8 @@ namespace lx
 	vec2& vec2::operator /= (double s) { this->x /= s; this->y /= s; return *this; }
 
 
-	double vec2::magnitude() const { return sqrt((this->x * this->x) + (this->y * this->y)); }
+	double vec2::magnitude() const { return sqrt(this->magnitudeSquared()); }
+	double vec2::magnitudeSquared() const { return (this->x * this->x) + (this->y * this->y); }
 
 	vec2 vec2::normalised() const
 	{
@@ -66,6 +67,7 @@ namespace lx
 	vec2 round(const vec2&v) { return vec2(lx::round(v.x), lx::round(v.y)); }
 	vec2 normalise(const vec2& v) { return v.normalised(); }
 	double magnitude(const vec2& v) { return v.magnitude(); }
+	double magnitudeSquared(const vec2& v) { return v.magnitudeSquared(); }
 
 	double dot(const vec2& a, const vec2& b)
 	{

@@ -42,6 +42,7 @@ namespace lx
 		fvec3& operator *= (float s);
 		fvec3& operator /= (float s);
 
+		float magnitudeSquared() const;
 		float magnitude() const;
 		fvec3 normalised() const;
 
@@ -82,6 +83,7 @@ namespace lx
 	fvec3 round(const fvec3& v);
 	fvec3 normalise(const fvec3& v);
 	float magnitude(const fvec3& v);
+	float magnitudeSquared(const fvec3& v);
 	fvec3 cross(const fvec3& a, const fvec3& b);
 
 	float dot(const fvec3& a, const fvec3& b);

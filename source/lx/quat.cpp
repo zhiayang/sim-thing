@@ -101,11 +101,21 @@ namespace lx
 	quat quat::normalised() const
 	{
 		double msq = (this->w * this->w) + (this->x * this->x) + (this->y * this->y) + (this->z * this->z);
+		if(msq == 0)
+			return quat();
 
-		if(abs(1.0 - msq) < 2.107342e-08)
-			return *this * (2.0 / (1.0 + msq));
-		else
-			return *this * (1.0 / sqrt(msq));
+		// if(abs(1.0 - msq) < 2.107342e-08)
+		// 	return *this * (2.0 / (1.0 + msq));
+		// else
+		// 	return *this * (1.0 / sqrt(msq));
+
+		auto oneoverlen = 1.0 / this->magnitude();
+		return quat(w * oneoverlen, x * oneoverlen, y * oneoverlen, z * oneoverlen);
+	}
+
+	quat quat::conjugated() const
+	{
+		return quat(w, -x, -y, -z);
 	}
 
 	double quat::magnitude() const
@@ -158,13 +168,18 @@ namespace lx
 					c.x * c.y * s.z + s.x * s.y * c.z);
 	}
 
+	quat quat::inversed() const
+	{
+		return this->conjugated() / dot(*this, *this);
+	}
+
 	quat& quat::operator += (const quat& v) { this->x += v.x; this->y += v.y; this->z += v.z; this->w += v.w; return *this; }
 	quat& quat::operator -= (const quat& v) { this->x -= v.x; this->y -= v.y; this->z -= v.z; this->w -= v.w; return *this; }
 	quat& quat::operator *= (double s) { this->x *= s; this->y *= s; this->z *= s; this->w *= s; return *this; }
 	quat& quat::operator /= (double s) { this->x /= s; this->y /= s; this->z /= s; this->w /= s; return *this; }
 
-	quat operator + (const quat& a, const quat& b) { return quat(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w); }
-	quat operator - (const quat& a, const quat& b) { return quat(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w); }
+	quat operator + (const quat& a, const quat& b) { return quat(a.w + b.w, a.x + b.x, a.y + b.y, a.z + b.z); }
+	quat operator - (const quat& a, const quat& b) { return quat(a.w - b.w, a.x - b.x, a.y - b.y, a.z - b.z); }
 
 	quat& quat::operator *= (const quat& v)
 	{
@@ -176,19 +191,56 @@ namespace lx
 	{
 		return quat(a.real * b.real - dot(a.imag, b.imag),
 					vec3((a.real * b.imag) + (b.real * a.imag) + cross(a.imag, b.imag))
-				).normalised();
+				);
+
+		// return quat(
+		// 	(a.w * b.w) - (a.x * b.x) - (a.y * b.y) - (a.z * b.z),
+		// 	(a.w * b.x) + (a.x * b.w) + (a.y * b.z) - (a.z * b.y),
+		// 	(a.w * b.y) - (a.x * b.z) + (a.y * b.w) + (a.z * b.x),
+		// 	(a.w * b.z) + (a.x * b.y) - (a.y * b.x) + (a.z * b.w)
+		// );
 	}
 
 
 	bool operator == (const quat& a, const quat& b) { return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w; }
 
-	quat operator * (const quat& a, double b) { return quat(a.x * b, a.y * b, a.z * b, a.w * b); }
-	quat operator / (const quat& a, double b) { return quat(a.x / b, a.y / b, a.z / b, a.w / b); }
+	quat operator * (const quat& a, double b) { return quat(a.w * b, a.x * b, a.y * b, a.z * b); }
+	quat operator / (const quat& a, double b) { return quat(a.w / b, a.x / b, a.y / b, a.z / b); }
 	quat operator * (double a, const quat& b) { return b * a; }
 
 
+
+	vec3 operator * (const quat& q, const vec3& v)
+	{
+		return ((q * quat(0, v)) * q.inversed()).imag;
+	}
+
+	vec3 operator * (const vec3& v, const quat& q)
+	{
+		return q * v;
+	}
+
+	fvec3 operator * (const quat& q, const fvec3& v)
+	{
+		return tof(q * fromf(v));
+	}
+
+	fvec3 operator * (const fvec3& v, const quat& q)
+	{
+		return q * v;
+	}
+
+
+
+	double dot(const quat& a, const quat& b)
+	{
+		return a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+	}
+
 	double magnitude(const quat& q) { return q.magnitude(); }
 	quat normalise(const quat& q) { return q.normalised(); }
+	quat conjugate(const quat& q) { return q.conjugated(); }
+	quat inverse(const quat& q) { return q.inversed(); }
 }
 
 

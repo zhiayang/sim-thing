@@ -42,6 +42,7 @@ namespace lx
 		vec3& operator *= (double s);
 		vec3& operator /= (double s);
 
+		double magnitudeSquared() const;
 		double magnitude() const;
 		vec3 normalised() const;
 
@@ -82,6 +83,7 @@ namespace lx
 	vec3 round(const vec3& v);
 	vec3 normalise(const vec3& v);
 	double magnitude(const vec3& v);
+	double magnitudeSquared(const vec3& v);
 	vec3 cross(const vec3& a, const vec3& b);
 
 	double dot(const vec3& a, const vec3& b);

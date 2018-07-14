@@ -77,8 +77,8 @@ static input::State* inputState = 0;
 
 int main(int argc, char** argv)
 {
-	Config::setResX(1240);
-	Config::setResY(720);
+	Config::setResX(960);
+	Config::setResY(600);
 
 
 	// Setup the platform
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
 	// camera matrix: camera at [ 70, 30, 70 ], looking at [ 0, 0, 0 ], rotated right-side up
 	{
 		rx::Camera cam;
-		cam.position = lx::vec3(0, 3, 4.5);// lx::vec3(2, 3, 4.5); // lx::vec3(0, 700000000, 0);
+		cam.position = lx::vec3(0, 3, 4.5); // lx::vec3(0, 700000000, 0); //
 		cam.yaw = -90; // cam.yaw = -110;
 		cam.pitch = -20;
 
@@ -215,7 +215,8 @@ int main(int argc, char** argv)
 			auto f = 600 * cam.front();
 			f.y = 0;
 
-			world.bodies[0].addForceAt(lx::vec3(0, 0.25, 0), f);
+			world.bodies[0].addRelForceAt(lx::vec3(0, 0.5, 0), lx::vec3(0, 0, f.z));
+			// world.bodies[0].addTorque(world.bodies[0].mass * 2 * lx::vec3(0, 1, 0));
 		}
 
 		theRenderer->updateCamera(cam);
@@ -241,6 +242,15 @@ int main(int argc, char** argv)
 	auto sun = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col5, col5, col5, 32));
 	auto earth = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col6, col6, col6, 32));
 
+	auto axis_x = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(),
+		rx::Material(util::colour::red(), util::colour::red(), util::colour::red(), 32));
+
+	auto axis_y = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(),
+		rx::Material(util::colour::blue(), util::colour::blue(), util::colour::blue(), 32));
+
+	auto axis_z = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(),
+		rx::Material(util::colour::green(), util::colour::green(), util::colour::green(), 32));
+
 
 	if((false))
 	{
@@ -255,7 +265,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		world.bodies.push_back(px::RigidBody(60, lx::vec3(0, 0.55, 0), lx::vec3(0), lx::quat::fromEulerDegs(lx::vec3(0, 30, 0)),
+		world.bodies.push_back(px::RigidBody(60, lx::vec3(0, 0.55, 0), lx::vec3(0), lx::quat::fromEulerDegs(lx::vec3(0, 0, 0)),
 			px::getInertiaMomentOfCuboid(lx::vec3(1))));
 	}
 
@@ -290,9 +300,6 @@ int main(int argc, char** argv)
 
 	// use the gridline shader.
 	gridlines->shaderProgramIndex = 1;
-
-
-
 
 
 
@@ -371,19 +378,53 @@ int main(int argc, char** argv)
 
 
 
-		theRenderer->renderObject(gridlines, lx::mat4().scaled(50));
 
 		if((false))
 		{
 			theRenderer->renderObject(sun, lx::mat4().translated(world.bodies[0].position()).scaled(lx::vec3(2 * EARTH_RADIUS)));
-			theRenderer->renderObject(earth, lx::mat4().translated(world.bodies[1].position()).scaled(lx::vec3(2 * MOON_RADIUS)));
+			theRenderer->renderObject(earth, lx::mat4().translated(world.bodies[1].position()).scaled(lx::vec3(20 * MOON_RADIUS)));
 		}
 		else
 		{
+			theRenderer->renderObject(gridlines, lx::mat4().scaled(50));
 			theRenderer->renderObject(earth, lx::mat4()
-				.rotated(world.bodies[0].rotation().angle(), world.bodies[0].rotation().axis())
 				.translated(world.bodies[0].position())
-				.scaled(1)
+				.rotated(world.bodies[0].rotation().angle(), world.bodies[0].rotation().axis())
+			);
+
+			theRenderer->renderObject(axis_x, lx::mat4()
+				.translated(world.bodies[0].position())
+				.rotated(world.bodies[0].rotation().angle(), world.bodies[0].rotation().axis())
+				.scaled(lx::vec3(5, 0.02, 0.02))
+			);
+
+			theRenderer->renderObject(axis_y, lx::mat4()
+				.translated(world.bodies[0].position())
+				.rotated(world.bodies[0].rotation().angle(), world.bodies[0].rotation().axis())
+				.scaled(lx::vec3(0.02, 5, 0.02))
+			);
+
+			theRenderer->renderObject(axis_z, lx::mat4()
+				.translated(world.bodies[0].position())
+				.rotated(world.bodies[0].rotation().angle(), world.bodies[0].rotation().axis())
+				.scaled(lx::vec3(0.02, 0.02, 5))
+			);
+
+
+
+			theRenderer->renderObject(axis_x, lx::mat4()
+				.translated(world.bodies[0].position())
+				.scaled(lx::vec3(5, 0.02, 0.02))
+			);
+
+			theRenderer->renderObject(axis_y, lx::mat4()
+				.translated(world.bodies[0].position())
+				.scaled(lx::vec3(0.02, 5, 0.02))
+			);
+
+			theRenderer->renderObject(axis_z, lx::mat4()
+				.translated(world.bodies[0].position())
+				.scaled(lx::vec3(0.02, 0.02, 5))
 			);
 		}
 
@@ -407,7 +448,10 @@ int main(int argc, char** argv)
 			}
 
 			{
-				auto velstr = tfm::format("vel: %s m/s", world.bodies[0].velocity());
+				auto velstr = tfm::format("vel: %s (%.1f) m/s | L = %s (%.1f) Nms",
+					world.bodies[0].velocity(), world.bodies[0].velocity().magnitude(),
+					world.bodies[0].linearMomentum(), world.bodies[0].linearMomentum().magnitude());
+
 				theRenderer->renderStringInScreenSpace(velstr, primaryFont, 12.0, lx::fvec2(5, 20), util::colour::white(),
 					rx::TextAlignment::LeftAligned);
 			}

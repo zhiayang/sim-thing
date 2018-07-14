@@ -9,7 +9,7 @@
 
 namespace px
 {
-	static constexpr double MINIMUM_VELOCITY		= 0.001;
+	static constexpr double MINIMUM_VELOCITY		= 0.005;
 	static constexpr double GRAVITATIONAL_CONSTANT	= 6.67408e-11;
 
 	void stepSimulation(World& world, double dt)
@@ -18,25 +18,36 @@ namespace px
 		for(auto& body : world.bodies)
 		{
 			integrators::Symplectic4(body, world, dt);
-			body._vel = body._linearMtm / body.mass;
 
 			// zero out the net force for the next step.
 			body._force = lx::vec3(0);
-
-
-			// for the next frame, apply a slight damping force (at the origin).
-			body.addForceAt(lx::vec3(), -body.velocity() * 5);
+			body._torque = lx::vec3(0);
 
 			// clamp the velocity.
 			if(lx::abs(body._vel.x) < MINIMUM_VELOCITY)	body._vel.x = 0;
 			if(lx::abs(body._vel.y) < MINIMUM_VELOCITY)	body._vel.y = 0;
 			if(lx::abs(body._vel.z) < MINIMUM_VELOCITY)	body._vel.z = 0;
+
+			// clamp the angular velocity as well
+			if(lx::abs(body._angVel.x) < 0.00005)	body.addAngularVelocity(lx::vec3(-body._angVel.x, 0, 0));
+			if(lx::abs(body._angVel.y) < 0.00005)	body.addAngularVelocity(lx::vec3(0, -body._angVel.y, 0));
+			if(lx::abs(body._angVel.z) < 0.00005)	body.addAngularVelocity(lx::vec3(0, 0, -body._angVel.z));
+
+
+			// for the next frame, apply a slight damping force
+			if(body.velocity().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
+				body.addForceAt(lx::vec3(), -1 * (body.rotation() * (body.velocity() * 100)));
+
+			// for the next frame, apply a slight damping torque
+			if(body.angularMomentum().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
+				body.addTorque(body.angularMomentum() * -0.3);
 		}
 	}
 
-	lx::vec3 getForce(const RigidBody& self, const World& world, double dt)
+	std::pair<lx::vec3, lx::vec3> calculateForceAndTorque(const RigidBody& self, const World& world, double dt)
 	{
-		lx::vec3 net = self._force;
+		lx::vec3 force = self._force;
+		lx::vec3 torque = self._torque;
 
 		for(const auto& body : world.bodies)
 		{
@@ -47,10 +58,10 @@ namespace px
 			double mag = ((GRAVITATIONAL_CONSTANT * self.mass) / dist) * (body.mass / dist);
 			auto dir = lx::vec3(body.position() - self.position()).normalised();
 
-			net += dir * mag;
+			force += dir * mag;
 		}
 
-		return net;
+		return { force, torque };
 	}
 }
 

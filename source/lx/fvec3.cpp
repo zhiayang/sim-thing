@@ -31,7 +31,8 @@ namespace lx
 	fvec3& fvec3::operator *= (float s) { this->x *= s; this->y *= s; this->z *= s; return *this; }
 	fvec3& fvec3::operator /= (float s) { this->x /= s; this->y /= s; this->z /= s; return *this; }
 
-	float fvec3::magnitude() const { return sqrt((this->x * this->x) + (this->y * this->y) + (this->z * this->z)); }
+	float fvec3::magnitude() const { return sqrt(this->magnitudeSquared()); }
+	float fvec3::magnitudeSquared() const { return (this->x * this->x) + (this->y * this->y) + (this->z * this->z); }
 
 	fvec3 fvec3::normalised() const
 	{
@@ -72,6 +73,7 @@ namespace lx
 	fvec3 round(const fvec3&v) { return fvec3(lx::round(v.x), lx::round(v.y), lx::round(v.z)); }
 	fvec3 normalise(const fvec3& v) { return v.normalised(); }
 	float magnitude(const fvec3& v) { return v.magnitude(); }
+	float magnitudeSquared(const fvec3& v) { return v.magnitudeSquared(); }
 
 	float dot(const fvec3& a, const fvec3& b)
 	{

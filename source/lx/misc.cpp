@@ -201,42 +201,43 @@ namespace lx
 
 
 #include <iostream>
+#include <iomanip>
 namespace tinyformat
 {
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::vec2& v)
 	{
-		out << "v2(" << v.x << ", " << v.y << ")";
+		out << std::setprecision(3) << "v2(" << v.x << ", " << v.y << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::vec3& v)
 	{
-		out << "v3(" << v.x << ", " << v.y << ", " << v.z << ")";
+		out << std::setprecision(3) << "v3(" << v.x << ", " << v.y << ", " << v.z << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::vec4& v)
 	{
-		out << "v4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+		out << std::setprecision(3) << "v4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
 	}
 
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::fvec2& v)
 	{
-		out << "v2(" << v.x << ", " << v.y << ")";
+		out << std::setprecision(3) << "v2(" << v.x << ", " << v.y << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::fvec3& v)
 	{
-		out << "v3(" << v.x << ", " << v.y << ", " << v.z << ")";
+		out << std::setprecision(3) << "v3(" << v.x << ", " << v.y << ", " << v.z << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::fvec4& v)
 	{
-		out << "v4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+		out << std::setprecision(3) << "v4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::quat& q)
 	{
-		out << "quat(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
+		out << std::setprecision(3) << "quat(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
 	}
 }
 

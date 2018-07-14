@@ -31,7 +31,8 @@ namespace lx
 	fvec4& fvec4::operator *= (float s) { this->x *= s; this->y *= s; this->z *= s; this->w *= s; return *this; }
 	fvec4& fvec4::operator /= (float s) { this->x /= s; this->y /= s; this->z /= s; this->w /= s; return *this; }
 
-	float fvec4::magnitude() const { return sqrt((this->x * this->x) + (this->y * this->y) + (this->z * this->z) + (this->w * this->w)); }
+	float fvec4::magnitude() const { return sqrt(this->magnitudeSquared()); }
+	float fvec4::magnitudeSquared() const { return (this->x * this->x) + (this->y * this->y) + (this->z * this->z) + (this->w * this->w); }
 
 	fvec4 fvec4::normalised() const
 	{
@@ -68,6 +69,7 @@ namespace lx
 	fvec4 round(const fvec4&v) { return fvec4(lx::round(v.x), lx::round(v.y), lx::round(v.z), lx::round(v.w)); }
 	fvec4 normalise(const fvec4& v) { return v.normalised(); }
 	float magnitude(const fvec4& v) { return v.magnitude(); }
+	float magnitudeSquared(const fvec4& v) { return v.magnitudeSquared(); }
 
 	float dot(const fvec4& a, const fvec4& b)
 	{

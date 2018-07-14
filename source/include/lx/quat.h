@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "lx/fvec3.h"
+
 #include "lx/vec4.h"
 #include "lx/mat3.h"
 
@@ -43,7 +45,9 @@ namespace lx
 		double angle() const;
 		vec3 axis() const;
 
+		quat inversed() const;
 		quat normalised() const;
+		quat conjugated() const;
 		double magnitude() const;
 
 		static quat fromEulerDegs(const vec3& elr);
@@ -51,13 +55,22 @@ namespace lx
 		static quat fromRotationMatrix(const mat3& r);
 	};
 
+	quat inverse(const quat& q);
 	quat normalise(const quat& q);
+	quat conjugate(const quat& q);
 	double magnitude(const quat& v);
+	double dot(const quat& a, const quat& b);
 
 	quat operator + (const quat& a, const quat& b);
 	quat operator - (const quat& a, const quat& b);
 	quat operator * (const quat& a, const quat& b);
 	bool operator == (const quat& a, const quat& b);
+
+	vec3 operator * (const quat& q, const vec3& v);
+	vec3 operator * (const vec3& v, const quat& q);
+
+	fvec3 operator * (const quat& q, const fvec3& v);
+	fvec3 operator * (const fvec3& v, const quat& q);
 
 	quat operator * (const quat& a, double b);
 	quat operator / (const quat& a, double b);
