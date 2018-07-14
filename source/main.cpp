@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 			auto f = 600 * cam.front();
 			f.y = 0;
 
-			world.bodies[0].addRelForceAt(lx::vec3(0, 0.5, 0), lx::vec3(0, 0, f.z));
+			world.bodies[0].addRelForceAt(lx::vec3(0, 1, 0), lx::vec3(0, 0, f.z));
 			// world.bodies[0].addTorque(world.bodies[0].mass * 2 * lx::vec3(0, 1, 0));
 		}
 
@@ -265,7 +265,8 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		world.bodies.push_back(px::RigidBody(60, lx::vec3(0, 0.55, 0), lx::vec3(0), lx::quat::fromEulerDegs(lx::vec3(0, 0, 0)),
+		world.bodies.push_back(px::RigidBody(60, lx::vec3(0, 1, 0), lx::vec3(0),
+			lx::quat::fromEulerRads(lx::vec3(0)),
 			px::getInertiaMomentOfCuboid(lx::vec3(1))));
 	}
 
@@ -450,7 +451,7 @@ int main(int argc, char** argv)
 			{
 				auto velstr = tfm::format("vel: %s (%.1f) m/s | L = %s (%.1f) Nms",
 					world.bodies[0].velocity(), world.bodies[0].velocity().magnitude(),
-					world.bodies[0].linearMomentum(), world.bodies[0].linearMomentum().magnitude());
+					world.bodies[0].angularMomentum(), world.bodies[0].angularMomentum().magnitude());
 
 				theRenderer->renderStringInScreenSpace(velstr, primaryFont, 12.0, lx::fvec2(5, 20), util::colour::white(),
 					rx::TextAlignment::LeftAligned);

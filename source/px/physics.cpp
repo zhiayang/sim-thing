@@ -29,14 +29,14 @@ namespace px
 			if(lx::abs(body._vel.z) < MINIMUM_VELOCITY)	body._vel.z = 0;
 
 			// clamp the angular velocity as well
-			if(lx::abs(body._angVel.x) < 0.00005)	body.addAngularVelocity(lx::vec3(-body._angVel.x, 0, 0));
-			if(lx::abs(body._angVel.y) < 0.00005)	body.addAngularVelocity(lx::vec3(0, -body._angVel.y, 0));
-			if(lx::abs(body._angVel.z) < 0.00005)	body.addAngularVelocity(lx::vec3(0, 0, -body._angVel.z));
+			if(lx::abs(body._linearMtm.x) < MINIMUM_VELOCITY)	body._linearMtm.x = 0;
+			if(lx::abs(body._linearMtm.y) < MINIMUM_VELOCITY)	body._linearMtm.y = 0;
+			if(lx::abs(body._linearMtm.z) < MINIMUM_VELOCITY)	body._linearMtm.z = 0;
 
 
 			// for the next frame, apply a slight damping force
 			if(body.velocity().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
-				body.addForceAt(lx::vec3(), -1 * (body.rotation() * (body.velocity() * 100)));
+				body.addRelForceAt(lx::vec3(), -1 * (body.velocity() * body.mass * 0.5));
 
 			// for the next frame, apply a slight damping torque
 			if(body.angularMomentum().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)

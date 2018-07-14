@@ -28,12 +28,9 @@ namespace integrators
 			body._angularMtm += torque * c[i] * dt;
 			body._angVel = body._inputOmega + (invtensor * body._angularMtm);
 
-			// body._rot = lx::quat::fromRotationMatrix((body._angVel * body._rot.toRotationMatrix()) * d[i] * dt);
 			lx::quat qdot = 0.5 * body._rot * lx::quat(0, body._angVel) * d[i] * dt;
 			body._rot += qdot;
 			body._rot = body._rot.normalised();
-
-			// tfm::printf("rot = %s\n", qdot.toEulerDegs());
 		}
 	}
 

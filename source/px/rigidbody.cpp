@@ -25,8 +25,8 @@ namespace px
 
 	void RigidBody::addForceAt(const lx::vec3& pos, const lx::vec3& force)
 	{
-		this->_force += this->rotation().inversed() * force;
-		this->_torque += this->rotation().inversed() * lx::cross(pos - lx::vec3(), force);
+		this->_force += this->rotation().inversed() * (force - this->position());
+		this->_torque += this->rotation().inversed() * lx::cross(pos - this->position(), force);
 	}
 
 	void RigidBody::addTorque(const lx::vec3& torque)
