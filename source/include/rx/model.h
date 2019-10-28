@@ -61,7 +61,8 @@ namespace rx
 
 		std::vector<Face> faces;
 
-		static Mesh getUnitCube(float scale = 1.0);
+		static Mesh getUnitCube(const lx::vec3& scale = lx::vec3(1));
+		static Mesh getUnitCube(double scale);
 	};
 
 	struct Model

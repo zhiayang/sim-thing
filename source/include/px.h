@@ -12,17 +12,24 @@
 
 #include "px/inertia.h"
 
+namespace rx
+{
+	struct Mesh;
+}
+
 namespace px
 {
 	struct RigidBody
 	{
 		size_t id = 0;
 
-		// intrinsic state of the body
+		// intrinsic properties of the body
 		double mass;
+		bool immovable;
 		lx::mat3 _bodyInertiaTensor;
 		lx::mat3 _inverseBodyInertiaTensor;
 
+		// state
 		lx::vec3 _pos;
 		lx::quat _rot;
 
@@ -39,7 +46,12 @@ namespace px
 		lx::vec3 _inputOmega;
 
 
-		RigidBody(double m, const lx::vec3& p, const lx::vec3& v, const lx::quat& r, const lx::mat3& inertiaTensor);
+		// collision stuff
+		const rx::Mesh& collisionMesh;
+
+
+		RigidBody(double m, const lx::vec3& p, const lx::vec3& v, const lx::quat& r, const lx::mat3& inertiaTensor,
+			const rx::Mesh& cmesh);
 
 		const lx::vec3& position() const { return this->_pos; }
 		const lx::vec3& velocity() const { return this->_vel; }
@@ -77,7 +89,30 @@ namespace px
 
 
 
+	namespace collision
+	{
+		struct Octree
+		{
+			struct Node
+			{
+				lx::vec3 minCorner;
+				lx::vec3 maxCorner;
 
+				std::vector<RigidBody*> bodies;
+
+				Node* parent;
+				Node* children[8];
+			};
+
+			lx::vec3 lowerBound;
+			lx::vec3 upperBound;
+
+			Node* root = 0;
+
+
+
+		};
+	}
 
 	namespace integrators
 	{

@@ -215,8 +215,8 @@ int main(int argc, char** argv)
 			auto f = 600 * cam.front();
 			f.y = 0;
 
-			world.bodies[0].addRelForceAt(lx::vec3(0, 1, 0), lx::vec3(0, 0, f.z));
-			// world.bodies[0].addTorque(world.bodies[0].mass * 2 * lx::vec3(0, 1, 0));
+			// world.bodies[0].addRelForceAt(lx::vec3(1, 0, 0), lx::vec3(0, 0, f.z));
+			world.bodies[0].addTorque(world.bodies[0].mass * 2 * lx::vec3(0, 1, 0));
 		}
 
 		theRenderer->updateCamera(cam);
@@ -239,8 +239,8 @@ int main(int argc, char** argv)
 	// auto box_spec = new rx::Texture("textures/box_spec.png");
 	// auto cubeRO = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(util::colour::white(), box, box_spec, 32));
 
-	auto sun = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col5, col5, col5, 32));
-	auto earth = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col6, col6, col6, 32));
+	// auto sun = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col5, col5, col5, 32));
+	auto earth = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(), rx::Material(col5, col5, col5, 32));
 
 	auto axis_x = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(),
 		rx::Material(util::colour::red(), util::colour::red(), util::colour::red(), 32));
@@ -252,22 +252,29 @@ int main(int argc, char** argv)
 		rx::Material(util::colour::green(), util::colour::green(), util::colour::green(), 32));
 
 
-	if((false))
+	if constexpr (false)
 	{
 		// earth and moon.
 		world.bodies.push_back(px::RigidBody(EARTH_MASS, lx::vec3(0, 0, 0), lx::vec3(0, 0, 0), lx::quat(),
-			px::getInertiaMomentOfSphere(EARTH_RADIUS)));
+			px::getInertiaMomentOfSphere(EARTH_RADIUS), rx::Mesh::getUnitCube(2 * EARTH_RADIUS)));
 
 		world.bodies.push_back(px::RigidBody(MOON_MASS, lx::vec3(3.844e8, 0, 0), lx::vec3(0, 0, -1022), lx::quat(),
-			px::getInertiaMomentOfSphere(MOON_RADIUS)));
+			px::getInertiaMomentOfSphere(MOON_RADIUS), rx::Mesh::getUnitCube(2 * MOON_RADIUS)));
 
 		deltaTimeMultiplier = 500000;
 	}
 	else
 	{
+		auto dims = lx::vec3(0.9, 0.8, 1.4);
+		earth = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(dims),
+			rx::Material(col5, col5, col5, 32));
+
 		world.bodies.push_back(px::RigidBody(60, lx::vec3(0, 1, 0), lx::vec3(0),
-			lx::quat::fromEulerRads(lx::vec3(0)),
-			px::getInertiaMomentOfCuboid(lx::vec3(1))));
+			lx::quat::fromEulerRads(lx::vec3(0)), px::getInertiaMomentOfCuboid(dims),
+			rx::Mesh::getUnitCube()));
+
+		// world.bodies.push_back(px::RigidBody(1, lx::vec3(0, 0, 0), lx::vec3(0), lx::quat(), px::getInertiaMomentOfCuboid(lx::vec3(1)),
+		// 	rx::Mesh::getUnitCube()));
 	}
 
 
@@ -380,14 +387,15 @@ int main(int argc, char** argv)
 
 
 
-		if((false))
+		if constexpr (false)
 		{
-			theRenderer->renderObject(sun, lx::mat4().translated(world.bodies[0].position()).scaled(lx::vec3(2 * EARTH_RADIUS)));
-			theRenderer->renderObject(earth, lx::mat4().translated(world.bodies[1].position()).scaled(lx::vec3(20 * MOON_RADIUS)));
+			// theRenderer->renderObject(sun, lx::mat4().translated(world.bodies[0].position()).scaled(lx::vec3(2 * EARTH_RADIUS)));
+			// theRenderer->renderObject(earth, lx::mat4().translated(world.bodies[1].position()).scaled(lx::vec3(20 * MOON_RADIUS)));
 		}
 		else
 		{
 			theRenderer->renderObject(gridlines, lx::mat4().scaled(50));
+
 			theRenderer->renderObject(earth, lx::mat4()
 				.translated(world.bodies[0].position())
 				.rotated(world.bodies[0].rotation().angle(), world.bodies[0].rotation().axis())

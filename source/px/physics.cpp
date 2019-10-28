@@ -12,35 +12,47 @@ namespace px
 	static constexpr double MINIMUM_VELOCITY		= 0.005;
 	static constexpr double GRAVITATIONAL_CONSTANT	= 6.67408e-11;
 
+	static void applyDampingForces(RigidBody& body)
+	{
+		// clamp the velocity.
+		if(lx::abs(body._vel.x) < MINIMUM_VELOCITY)	body._vel.x = 0;
+		if(lx::abs(body._vel.y) < MINIMUM_VELOCITY)	body._vel.y = 0;
+		if(lx::abs(body._vel.z) < MINIMUM_VELOCITY)	body._vel.z = 0;
+
+		// clamp the angular velocity as well
+		if(lx::abs(body._linearMtm.x) < MINIMUM_VELOCITY)	body._linearMtm.x = 0;
+		if(lx::abs(body._linearMtm.y) < MINIMUM_VELOCITY)	body._linearMtm.y = 0;
+		if(lx::abs(body._linearMtm.z) < MINIMUM_VELOCITY)	body._linearMtm.z = 0;
+
+
+		// for the next frame, apply a slight damping force
+		if(body.velocity().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
+			body.addRelForceAt(lx::vec3(), -1 * (body.velocity() * body.mass * 0.5));
+
+		// for the next frame, apply a slight damping torque
+		if(body.angularMomentum().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
+			body.addTorque(body.angularMomentum() * -0.3);
+	}
+
 	void stepSimulation(World& world, double dt)
 	{
 		world.worldtime += dt;
 		for(auto& body : world.bodies)
 		{
-			integrators::Symplectic4(body, world, dt);
+			if(!body.immovable)
+				integrators::Symplectic4(body, world, dt);
 
 			// zero out the net force for the next step.
 			body._force = lx::vec3(0);
 			body._torque = lx::vec3(0);
 
-			// clamp the velocity.
-			if(lx::abs(body._vel.x) < MINIMUM_VELOCITY)	body._vel.x = 0;
-			if(lx::abs(body._vel.y) < MINIMUM_VELOCITY)	body._vel.y = 0;
-			if(lx::abs(body._vel.z) < MINIMUM_VELOCITY)	body._vel.z = 0;
-
-			// clamp the angular velocity as well
-			if(lx::abs(body._linearMtm.x) < MINIMUM_VELOCITY)	body._linearMtm.x = 0;
-			if(lx::abs(body._linearMtm.y) < MINIMUM_VELOCITY)	body._linearMtm.y = 0;
-			if(lx::abs(body._linearMtm.z) < MINIMUM_VELOCITY)	body._linearMtm.z = 0;
 
 
-			// for the next frame, apply a slight damping force
-			if(body.velocity().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
-				body.addRelForceAt(lx::vec3(), -1 * (body.velocity() * body.mass * 0.5));
 
-			// for the next frame, apply a slight damping torque
-			if(body.angularMomentum().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
-				body.addTorque(body.angularMomentum() * -0.3);
+
+
+
+			applyDampingForces(body);
 		}
 	}
 

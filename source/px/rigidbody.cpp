@@ -3,14 +3,17 @@
 // Licensed under the Apache License Version 2.0.
 
 #include "px.h"
+#include "rx.h"
 #include "tinyformat.h"
 
 namespace px
 {
 	static size_t __id = 0;
-	RigidBody::RigidBody(double m, const lx::vec3& p, const lx::vec3& v, const lx::quat& r, const lx::mat3& bodyTensor)
+	RigidBody::RigidBody(double m, const lx::vec3& p, const lx::vec3& v, const lx::quat& r, const lx::mat3& bodyTensor,
+		const rx::Mesh& cmesh) : collisionMesh(cmesh)
 	{
 		this->id = __id++;
+		this->immovable = false;
 
 		// constants
 		this->mass = m;

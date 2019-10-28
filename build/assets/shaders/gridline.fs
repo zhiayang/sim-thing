@@ -14,7 +14,7 @@ void main(void)
 	if(fract(fragmentPosition.x) < 0.005 || fract(fragmentPosition.x) > 0.995
 		|| fract(fragmentPosition.z) < 0.005 || fract(fragmentPosition.z) > 0.995)
 	{
-		color = vec4(vec3(1), smoothstep(-50, 0, -distance(cameraPosition, fragmentPosition)));
+		color = vec4(vec3(.6), smoothstep(-50, 0, -distance(cameraPosition, fragmentPosition)));
 	}
 	else
 	{
