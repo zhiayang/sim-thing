@@ -132,13 +132,28 @@ namespace lx
 			0				0				0				1
 		*/
 
-		ret.vecs[3] = fvec4(0,					0,					0,					1);
-		ret.vecs[2] = fvec4(N * L * C + M * s,	N * M * C - L * s,	N * N * C + c,		0);
-		ret.vecs[1] = fvec4(M * L * C - N * s,	M * M * C + c,		M * N * C + L * s,	0);
-		ret.vecs[0] = fvec4(L * L * C + c,		L * M * C + N * s,	L * N * C - M * s,	0);
+		ret.vecs[3] = fvec4(0,                  0,                  0,                  1);
+		ret.vecs[2] = fvec4(N * L * C + M * s,  N * M * C - L * s,  N * N * C + c,      0);
+		ret.vecs[1] = fvec4(M * L * C - N * s,  M * M * C + c,      M * N * C + L * s,  0);
+		ret.vecs[0] = fvec4(L * L * C + c,      L * M * C + N * s,  L * N * C - M * s,  0);
 
 		return ret * (*this);
 	}
+
+
+	fmat4x4 fmat4x4::rotationOnly() const
+	{
+		fmat4x4 result;
+
+		result[3] = fvec4(0,     0,     0,     1);
+		result[2] = fvec4(this->vecs[2].xyz(), 0);
+		result[1] = fvec4(this->vecs[1].xyz(), 0);
+		result[0] = fvec4(this->vecs[0].xyz(), 0);
+
+		return result;
+	}
+
+
 
 	fmat4x4 fmat4x4::scaled(const fvec3& v) const
 	{

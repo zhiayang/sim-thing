@@ -4,6 +4,7 @@
 
 #include "rx.h"
 
+#include <vector>
 #include <assert.h>
 #include <glbinding/gl/gl.h>
 

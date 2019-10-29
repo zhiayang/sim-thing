@@ -132,13 +132,28 @@ namespace lx
 			0				0				0				1
 		*/
 
-		ret.vecs[3] = vec4(0,					0,					0,					1);
-		ret.vecs[2] = vec4(N * L * C + M * s,	N * M * C - L * s,	N * N * C + c,		0);
-		ret.vecs[1] = vec4(M * L * C - N * s,	M * M * C + c,		M * N * C + L * s,	0);
-		ret.vecs[0] = vec4(L * L * C + c,		L * M * C + N * s,	L * N * C - M * s,	0);
+		// stolen from https://github.com/g-truc/glm/blob/master/glm/gtx/matrix_interpolation.inl
+		ret.vecs[3] = vec4(0,                   0,                  0,                  1);
+		ret.vecs[2] = vec4(N * L * C + M * s,   N * M * C - L * s,  N * N * C + c,      0);
+		ret.vecs[1] = vec4(M * L * C - N * s,   M * M * C + c,      M * N * C + L * s,  0);
+		ret.vecs[0] = vec4(L * L * C + c,       L * M * C + N * s,  L * N * C - M * s,  0);
 
 		return (*this) * ret;
 	}
+
+	mat4x4 mat4x4::rotationOnly() const
+	{
+		mat4x4 result;
+
+		result[3] = vec4(0,     0,     0,     1);
+		result[2] = vec4(this->vecs[2].xyz(), 0);
+		result[1] = vec4(this->vecs[1].xyz(), 0);
+		result[0] = vec4(this->vecs[0].xyz(), 0);
+
+		return result;
+	}
+
+
 
 	mat4x4 mat4x4::scaled(const vec3& v) const
 	{
@@ -182,11 +197,6 @@ namespace lx
 
 		return result;
 	}
-
-
-
-
-
 
 
 

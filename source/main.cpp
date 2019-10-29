@@ -185,7 +185,7 @@ int main(int argc, char** argv)
 		);
 
 		// position, colour, intensity
-		theRenderer->setAmbientLighting(util::colour::white(), 0.4);
+		theRenderer->setAmbientLighting(util::colour::white(), 0.2);
 		theRenderer->addSpotLight(rx::SpotLight(lx::fvec3(0, -4, 0), lx::fvec3(0, 1, 0), util::colour::white(), util::colour::white(),
 			0.3, 2.0, 12.5, 30));
 	}
@@ -213,61 +213,71 @@ int main(int argc, char** argv)
 		double accum_rot_error = 0;
 
 		const double rot_Kp = 1.5000;
-		const double rot_Ki = 0.0005;
+		const double rot_Ki = 0.0000;
 		const double rot_Kd = 0.0050;
 
 		double prev_lin_error = 0;
 		double accum_lin_error = 0;
 
-		const double lin_Kp = 0.1500;
-		const double lin_Ki = 0.0005;
-		const double lin_Kd = 0.0200;
+		const double lin_Kp = 0.1000;
+		const double lin_Ki = 0.0000;
+		const double lin_Kd = 0.2500;
 
 		auto update(const px::RigidBody& rb, double dt) -> decltype(thruster_control)
 		{
 			// current algo is to ensure rotation is good before we start moving.
 			decltype(thruster_control) ret;
 
-			// this is still fucked up if we need to turn > 90 degrees ):
-			auto set_angle = -1 * lx::atan2(set_pos.x - rb.position().x, -(set_pos.z - rb.position().z));
+			auto makepid = [&dt](double e, double p_e, double a_e, double kp, double ki, double kd) -> double {
+				auto d_error = e - p_e;
 
-			if(lx::abs(prev_lin_error) > 0.5)
+				auto p = (kp * e);
+				auto i = (ki * (a_e += (dt * e)));
+				auto d = (kd * (d_error / dt));
+
+				return p + i + d;
+			};
+
+
+
 			{
-				auto error = (set_angle - rb.rotation().toEulerRads().y);
-				auto d_error = error - prev_rot_error;
+				// ok we can start to move now.
+				auto error = set_pos.xz().magnitude() - rb.position().xz().magnitude();
+				auto res = makepid(error, prev_lin_error, accum_lin_error, lin_Kp, lin_Ki, lin_Kd);
 
-				auto p = (rot_Kp * error);
-				auto i = (rot_Ki * (accum_rot_error += (dt * error)));
-				auto d = (rot_Kd * (d_error / dt));
+				auto thrust = lx::clamp(res, -0.75, 0.75);
 
-				auto thrust = (p + i + d);
-				// ret.yaw = lx::clamp(thrust, -0.75, 0.75);
+				// once we approach the target, we want to give the rotation control slightly more
+				// leverage.
+				{
+					// once we are below 2m, start to cut.
+					auto bound = lx::lerp(0.25, 0.75, lx::min(error, 2) / 2.0);
 
-				ret.fwd_l = lx::clamp(-thrust, -0.75, 0.75);
-				ret.fwd_r = lx::clamp(thrust, -0.75, 0.75);
+					ret.fwd_l = lx::clamp(ret.fwd_l + thrust, -bound, bound);
+					ret.fwd_r = lx::clamp(ret.fwd_r + thrust, -bound, bound);
+				}
 
-				prev_rot_error = error;
+				prev_lin_error = error;
 			}
 
 
-			if(lx::abs(prev_rot_error) < 0.5)
 			{
-				// ok we can start to move now.
-				auto error = (set_pos.xz() - rb.position().xz()).magnitude();
-				if(rb.position().xz().magnitudeSquared() > set_pos.xz().magnitudeSquared())
-					error *= -1;
+				auto set_angle = lx::atan2(-(set_pos.x - rb.position().x), -(set_pos.z - rb.position().z));
 
-				auto d_error = error - prev_lin_error;
+				auto error = (set_angle - rb.rotation().toEulerRads().y);
+				auto res = makepid(error, prev_rot_error, accum_rot_error, rot_Kp, rot_Ki, rot_Kd);
 
-				auto p = (lin_Kp * error);
-				auto i = (lin_Ki * (accum_lin_error += (dt * error)));
-				auto d = (lin_Kd * (d_error / dt));
+				auto thrust = res;
 
-				auto thrust = lx::clamp(p + i + d, -0.75, 0.75);
-				ret.fwd_l = lx::clamp(ret.fwd_l + thrust, -0.75, 1);
-				ret.fwd_r = lx::clamp(ret.fwd_r + thrust, -0.75, 1);
 
-				prev_lin_error = error;
+				// don't abs! if not we'll do a 180 if we overshoot ):
+				if(prev_lin_error > 0.05)
+				{
+					ret.fwd_l = lx::clamp(ret.fwd_l - thrust, -0.75, 0.75);
+					ret.fwd_r = lx::clamp(ret.fwd_r + thrust, -0.75, 0.75);
+				}
+
+				prev_rot_error = error;
 			}
 
 			return ret;
@@ -277,15 +287,40 @@ int main(int argc, char** argv)
 
 	auto world = px::World();
 
+	input::addKeyHandler(inputState, {
+		input::Key::Comma, input::Key::Period, input::Key::X, input::Key::O
+	}, 0, [&thruster_control, &upd](input::State* s, input::Key k, double) -> bool {
+
+		using IK = input::Key;
+		if(k == IK::Comma)
+		{
+			deltaTimeMultiplier /= 2.0;
+		}
+		else if(k == IK::Period)
+		{
+			deltaTimeMultiplier *= 2.0;
+		}
+		else if(k == IK::O)
+		{
+			upd = true;
+		}
+		else if(k == IK::X)
+		{
+			thruster_control = { 0 };
+			upd = false;
+		}
+
+		return true;
+	}, input::HandlerKind::PressDown);
+
 	input::addKeyHandler(inputState,
 		{
 			input::Key::W, input::Key::S, input::Key::A, input::Key::D,
 			input::Key::ShiftL, input::Key::Space, input::Key::MouseL,
 
-			input::Key::X, input::Key::H, input::Key::N, input::Key::I, input::Key::J, input::Key::K, input::Key::L,
-			input::Key::U, input::Key::O, input::Key::G, input::Key::B
+			input::Key::H, input::Key::N, input::Key::I, input::Key::J, input::Key::K, input::Key::L,
 		},
-		0, [&world, &thruster_control, &upd](input::State* s, input::Key k, double) -> bool {
+		0, [&thruster_control](input::State* s, input::Key k, double) -> bool {
 
 		using IK = input::Key;
 		auto cam = theRenderer->getCamera();
@@ -339,20 +374,13 @@ int main(int argc, char** argv)
 		}
 		else if(k == IK::J)
 		{
-			thruster_control.yaw = lx::clamp(thruster_control.yaw + thrust_rate, -0.75, 0.75);
+			thruster_control.fwd_l = lx::clamp(thruster_control.fwd_l - thrust_rate, -0.75, 0.75);
+			thruster_control.fwd_r = lx::clamp(thruster_control.fwd_r + thrust_rate, -0.75, 0.75);
 		}
 		else if(k == IK::L)
 		{
-			thruster_control.yaw = lx::clamp(thruster_control.yaw - thrust_rate, -0.75, 0.75);
-		}
-		else if(k == IK::O)
-		{
-			upd = true;
-		}
-		else if(k == IK::X)
-		{
-			thruster_control = { 0 };
-			upd = false;
+			thruster_control.fwd_l = lx::clamp(thruster_control.fwd_l + thrust_rate, -0.75, 0.75);
+			thruster_control.fwd_r = lx::clamp(thruster_control.fwd_r - thrust_rate, -0.75, 0.75);
 		}
 
 
@@ -384,12 +412,14 @@ int main(int argc, char** argv)
 		rx::Material(util::colour::red(), util::colour::red(), util::colour::red(), 32));
 
 	auto axis_y = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(),
-		rx::Material(util::colour::blue(), util::colour::blue(), util::colour::blue(), 32));
-
-	auto axis_z = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(),
 		rx::Material(util::colour::green(), util::colour::green(), util::colour::green(), 32));
 
+	auto axis_z = rx::RenderObject::fromMesh(rx::Mesh::getUnitCube(),
+		rx::Material(util::colour::blue(), util::colour::blue(), util::colour::blue(), 32));
 
+
+
+	rx::SpotLight* auvLight = 0;
 	if constexpr ((false))
 	{
 		// earth and moon.
@@ -409,15 +439,20 @@ int main(int argc, char** argv)
 
 		world.bodies.push_back(px::RigidBody(
 			/* mass: */     40,
-			/* position: */ lx::vec3(0, 1, 0),
+			/* position: */ lx::vec3(0, 0.45, 0),
 			/* velocity: */ lx::vec3(0),
-			/* rotation: */ lx::quat::fromEulerRads(lx::vec3(0, 0, 0)),
+			/* rotation: */ lx::quat::fromEulerDegs(lx::vec3(0, 0, 0)),
 			/* inertia:  */ px::getInertiaMomentOfCuboid(dims),
 			/* collider: */ rx::Mesh::getUnitCube()
 		));
 
+		auvLight = &theRenderer->addSpotLight(rx::SpotLight(lx::fvec3(0), lx::fvec3(0, 0, -1),
+			util::colour::red(), util::colour::red(), 0.6, 10.0, 20.5, 60));
+
 		world.bodies[0].surfaceArea = 0.9*0.8;
-		world.bodies[0].dragCoefficient = 1.05;
+		world.bodies[0].dragCoefficient = 0.75;
+
+		deltaTimeMultiplier = 16;
 	}
 
 
@@ -449,6 +484,34 @@ int main(int argc, char** argv)
 		}
 	);
 
+
+	auto groundplane = rx::RenderObject::fromColouredVertices(
+		lx::tof(rx::triangulateQuadFace(rx::Face {
+			.vertices = {
+				lx::vec3(-10, 0, -10),
+				lx::vec3(-10, 0, +10),
+				lx::vec3(+10, 0, +10),
+				lx::vec3(+10, 0, -10),
+			}
+		}).vertices),
+		{
+			util::colour::fromHexRGB(0x0E5183),
+			util::colour::fromHexRGB(0x0E5183),
+			util::colour::fromHexRGB(0x0E5183),
+			util::colour::fromHexRGB(0x0E5183),
+			util::colour::fromHexRGB(0x0E5183),
+			util::colour::fromHexRGB(0x0E5183)
+		},
+		{
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0),
+			lx::fvec3(0, 1, 0)
+		}
+	);
+
 	// use the gridline shader.
 	gridlines->shaderProgramIndex = 1;
 
@@ -457,7 +520,7 @@ int main(int argc, char** argv)
 
 
 	auto pidController = pid_controller();
-	pidController.set_pos = lx::vec3(-15, 0, -10);
+	pidController.set_pos = lx::vec3(-15, 0, 10);
 
 
 
@@ -487,30 +550,25 @@ int main(int argc, char** argv)
 
 
 		{
-			double max_thrust = 66;
-			// double max_thrust = 200;
-			auto max = max_thrust;
-			// auto rot = world.bodies[0].rotation().toRotationMatrix();
+			auto max = 15;
+			auto& body = world.bodies[0];
 
-			world.bodies[0].addRelForceAt(lx::vec3(-0.4, 0, +0.6), max * lx::vec3(0, 0, -thruster_control.fwd_l));
-			world.bodies[0].addRelForceAt(lx::vec3(+0.4, 0, +0.6), max * lx::vec3(0, 0, -thruster_control.fwd_r));
-			world.bodies[0].addRelForceAt(lx::vec3(0, 0, +0.6), max * lx::vec3(0, thruster_control.vert_front, 0));
-			world.bodies[0].addRelForceAt(lx::vec3(0, 0, -0.6), max * lx::vec3(0, thruster_control.vert_back, 0));
-			world.bodies[0].addRelForceAt(lx::vec3(0, 0, +0.6), max * lx::vec3(thruster_control.yaw, 0, 0));
-
-			auto thrstr = tfm::format("thrusters: fwd[%.2f/%.2f] / vert_f[%.2f] / vert_b[%.2f] / yaw[%.2f]",
-				thruster_control.fwd_l, thruster_control.fwd_r, thruster_control.vert_front, thruster_control.vert_back,
-				thruster_control.yaw);
-
-			theRenderer->renderStringInScreenSpace(thrstr, primaryFont, 12.0, lx::fvec2(5, 35), util::colour::white(),
-				rx::TextAlignment::LeftAligned);
+			body.addRelForceAt(lx::vec3(-0.4, 0, +0.6), max * lx::vec3(0, 0, -thruster_control.fwd_l));
+			body.addRelForceAt(lx::vec3(+0.4, 0, +0.6), max * lx::vec3(0, 0, -thruster_control.fwd_r));
+			body.addRelForceAt(lx::vec3(0, 0, +0.6), max * lx::vec3(0, thruster_control.vert_front, 0));
+			body.addRelForceAt(lx::vec3(0, 0, -0.6), max * lx::vec3(0, thruster_control.vert_back, 0));
+			body.addRelForceAt(lx::vec3(0, 0, +0.6), max * lx::vec3(thruster_control.yaw, 0, 0));
 
 
-			auto pidstr = tfm::format("pid: rot_err[%.2f deg] / lin_err[%.2f m]",
-				lx::toDegrees(pidController.prev_rot_error), pidController.prev_lin_error);
+			auto transform = lx::mat4()
+				.translated(world.bodies[0].position())
+				.rotated(world.bodies[0].rotation().angle(), world.bodies[0].rotation().axis());
 
-			theRenderer->renderStringInScreenSpace(pidstr, primaryFont, 12.0, lx::fvec2(5, 50), util::colour::white(),
-				rx::TextAlignment::LeftAligned);
+			auto relpos = lx::vec3(0, -0.3, -0.8);
+			auto reldir = lx::vec3(0, -1, -1.5).normalised();
+
+			auvLight->position = lx::tof(transform * lx::vec4(relpos, 1)).xyz();
+			auvLight->direction = lx::tof(transform.rotationOnly() * lx::vec4(reldir, 1)).xyz();
 		}
 
 
@@ -544,15 +602,14 @@ int main(int argc, char** argv)
 
 					if(theRenderer->spotLights.size() > 0)
 					{
-						theRenderer->spotLights.back().position = tof(cam.position);
-						theRenderer->spotLights.back().direction = tof(cam.front());
+						theRenderer->spotLights.front().position = lx::tof(cam.position);
+						theRenderer->spotLights.front().direction = lx::tof(cam.front());
 					}
 
 					input::Update(inputState, theRenderer->window, fixedDeltaTimeNs);
 				}
 
-				if(upd)
-				thruster_control = pidController.update(world.bodies[0], NS_TO_S(fixedDeltaTimeNs * deltaTimeMultiplier));
+				if(upd) thruster_control = pidController.update(world.bodies[0], NS_TO_S(fixedDeltaTimeNs * deltaTimeMultiplier));
 			}
 		}
 
@@ -578,6 +635,7 @@ int main(int argc, char** argv)
 		else
 		{
 			theRenderer->renderObject(gridlines, lx::mat4().scaled(50));
+			theRenderer->renderObject(groundplane, lx::mat4().translated(lx::vec3(0, -0.1, 0)).scaled(50));
 
 			theRenderer->renderObject(earth, lx::mat4()
 				.translated(world.bodies[0].position())
@@ -608,22 +666,6 @@ int main(int argc, char** argv)
 				.translated(pidController.set_pos)
 				.scaled(lx::vec3(0.02, 10, 0.02))
 			);
-
-
-			// theRenderer->renderObject(axis_x, lx::mat4()
-			// 	.translated(world.bodies[0].position())
-			// 	.scaled(lx::vec3(5, 0.02, 0.02))
-			// );
-
-			// theRenderer->renderObject(axis_y, lx::mat4()
-			// 	.translated(world.bodies[0].position())
-			// 	.scaled(lx::vec3(0.02, 5, 0.02))
-			// );
-
-			// theRenderer->renderObject(axis_z, lx::mat4()
-			// 	.translated(world.bodies[0].position())
-			// 	.scaled(lx::vec3(0.02, 0.02, 5))
-			// );
 		}
 
 
@@ -633,6 +675,22 @@ int main(int argc, char** argv)
 
 		if((true))
 		{
+			auto thrstr = tfm::format("thrusters: fwd[%.2f/%.2f] / vert_f[%.2f] / vert_b[%.2f] / yaw[%.2f]",
+				thruster_control.fwd_l, thruster_control.fwd_r, thruster_control.vert_front, thruster_control.vert_back,
+				thruster_control.yaw);
+
+			theRenderer->renderStringInScreenSpace(thrstr, primaryFont, 12.0, lx::fvec2(5, 35), util::colour::white(),
+				rx::TextAlignment::LeftAligned);
+
+
+			auto pidstr = tfm::format("pid: rot_err[%.2f deg] / lin_err[%.2f m]",
+				lx::toDegrees(pidController.prev_rot_error), pidController.prev_lin_error);
+
+			theRenderer->renderStringInScreenSpace(pidstr, primaryFont, 12.0, lx::fvec2(5, 50), util::colour::white(),
+				rx::TextAlignment::LeftAligned);
+
+
+
 			{
 				auto fpsstr = tfm::format("%.2f fps (%.1f ms) / [%.1f, %.1f, %.1f] / [%.0f, %.0f] / (y: %.0f, p: %.0f)",
 					currentFps, NS_TO_MS(avgFrameTime), theRenderer->getCamera().position.x,
@@ -645,6 +703,10 @@ int main(int argc, char** argv)
 			{
 				auto timestr = tfm::format("t: %.2f s", world.worldtime);
 				theRenderer->renderStringInScreenSpace(timestr, primaryFont, 12.0, lx::fvec2(5, 5), util::colour::white(),
+					rx::TextAlignment::RightAligned);
+
+				timestr = tfm::format("m: %.2fx", deltaTimeMultiplier);
+				theRenderer->renderStringInScreenSpace(timestr, primaryFont, 12.0, lx::fvec2(5, 20), util::colour::white(),
 					rx::TextAlignment::RightAligned);
 			}
 

@@ -62,8 +62,17 @@ namespace lx
 	fvec3 toRadians(const fvec3& v)  { return fvec3(toRadians(v.x), toRadians(v.y), toRadians(v.z)); }
 
 
+	float max(float x, float y)     { return x > y ? x : y; }
+	double max(double x, double y)  { return x > y ? x : y; }
+
+	float min(float x, float y)     { return x < y ? x : y; }
+	double min(double x, double y)  { return x < y ? x : y; }
+
+
 	float sqrt(float x) { return ::sqrt(x); }
 	double sqrt(double x) { return ::sqrt(x); }
+
+
 }
 
 

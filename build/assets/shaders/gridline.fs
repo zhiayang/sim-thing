@@ -18,6 +18,7 @@ void main(void)
 	}
 	else
 	{
-		color = vec4(0);
+		// color = vec4(vec3(0), 0);
+		discard;
 	}
 }

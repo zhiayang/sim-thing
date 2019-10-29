@@ -45,6 +45,7 @@ namespace lx
 		double magnitudeSquared() const;
 		double magnitude() const;
 		vec4 normalised() const;
+		vec3 homogenised() const;
 
 		// dammit. 24???
 		vec2 xy() const;

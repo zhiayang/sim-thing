@@ -3,6 +3,8 @@
 // Licensed under the Apache License Version 2.0.
 
 #include <assert.h>
+
+#include <vector>
 #include <algorithm>
 #include <unordered_map>
 
@@ -169,14 +171,14 @@ namespace rx
 		this->pipeline.shaders[0].setUniform("ambientLightIntensity", intensity);
 	}
 
-	void Renderer::addPointLight(const rx::PointLight& light)
+	PointLight& Renderer::addPointLight(const rx::PointLight& light)
 	{
-		this->pointLights.push_back(light);
+		return *this->pointLights.insert(this->pointLights.end(), light);
 	}
 
-	void Renderer::addSpotLight(const rx::SpotLight& light)
+	SpotLight& Renderer::addSpotLight(const rx::SpotLight& light)
 	{
-		this->spotLights.push_back(light);
+		return *this->spotLights.insert(this->spotLights.end(), light);
 	}
 
 

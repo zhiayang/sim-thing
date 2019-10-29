@@ -9,32 +9,34 @@
 
 namespace px
 {
-	static constexpr double MINIMUM_VELOCITY		= 0.005;
-	static constexpr double GRAVITATIONAL_CONSTANT	= 6.67408e-11;
+	static constexpr double MINIMUM_VELOCITY        = 0.0050;
+	static constexpr double MINIMUM_ROT_VELOCITY    = 0.0005;
+	static constexpr double GRAVITATIONAL_CONSTANT  = 6.67408e-11;
 
 	// simulate water
-	static constexpr double FLUID_DENSITY           = 1.0;
+	static constexpr double FLUID_DENSITY           = 1000.0;
 	static constexpr double DAMPING_TORQUE_FACTOR   = 0.7;
 
 	static void applyDampingForces(RigidBody& body)
 	{
 		// clamp the velocity.
-		if(lx::abs(body._vel.x) < MINIMUM_VELOCITY)	body._vel.x = 0;
-		if(lx::abs(body._vel.y) < MINIMUM_VELOCITY)	body._vel.y = 0;
-		if(lx::abs(body._vel.z) < MINIMUM_VELOCITY)	body._vel.z = 0;
+		if(lx::abs(body._vel.x) < MINIMUM_VELOCITY) body._vel.x = 0;
+		if(lx::abs(body._vel.y) < MINIMUM_VELOCITY) body._vel.y = 0;
+		if(lx::abs(body._vel.z) < MINIMUM_VELOCITY) body._vel.z = 0;
 
 		// clamp the angular velocity as well
-		if(lx::abs(body._angularMtm.x) < MINIMUM_VELOCITY)	body._angularMtm.x = 0;
-		if(lx::abs(body._angularMtm.y) < MINIMUM_VELOCITY)	body._angularMtm.y = 0;
-		if(lx::abs(body._angularMtm.z) < MINIMUM_VELOCITY)	body._angularMtm.z = 0;
+		if(lx::abs(body._angularMtm.x) < MINIMUM_ROT_VELOCITY)  body._angularMtm.x = 0;
+		if(lx::abs(body._angularMtm.y) < MINIMUM_ROT_VELOCITY)  body._angularMtm.y = 0;
+		if(lx::abs(body._angularMtm.z) < MINIMUM_ROT_VELOCITY)  body._angularMtm.z = 0;
 
 
 		// for the next frame, apply a slight damping force
 		if(body.velocity().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
 		{
-			double forceMag = 0.5 * FLUID_DENSITY * body.velocity().magnitudeSquared() * body.dragCoefficient * body.surfaceArea;
-			printf("drag force = %.1f\n", forceMag);
-			body.addForce(-1 * (body.velocity().normalised() * forceMag));
+			double forceMag = -0.5 * FLUID_DENSITY * body.velocity().magnitudeSquared()
+				* body.dragCoefficient * body.surfaceArea;
+
+			body.addForce(body.velocity().normalised() * forceMag);
 		}
 
 		// for the next frame, apply a slight damping torque

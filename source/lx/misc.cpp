@@ -97,6 +97,21 @@ namespace lx
 
 
 
+	template <typename T>
+	static T _lerp(const T& v0, const T& v1, double t)
+	{
+		t = clamp(t, 0, 1);
+		return (1 - t) * v0 + t * v1;
+	}
+
+	float lerp(float v0, float v1, double t)                { return _lerp(v0, v1, t); }
+	double lerp(double v0, double v1, double t)             { return _lerp(v0, v1, t); }
+	vec2 lerp(const vec2& v0, const vec2& v1, double t)     { return _lerp(v0, v1, t); }
+	vec3 lerp(const vec3& v0, const vec3& v1, double t)     { return _lerp(v0, v1, t); }
+	vec4 lerp(const vec4& v0, const vec4& v1, double t)     { return _lerp(v0, v1, t); }
+	fvec2 lerp(const fvec2& v0, const fvec2& v1, double t)  { return _lerp(v0, v1, t); }
+	fvec3 lerp(const fvec3& v0, const fvec3& v1, double t)  { return _lerp(v0, v1, t); }
+	fvec4 lerp(const fvec4& v0, const fvec4& v1, double t)  { return _lerp(v0, v1, t); }
 
 
 

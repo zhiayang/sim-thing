@@ -60,6 +60,7 @@ namespace lx
 		fmat4x4 scaled(const fvec3& v) const;
 		fmat4x4 scaled(float s) const;
 		fmat4x4 transposed() const;
+		fmat4x4 rotationOnly() const;
 
 		static fmat4x4 identity();
 		static fmat4x4 zero();

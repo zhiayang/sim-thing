@@ -59,6 +59,12 @@ namespace lx
 	float abs(float x);
 	double abs(double x);
 
+	float max(float x, float y);
+	double max(double x, double y);
+
+	float min(float x, float y);
+	double min(double x, double y);
+
 	float pow(float x, float n);
 	double pow(double x, double n);
 
@@ -69,6 +75,16 @@ namespace lx
 	vec2 pow(const vec2& v, double n);
 	vec3 pow(const vec3& v, double n);
 	vec4 pow(const vec4& v, double n);
+
+	float lerp(float v0, float v1, double t);
+	double lerp(double v0, double v1, double t);
+	vec2 lerp(const vec2& v0, const vec2& v1, double t);
+	vec3 lerp(const vec3& v0, const vec3& v1, double t);
+	vec4 lerp(const vec4& v0, const vec4& v1, double t);
+	fvec2 lerp(const fvec2& v0, const fvec2& v1, double t);
+	fvec3 lerp(const fvec3& v0, const fvec3& v1, double t);
+	fvec4 lerp(const fvec4& v0, const fvec4& v1, double t);
+
 
 	float toDegrees(float radians);
 	float toRadians(float degrees);

@@ -45,6 +45,7 @@ namespace lx
 		float magnitudeSquared() const;
 		float magnitude() const;
 		fvec4 normalised() const;
+		fvec3 homogenised() const;
 
 		// dammit. 24???
 		fvec2 xy() const;

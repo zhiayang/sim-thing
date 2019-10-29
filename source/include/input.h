@@ -70,6 +70,12 @@ namespace input
 		ShiftL,
 		ShiftR,
 
+		LSquare,
+		RSquare,
+
+		Comma,
+		Period,
+
 		Space,
 
 

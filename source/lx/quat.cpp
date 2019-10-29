@@ -128,21 +128,41 @@ namespace lx
 
 	vec3 quat::toEulerRads() const
 	{
-		double sinr = +2.0 * (this->w * this->x + this->y * this->z);
-		double cosr = +1.0 - 2.0 * (this->x * this->x + this->y * this->y);
-		double roll = atan2(sinr, cosr);
+		// double sinr = +2.0 * (this->w * this->x + this->y * this->z);
+		// double cosr = +1.0 - 2.0 * (this->x * this->x + this->y * this->y);
+		// double roll = atan2(sinr, cosr);
 
 
-		// use 90 degrees if out of range
-		double sinp = +2.0 * (this->w * this->y - this->z * this->x);
-		double pitch = abs(sinp) >= 1 ? copysign(PI / 2, sinp) : asin(sinp);
+		// // use 90 degrees if out of range
+		// double sinp = +2.0 * (this->w * this->y - this->z * this->x);
+		// double pitch = abs(sinp) >= 1 ? copysign(PI / 2, sinp) : asin(sinp);
 
 
-		double siny = +2.0 * (this->w * this->z + this->x * this->y);
-		double cosy = +1.0 - 2.0 * (this->y * this->y + this->z * this->z);
-		double yaw = atan2(siny, cosy);
+		// double siny = +2.0 * (this->w * this->z + this->x * this->y);
+		// double cosy = +1.0 - 2.0 * (this->y * this->y + this->z * this->z);
+		// double yaw = atan2(siny, cosy);
 
-		return vec3(roll, pitch, yaw);
+		// return vec3(roll, yaw, pitch);
+
+		if(double test = (this->x * this->y) + (this->z * this->w); test > 0.499)
+		{
+			return vec3(0, 2.0 * atan2(this->x,this->w), PI / 2);
+		}
+		else if(test < -0.499)
+		{
+			return vec3(0, -2.0 * atan2(this->x,this->w), -PI / 2);
+		}
+
+	    double sqx = this->x * this->x;
+	    double sqy = this->y * this->y;
+	    double sqz = this->z * this->z;
+
+
+	    double yaw      = atan2(2 * (this->y * this->w) - 2 * (this->x * this->z) , 1 - 2 * sqy - 2 * sqz);
+		double pitch    = asin(2 * (this->x * this->y) + (this->z * this->w));
+		double roll     = atan2(2 * (this->x * this->w) - 2 * (this->y * this->z), 1 - 2 * sqx - 2 * sqz);
+
+		return vec3(roll, yaw, pitch);
 	}
 
 	vec3 quat::toEulerDegs() const
@@ -158,7 +178,6 @@ namespace lx
 
 	quat quat::fromEulerRads(const vec3& elr)
 	{
-		// pitch
 		auto s = vec3(sin(0.5 * elr.x), sin(0.5 * elr.y), sin(0.5 * elr.z));
 		auto c = vec3(cos(0.5 * elr.x), cos(0.5 * elr.y), cos(0.5 * elr.z));
 

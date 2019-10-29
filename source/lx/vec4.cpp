@@ -41,8 +41,10 @@ namespace lx
 		return vec4(this->x * ivs, this->y * ivs, this->z * ivs, this->w * ivs);
 	}
 
-
-
+	vec3 vec4::homogenised() const
+	{
+		return this->xyz() / this->w;
+	}
 
 
 

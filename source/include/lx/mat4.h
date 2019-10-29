@@ -60,6 +60,8 @@ namespace lx
 		mat4x4 scaled(double s) const;
 		mat4x4 transposed() const;
 
+		mat4x4 rotationOnly() const;
+
 		static mat4x4 identity();
 		static mat4x4 zero();
 	};

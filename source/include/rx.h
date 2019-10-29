@@ -151,8 +151,8 @@ namespace rx
 
 
 		void setAmbientLighting(const util::colour& colour, float intensity);
-		void addPointLight(const PointLight& light);
-		void addSpotLight(const SpotLight& light);
+		PointLight& addPointLight(const PointLight& light);
+		SpotLight& addSpotLight(const SpotLight& light);
 
 
 		std::vector<PointLight> sortAndUpdatePointLights(const lx::fvec3& reference);

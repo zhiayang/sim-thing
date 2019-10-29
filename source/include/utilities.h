@@ -134,8 +134,21 @@ namespace util
 
 		static colour fromHex(uint32_t hex)
 		{
-			return colour((hex & 0xFF000000 >> 24) / 255.0, (hex & 0x00FF0000 >> 16) / 255.0,
-				(hex & 0x0000FF00 >> 8) / 255.0, (hex & 0xFF) / 255.0);
+			return colour(
+				((hex & 0xFF000000) >> 24) / 255.0,
+				((hex & 0x00FF0000) >> 16) / 255.0,
+				((hex & 0x0000FF00) >>  8) / 255.0,
+				((hex & 0x000000FF) >>  0) / 255.0
+			);
+		}
+
+		static colour fromHexRGB(uint32_t hex)
+		{
+			return colour(
+				((hex & 0xFF0000) >> 16) / 255.0,
+				((hex & 0x00FF00) >>  8) / 255.0,
+				((hex & 0x0000FF) >>  0) / 255.0
+			);
 		}
 
 		static colour black() { return colour(0, 0, 0); }
