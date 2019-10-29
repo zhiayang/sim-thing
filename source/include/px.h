@@ -46,6 +46,11 @@ namespace px
 		lx::vec3 _inputOmega;
 
 
+		// testing stuff!
+		double surfaceArea = 0;
+		double dragCoefficient = 1;
+
+
 		// collision stuff
 		const rx::Mesh& collisionMesh;
 
@@ -65,7 +70,7 @@ namespace px
 		void addRelForceAt(const lx::vec3& pos, const lx::vec3& force);
 		void addRelTorque(const lx::vec3& torque);
 
-		void addForceAt(const lx::vec3& pos, const lx::vec3& force);
+		void addForce(const lx::vec3& force);
 		void addTorque(const lx::vec3& torque);
 
 		void addAngularVelocity(const lx::vec3& w);

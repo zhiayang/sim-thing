@@ -12,6 +12,10 @@ namespace px
 	static constexpr double MINIMUM_VELOCITY		= 0.005;
 	static constexpr double GRAVITATIONAL_CONSTANT	= 6.67408e-11;
 
+	// simulate water
+	static constexpr double FLUID_DENSITY           = 1.0;
+	static constexpr double DAMPING_TORQUE_FACTOR   = 0.7;
+
 	static void applyDampingForces(RigidBody& body)
 	{
 		// clamp the velocity.
@@ -20,18 +24,22 @@ namespace px
 		if(lx::abs(body._vel.z) < MINIMUM_VELOCITY)	body._vel.z = 0;
 
 		// clamp the angular velocity as well
-		if(lx::abs(body._linearMtm.x) < MINIMUM_VELOCITY)	body._linearMtm.x = 0;
-		if(lx::abs(body._linearMtm.y) < MINIMUM_VELOCITY)	body._linearMtm.y = 0;
-		if(lx::abs(body._linearMtm.z) < MINIMUM_VELOCITY)	body._linearMtm.z = 0;
+		if(lx::abs(body._angularMtm.x) < MINIMUM_VELOCITY)	body._angularMtm.x = 0;
+		if(lx::abs(body._angularMtm.y) < MINIMUM_VELOCITY)	body._angularMtm.y = 0;
+		if(lx::abs(body._angularMtm.z) < MINIMUM_VELOCITY)	body._angularMtm.z = 0;
 
 
 		// for the next frame, apply a slight damping force
 		if(body.velocity().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
-			body.addRelForceAt(lx::vec3(), -1 * (body.velocity() * body.mass * 0.5));
+		{
+			double forceMag = 0.5 * FLUID_DENSITY * body.velocity().magnitudeSquared() * body.dragCoefficient * body.surfaceArea;
+			printf("drag force = %.1f\n", forceMag);
+			body.addForce(-1 * (body.velocity().normalised() * forceMag));
+		}
 
 		// for the next frame, apply a slight damping torque
 		if(body.angularMomentum().magnitudeSquared() > MINIMUM_VELOCITY * MINIMUM_VELOCITY)
-			body.addTorque(body.angularMomentum() * -0.3);
+			body.addTorque(body.angularMomentum() * -DAMPING_TORQUE_FACTOR);
 	}
 
 	void stepSimulation(World& world, double dt)
@@ -45,12 +53,6 @@ namespace px
 			// zero out the net force for the next step.
 			body._force = lx::vec3(0);
 			body._torque = lx::vec3(0);
-
-
-
-
-
-
 
 			applyDampingForces(body);
 		}

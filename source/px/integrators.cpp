@@ -21,8 +21,7 @@ namespace integrators
 
 
 			// transform the body-space inertia tensor matrix into a world-space one
-			// auto rotmat = body.rotation().toRotationMatrix();
-			auto rotmat = lx::mat3();
+			auto rotmat = body.rotation().toRotationMatrix();
 			auto invtensor = rotmat * (body._bodyInertiaTensor * body.mass).inversed() * rotmat.transposed();
 
 			body._angularMtm += torque * c[i] * dt;

@@ -33,8 +33,8 @@ namespace lx
 	double acos(double x) { return ::acos(x); }
 	double atan(double x) { return ::atan(x); }
 
-	float atan2(float x, float y) { return ::atan2(x, y); }
-	double atan2(double x, double y) { return ::atan2(x, y); }
+	float atan2(float y, float x) { return ::atan2(y, x); }
+	double atan2(double y, double x) { return ::atan2(y, x); }
 
 	float pow(float x, float n) { return ::pow(x, n); }
 	double pow(double x, double n) { return ::pow(x, n); }

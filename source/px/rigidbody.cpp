@@ -26,10 +26,10 @@ namespace px
 		this->_linearMtm = this->mass * v;
 	}
 
-	void RigidBody::addForceAt(const lx::vec3& pos, const lx::vec3& force)
+	void RigidBody::addForce(const lx::vec3& force)
 	{
-		this->_force += this->rotation().inversed() * (force - this->position());
-		this->_torque += this->rotation().inversed() * lx::cross(pos - this->position(), force);
+		this->_force += force;
+		// this->_torque += lx::cross(this->position(), force);
 	}
 
 	void RigidBody::addTorque(const lx::vec3& torque)
@@ -40,8 +40,8 @@ namespace px
 
 	void RigidBody::addRelForceAt(const lx::vec3& pos, const lx::vec3& force)
 	{
-		this->_force += force;
-		this->_torque += lx::cross(pos - lx::vec3(), force);
+		this->_force += this->rotation() * force;
+		this->_torque += this->rotation() * lx::cross(pos, force);
 	}
 
 	void RigidBody::addRelTorque(const lx::vec3& torque)

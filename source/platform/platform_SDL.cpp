@@ -307,6 +307,7 @@ namespace platform
 			case  SDLK_f:		return Key::F;
 			case  SDLK_g:		return Key::G;
 			case  SDLK_h:		return Key::H;
+			case  SDLK_i:		return Key::I;
 			case  SDLK_j:		return Key::J;
 			case  SDLK_k:		return Key::K;
 			case  SDLK_l:		return Key::L;

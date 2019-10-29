@@ -53,8 +53,8 @@ namespace lx
 	double acos(double x);
 	double atan(double x);
 
-	float atan2(float x, float y);
-	double atan2(double x, double y);
+	float atan2(float y, float x);
+	double atan2(double y, double x);
 
 	float abs(float x);
 	double abs(double x);

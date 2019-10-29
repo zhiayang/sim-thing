@@ -50,6 +50,8 @@ namespace lx
 		// swizzling
 		vec2 xy() const;
 		vec2 yx() const;
+		vec2 xz() const;
+		vec2 zx() const;
 
 		vec3 xyz() const;
 		vec3 xzy() const;

@@ -27,6 +27,7 @@ namespace input
 		F,
 		G,
 		H,
+		I,
 		J,
 		K,
 		L,

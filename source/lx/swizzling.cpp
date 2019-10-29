@@ -19,6 +19,8 @@ namespace lx
 	// vec3
 	vec2 vec3::xy() const { return vec2(x, y); }
 	vec2 vec3::yx() const { return vec2(y, x); }
+	vec2 vec3::xz() const { return vec2(x, z); }
+	vec2 vec3::zx() const { return vec2(z, x); }
 
 	vec3 vec3::xyz() const { return vec3(x, y, z); }
 	vec3 vec3::xzy() const { return vec3(x, z, y); }
