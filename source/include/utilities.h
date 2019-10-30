@@ -151,16 +151,16 @@ namespace util
 			);
 		}
 
-		static colour black() { return colour(0, 0, 0); }
-		static colour white() { return colour(1.0, 1.0, 1.0); }
+		static colour black()   { return colour(0.0, 0.0, 0.0); }
+		static colour white()   { return colour(1.0, 1.0, 1.0); }
 
-		static colour red() { return colour(1.0, 0, 0); }
-		static colour blue() { return colour(0, 0, 1.0); }
-		static colour green() { return colour(0, 1.0, 0); }
-		static colour cyan() { return colour::green() + colour::blue(); }
-		static colour yellow() { return colour::red() + colour::green(); }
+		static colour red()     { return colour(1.0, 0.0, 0.0); }
+		static colour blue()    { return colour(0.0, 0.0, 1.0); }
+		static colour green()   { return colour(0.0, 1.0, 0.0); }
+		static colour cyan()    { return colour::green() + colour::blue(); }
+		static colour yellow()  { return colour::red() + colour::green(); }
 		static colour magenta() { return colour::blue() + colour::red(); }
-		static colour random() { return colour(util::random::get(0, 1), util::random::get(0, 1), util::random::get(0, 1)); }
+		static colour random()  { return colour(util::random::get(0, 1), util::random::get(0, 1), util::random::get(0, 1)); }
 	};
 
 

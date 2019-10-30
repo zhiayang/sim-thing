@@ -198,6 +198,16 @@ namespace lx
 		return result;
 	}
 
+	mat3x3 mat4x4::upper3x3() const
+	{
+		mat3x3 result;
+		result[0] = this->vecs[0].xyz();
+		result[1] = this->vecs[1].xyz();
+		result[2] = this->vecs[2].xyz();
+
+		return result;
+	}
+
 
 
 	vec4 operator * (const mat4x4& m, const vec4& v)

@@ -460,7 +460,7 @@ namespace rx
 
 		for(auto pl : this->pointLights)
 		{
-			this->renderObject(cubeRO, lx::scale(0.1).translated(fromf(pl.position)));
+			this->renderObject(cubeRO, lx::mat4().translated(fromf(pl.position)).scaled(0.1));
 		}
 
 		for(auto rc : this->forwardList)
@@ -480,6 +480,12 @@ namespace rx
 					sprog.setUniform("modelMatrix", tof(rc.modelMatrix));
 					sprog.setUniform("viewMatrix", tof(this->cameraMatrix));
 					sprog.setUniform("projMatrix", tof(this->projectionMatrix));
+
+					if(sprog.capabilities & SHADER_SUPPORTS_TRANS_INV_MODELMAT)
+					{
+						sprog.setUniform("transposedInverseModelMatrix",
+							tof(rc.modelMatrix.upper3x3().inversed().transposed()));
+					}
 
 					if(sprog.capabilities & SHADER_SUPPORTS_MATERIALS)
 					{

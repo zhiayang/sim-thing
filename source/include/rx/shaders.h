@@ -25,9 +25,10 @@ namespace rx
 		std::string fragmentShaderPath;
 	};
 
-	constexpr size_t SHADER_SUPPORTS_NOTHING			= 0x0;
-	constexpr size_t SHADER_SUPPORTS_MATERIALS			= 0x1;
-	constexpr size_t SHADER_SUPPORTS_CAMERA_POSITION	= 0x2;
+	constexpr size_t SHADER_SUPPORTS_NOTHING            = 0x0;
+	constexpr size_t SHADER_SUPPORTS_MATERIALS          = 0x1;
+	constexpr size_t SHADER_SUPPORTS_CAMERA_POSITION    = 0x2;
+	constexpr size_t SHADER_SUPPORTS_TRANS_INV_MODELMAT = 0x4;
 
 	struct ShaderProgram
 	{

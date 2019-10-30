@@ -199,6 +199,16 @@ namespace lx
 		return result;
 	}
 
+	fmat3x3 fmat4x4::upper3x3() const
+	{
+		fmat3x3 result;
+		result[0] = this->vecs[0].xyz();
+		result[1] = this->vecs[1].xyz();
+		result[2] = this->vecs[2].xyz();
+
+		return result;
+	}
+
 
 
 

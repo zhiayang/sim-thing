@@ -10,6 +10,7 @@
 
 namespace lx
 {
+	struct fmat3x3;
 	struct fmat4x4
 	{
 		#pragma clang diagnostic push
@@ -61,6 +62,7 @@ namespace lx
 		fmat4x4 scaled(float s) const;
 		fmat4x4 transposed() const;
 		fmat4x4 rotationOnly() const;
+		fmat3x3 upper3x3() const;
 
 		static fmat4x4 identity();
 		static fmat4x4 zero();

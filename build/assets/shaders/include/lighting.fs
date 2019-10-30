@@ -113,12 +113,16 @@ vec4 applySpotLights(vec3 normal, vec3 fragPosition, vec3 viewDirection, vec4 di
 
 
 		{
+
 			// Diffuse lighting
 			float diff = max(dot(normal, lightDir), 0.0);
 
 			// Specular lighting
-			vec3 reflectDir = reflect(-1 * lightDir, normal);
-			float spec = pow(max(dot(viewDirection, reflectDir), 0.0), shine);
+			vec3 halfwayDir = normalize(lightDir + viewDirection);
+			float spec = pow(max(dot(normal, halfwayDir), 0.0), shine);
+
+			// vec3 reflectDir = reflect(-1 * lightDir, normal);
+			// float spec = pow(max(dot(viewDirection, reflectDir), 0.0), shine);
 
 
 			float smoothIntensity = clamp((theta - spotLights[i].outerCutoffCosine) / epsilon, 0.0, 1.0);

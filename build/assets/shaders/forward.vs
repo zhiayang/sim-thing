@@ -19,6 +19,7 @@ out vec3 fragmentPosition;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projMatrix;
+uniform mat3 transposedInverseModelMatrix;
 
 void main()
 {
@@ -26,7 +27,7 @@ void main()
 	gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(vertexPosition, 1);
 
 	fragmentUV = vertexUV;
-	fragmentNormal = vertexNormal;
+	fragmentNormal = transposedInverseModelMatrix * vertexNormal;
 	fragmentColour = vertexColour;
 	fragmentPosition = vec3(modelMatrix * vec4(vertexPosition, 1.0));
 }
