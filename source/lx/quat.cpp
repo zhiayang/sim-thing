@@ -41,11 +41,13 @@ namespace lx
 
 	mat3 quat::toRotationMatrix() const
 	{
-		return mat3(
-			vec3(1 - (2 * y * y) - (2 * z * z), (2 * x * y) + (2 * w * z), (2 * x * z) - (2 * w * y)),
-			vec3((2 * x * y) - (2 * w * z), 1 - (2 * x * x) - (2 * z * z), (2 * y * z) - (2 * w * x)),
-			vec3((2 * x * z) + (2 * w * y), (2 * y * z) - (2 * w * x), 1 - (2 * x * x) - (2 * y * y))
-		);
+		mat3 ret;
+
+		ret.vecs[2] = vec3((2*x*z) + (2*w*y),       (2*y*z) - (2*w*x),      1 - (2*x*x) - (2*y*y));
+		ret.vecs[1] = vec3((2*x*y) - (2*w*z),       1 - (2*x*x) - (2*z*z),  (2*y*z) + (2*w*x));
+		ret.vecs[0] = vec3(1 - (2*y*y) - (2*z*z),   (2*x*y) + (2*w*z),      (2*x*z) - (2*w*y));
+
+		return ret;
 	}
 
 	quat quat::fromRotationMatrix(const mat3& m)
@@ -109,8 +111,8 @@ namespace lx
 		// else
 		// 	return *this * (1.0 / sqrt(msq));
 
-		auto oneoverlen = 1.0 / this->magnitude();
-		return quat(w * oneoverlen, x * oneoverlen, y * oneoverlen, z * oneoverlen);
+		auto rt = sqrt(msq);
+		return quat(w / rt, x / rt, y / rt, z / rt);
 	}
 
 	quat quat::conjugated() const
@@ -208,16 +210,12 @@ namespace lx
 
 	quat operator * (const quat& a, const quat& b)
 	{
-		return quat(a.real * b.real - dot(a.imag, b.imag),
-					vec3((a.real * b.imag) + (b.real * a.imag) + cross(a.imag, b.imag))
-				);
-
-		// return quat(
-		// 	(a.w * b.w) - (a.x * b.x) - (a.y * b.y) - (a.z * b.z),
-		// 	(a.w * b.x) + (a.x * b.w) + (a.y * b.z) - (a.z * b.y),
-		// 	(a.w * b.y) - (a.x * b.z) + (a.y * b.w) + (a.z * b.x),
-		// 	(a.w * b.z) + (a.x * b.y) - (a.y * b.x) + (a.z * b.w)
-		// );
+		return quat(
+			(a.w * b.w) - (a.x * b.x) - (a.y * b.y) - (a.z * b.z),
+			(a.w * b.x) + (a.x * b.w) + (a.y * b.z) - (a.z * b.y),
+			(a.w * b.y) - (a.x * b.z) + (a.y * b.w) + (a.z * b.x),
+			(a.w * b.z) + (a.x * b.y) - (a.y * b.x) + (a.z * b.w)
+		);
 	}
 
 

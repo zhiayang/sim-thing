@@ -219,40 +219,51 @@ namespace lx
 #include <iomanip>
 namespace tinyformat
 {
+	static constexpr double THRESH = 1e-7;
+
+	template <typename T>
+	static T fix(T x)
+	{
+		if(lx::abs(x) < THRESH)
+			return 0;
+
+		return x;
+	}
+
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::vec2& v)
 	{
-		out << std::setprecision(3) << "v2(" << v.x << ", " << v.y << ")";
+		out << std::setprecision(3) << "v2(" << fix(v.x) << ", " << fix(v.y) << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::vec3& v)
 	{
-		out << std::setprecision(3) << "v3(" << v.x << ", " << v.y << ", " << v.z << ")";
+		out << std::setprecision(3) << "v3(" << fix(v.x) << ", " << fix(v.y) << ", " << fix(v.z) << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::vec4& v)
 	{
-		out << std::setprecision(3) << "v4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+		out << std::setprecision(3) << "v4(" << fix(v.x) << ", " << fix(v.y) << ", " << fix(v.z) << ", " << fix(v.w) << ")";
 	}
 
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::fvec2& v)
 	{
-		out << std::setprecision(3) << "v2(" << v.x << ", " << v.y << ")";
+		out << std::setprecision(3) << "v2(" << fix(v.x) << ", " << fix(v.y) << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::fvec3& v)
 	{
-		out << std::setprecision(3) << "v3(" << v.x << ", " << v.y << ", " << v.z << ")";
+		out << std::setprecision(3) << "v3(" << fix(v.x) << ", " << fix(v.y) << ", " << fix(v.z) << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::fvec4& v)
 	{
-		out << std::setprecision(3) << "v4(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+		out << std::setprecision(3) << "v4(" << fix(v.x) << ", " << fix(v.y) << ", " << fix(v.z) << ", " << fix(v.w) << ")";
 	}
 
 	void formatValue(std::ostream& out, const char* /*fmtBegin*/, const char* fmtEnd, int ntrunc, const lx::quat& q)
 	{
-		out << std::setprecision(3) << "quat(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
+		out << std::setprecision(3) << "quat(" << fix(q.w) << ", " << fix(q.x) << ", " << fix(q.y) << ", " << fix(q.z) << ")";
 	}
 }
 

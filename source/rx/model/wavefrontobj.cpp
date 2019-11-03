@@ -3,7 +3,7 @@
 // Licensed under the Apache License Version 2.0.
 
 #include <vector>
-#include <stx/string_view.hpp>
+#include <string_view>
 
 #include "rx.h"
 #include "rx/model.h"
@@ -15,43 +15,39 @@ namespace rx
 		// split into lines
 		Model model;
 
-		std::vector<stx::string_view> lines;
+		std::vector<const char*> lines;
+
+		// copy it over, so we can stomp memory!
+		char* copy = new char[ass->length + 1];
+		memcpy(copy, ass->raw, ass->length);
+
 		{
-			auto view = stx::string_view((char*) ass->raw, ass->length);
+			char* view = copy;
 
 			while(true)
 			{
-				size_t ln = view.find("\n");
+				size_t ln = 0;
+				while(view[ln] && view[ln] != '\n')
+					ln++;
 
-				if(ln != stx::string_view::npos)
+				if(ln > 0)
 				{
-					// fuck windows line endings
-					if(view.length() > 1 && view.data()[ln - 1] == '\r')
-					{
-						// don't +1 because we don't want the \n in the line itself
-						lines.push_back(stx::string_view(view.data(), ln - 1));
-					}
-					else
-					{
-						// don't +1 because we don't want the \n in the line itself
-						lines.push_back(stx::string_view(view.data(), ln));
-					}
+					view[ln] = 0;
+					lines.push_back(view);
 
 					// +1 here because we want to remove the \n from the stream.
-					view.remove_prefix(ln + 1);
+					view += (ln + 1);
 				}
-				else
-				{
+
+				if(!view[ln])
 					break;
-				}
 			}
 		}
 
-		for(auto& line : lines)
-		{
-			while(line.find(' ') == 0)
-				line.remove_prefix(1);
-		}
+
+
+
+
 
 		struct IndexedFace
 		{
@@ -66,90 +62,115 @@ namespace rx
 			std::vector<IndexedFace> ifaces;
 		};
 
+
+
 		std::vector<ObjectGroup> objs;
 
-		std::vector<lx::vec3> vertices;
-		std::vector<lx::vec3> normals;
-		std::vector<lx::vec2> uvs;
+		std::vector<lx::vec3> vertices; vertices.reserve(lines.size() / 3);
+		std::vector<lx::vec3> normals;  normals.reserve(lines.size() / 3);
+		std::vector<lx::vec2> uvs;      uvs.reserve(lines.size() / 3);
 
 		size_t ln = 1;
 		for(auto line : lines)
 		{
-			if(line.empty() || line[0] == '#' || line[0] == '\n' || line[0] == '\r')
+			// fprintf(stderr, "line %zu/%zu\n", ln, lines.size());
+			if(line[0] == '#' || line[0] == '\n' || line[0] == '\r')
 			{
 				ln++;
 				continue;
 			}
-			else if(line.find("v ") == 0)
+			else if(strncmp(line, "v ", 2) == 0)
 			{
 				// vertex
 				double x = 0;
 				double y = 0;
 				double z = 0;
-				int res = sscanf(stx::to_string(line).c_str(), "v %lf %lf %lf", &x, &y, &z);
+				int res = sscanf(line, "v %lf %lf %lf", &x, &y, &z);
 				if(res != 3)
 					ERROR("Malformed vertex on line %zu", ln);
 
-				vertices.push_back(lx::vec3(x, y, z));
+				// LOG("vertex: %d/%d", ln, lines.size());
+				vertices.emplace_back(x, y, z);
 			}
-			else if(line.find("vt ") == 0)
+			else if(strncmp(line, "vt ", 3) == 0)
 			{
 				// vertex
 				double u = 0;
 				double v = 0;
 
-				int res = sscanf(stx::to_string(line).c_str(), "vt %lf %lf", &u, &v);
+				int res = sscanf(line, "vt %lf %lf", &u, &v);
 				if(res != 2)
 					ERROR("Malformed UV coordinates on line %zu", ln);
 
-				uvs.push_back(lx::vec2(u, v));
+				uvs.emplace_back(u, v);
 			}
-			else if(line.find("vn ") == 0)
+			else if(strncmp(line, "vn ", 3) == 0)
 			{
 				// vertex
 				double x = 0;
 				double y = 0;
 				double z = 0;
 
-				int res = sscanf(stx::to_string(line).c_str(), "vn %lf %lf %lf", &x, &y, &z);
+				int res = sscanf(line, "vn %lf %lf %lf", &x, &y, &z);
 				if(res != 3)
 					ERROR("Malformed normal on line %zu", ln);
 
 				normals.push_back(lx::vec3(x, y, z).normalised());
 			}
-			else if(line.find("f") == 0)
+			else if(strncmp(line, "f ", 2) == 0)
 			{
 				// todo: handle the optional cases:
 				// f x y z
 				// f x/x y/y z/z
-				// f x//x y//y z//z
 
-				// for now, only accept the full form: f x/x/x y/y/y z/z/z
+				// for now, we only accept either: x/x/x or x//x
 
-				line.remove_prefix(2);
+				line += 2;
 				IndexedFace iface;
 
-				while(true)
+				bool failed = false;
+				while(line && *line)
 				{
 					double v = 0; double t = 0; double n = 0;
 
-					int didread = 0;
-					int res = sscanf(stx::to_string(line).c_str(), "%lf/%lf/%lf%n",
-						&v, &t, &n, &didread);
-
-					if(res > 0)
+					// because uv coords may be omitted (the second one -- to give %f//%f), we scan separately.
+					if(int didread = 0, res = sscanf(line, "%lf/%n", &v, &didread); res > 0)
 					{
+						line += didread;
 						iface.vertexIndices.push_back(v);
-						iface.normalIndices.push_back(n);
-						iface.uvIndices.push_back(t);
 
-						line.remove_prefix(didread);
-						// fprintf(stderr, "face vert %f/%f/%f\n", v, n, t);
+						if(res = sscanf(line, "%lf%n", &t, &didread); res > 0)
+						{
+							line += didread;
+							iface.uvIndices.push_back(t);
+						}
+						else
+						{
+							iface.uvIndices.push_back(t);
+							res = sscanf(line, "/%lf%n", &n, &didread);
+
+							if(res > 0)
+							{
+								iface.normalIndices.push_back(n);
+								line += didread;
+							}
+							else
+							{
+								failed = true;
+								break;
+							}
+						}
 					}
 					else
 					{
+						failed = true;
 						break;
 					}
+				}
+
+				if(failed)
+				{
+					WARN("Malformed OBJ file; unexpected line<%zu>: %s", line, ln);
 				}
 
 				// fprintf(stderr, "face with %zu verts\n\n", iface.vertexIndices.size());
@@ -162,43 +183,42 @@ namespace rx
 				// LOG("face");
 				objs.back().ifaces.push_back(iface);
 			}
-			else if(line.find("mtllib") == 0 || line.find("usemtl") == 0)
+			else if(strncmp(line, "mtllib", 6) == 0 || strncmp(line, "usemtl", 6) == 0)
 			{
 				// skip
 				LOG("Ignoring materials in OBJ file");
 			}
-			else if(line.find("o") == 0)
+			else if(strncmp(line, "o ", 2) == 0)
 			{
 				// each 'group' would represent a mesh, I guess.
 				// not sure if OBJ files *need* a group...
 
 				ObjectGroup og;
-				og.name = stx::to_string(line.substr(2));
+				og.name = std::string(line + 2);
 				objs.push_back(og);
 			}
-			else if(line.find("g") == 0 || line.find("s") == 0)
+			else if(strncmp(line, "g ", 2) == 0 || strncmp(line, "s ", 2) == 0)
 			{
 				// ignore groups and shading
-				LOG("Ingoring polygon groups and shading in OBJ file");
+				LOG("Ignoring polygon groups and shading in OBJ file");
 			}
 			else
 			{
-				WARN("Malformed OBJ file; unexpected token <%d/%s> at beginning of line <%zu>",
-					line[0], stx::to_string(line.substr(0, line.find(' '))).c_str(), ln);
+				WARN("Malformed OBJ file; unexpected line<%zu>: %s", line, ln);
 			}
 
 			ln++;
 		}
 
 		size_t faceCount = 0;
-		for(auto obj : objs)
+		for(const auto& obj : objs)
 		{
 			Mesh mesh;
 			mesh.name = obj.name;
 
 			faceCount += obj.ifaces.size();
 
-			for(auto iface : obj.ifaces)
+			for(const auto& iface : obj.ifaces)
 			{
 				Face face;
 				for(auto vi : iface.vertexIndices)

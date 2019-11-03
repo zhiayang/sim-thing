@@ -142,6 +142,11 @@ namespace lx
 		return ret * (*this);
 	}
 
+	mat3x3 mat3x3::rotated(const quat& rot) const
+	{
+		return rot.toRotationMatrix();
+	}
+
 	mat3x3 mat3x3::scaled(const vec3& v) const
 	{
 		mat3x3 result;
@@ -202,7 +207,21 @@ namespace lx
 			return mat3x3();
 		}
 
-		return (1.0 / this->determinant()) * this->transposed();
+		auto m = *this;
+
+		mat3 ret;
+		auto invdet = 1.0 / this->determinant();
+		ret[0][0] = (m[1][1] * m[2][2] - m[2][1] * m[1][2]) * invdet;
+		ret[0][1] = (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * invdet;
+		ret[0][2] = (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invdet;
+		ret[1][0] = (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invdet;
+		ret[1][1] = (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invdet;
+		ret[1][2] = (m[1][0] * m[0][2] - m[0][0] * m[1][2]) * invdet;
+		ret[2][0] = (m[1][0] * m[2][1] - m[2][0] * m[1][1]) * invdet;
+		ret[2][1] = (m[2][0] * m[0][1] - m[0][0] * m[2][1]) * invdet;
+		ret[2][2] = (m[0][0] * m[1][1] - m[1][0] * m[0][1]) * invdet;
+
+		return ret;
 	}
 
 

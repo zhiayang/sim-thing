@@ -9,35 +9,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <string_view>
 
 #include "lx.h"
 #include "units.h"
 #include "profile.h"
 
-#include "stx/string_view.hpp"
-
 struct ImFont;
-
-namespace stx
-{
-	template <typename T>
-	struct reversion_wrapper { T& iterable; };
-
-	template <typename T>
-	auto begin (reversion_wrapper<T> w) { return rbegin(w.iterable); }
-
-	template <typename T>
-	auto end (reversion_wrapper<T> w) { return rend(w.iterable); }
-
-	template <typename T>
-	reversion_wrapper<T> reverse (T&& iterable) { return { iterable }; }
-
-	template <typename T>
-	std::basic_string<T> to_string(const stx::basic_string_view<T>& sv)
-	{
-		return std::basic_string<T>(sv.data(), sv.size());
-	}
-}
 
 namespace util
 {

@@ -10,8 +10,6 @@
 #include "rx.h"
 #include "rx/model.h"
 
-#include <stx/string_view.hpp>
-
 using namespace AssetLoader;
 
 

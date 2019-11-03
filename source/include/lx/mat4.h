@@ -11,6 +11,7 @@
 namespace lx
 {
 	struct mat3x3;
+	struct quat;
 
 	struct mat4x4
 	{
@@ -58,6 +59,7 @@ namespace lx
 
 		mat4x4 translated(const vec3& v) const;
 		mat4x4 rotated(double radians, const vec3& axis) const;
+		mat4x4 rotated(const quat& rot) const;
 		mat4x4 scaled(const vec3& v) const;
 		mat4x4 scaled(double s) const;
 		mat4x4 transposed() const;

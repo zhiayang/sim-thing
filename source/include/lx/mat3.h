@@ -11,6 +11,8 @@
 
 namespace lx
 {
+	struct quat;
+
 	struct mat3x3
 	{
 		#pragma clang diagnostic push
@@ -57,6 +59,7 @@ namespace lx
 
 		mat4x4 translated(const vec3& v) const;
 		mat3x3 rotated(double radians, const vec3& axis) const;
+		mat3x3 rotated(const quat& rot) const;
 		mat3x3 scaled(const vec3& v) const;
 		mat3x3 scaled(double s) const;
 		mat3x3 transposed() const;

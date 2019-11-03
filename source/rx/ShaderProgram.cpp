@@ -9,7 +9,6 @@
 
 #include "rx/shaders.h"
 
-#include "stx/string_view.hpp"
 #include <glbinding/gl/gl.h>
 
 using namespace AssetLoader;
@@ -18,27 +17,27 @@ using namespace AssetLoader;
 
 namespace rx
 {
-	static std::vector<stx::string_view> splitString(const char* str, size_t length)
+	static std::vector<std::string_view> splitString(const char* str, size_t length)
 	{
-		std::vector<stx::string_view> lines;
-		auto view = stx::string_view(str, length);
+		std::vector<std::string_view> lines;
+		auto view = std::string_view(str, length);
 
 		while(true)
 		{
 			size_t ln = view.find("\n");
 
-			if(ln != stx::string_view::npos)
+			if(ln != std::string_view::npos)
 			{
 				// fuck windows line endings
 				if(view.length() > 1 && view.data()[ln - 1] == '\r')
 				{
 					// don't +1 because we don't want the \n in the line itself
-					lines.push_back(stx::string_view(view.data(), ln - 1));
+					lines.push_back(std::string_view(view.data(), ln - 1));
 				}
 				else
 				{
 					// don't +1 because we don't want the \n in the line itself
-					lines.push_back(stx::string_view(view.data(), ln));
+					lines.push_back(std::string_view(view.data(), ln));
 				}
 
 				// +1 here because we want to remove the \n from the stream.
@@ -82,7 +81,7 @@ namespace rx
 							kind.c_str(), path.c_str(), linenum);
 					}
 
-					std::string incPath = stx::to_string(line);
+					auto incPath = std::string(line);
 					incPath.pop_back();
 
 					// load the asset, hopefully.
@@ -91,13 +90,13 @@ namespace rx
 
 					{
 						// insert the inc into the vsrc
-						for(auto il : inclines)
-							finalLines.push_back(stx::to_string(il));
+						for(const auto& il : inclines)
+							finalLines.push_back(std::string(il));
 					}
 				}
 				else
 				{
-					finalLines.push_back(stx::to_string(line));
+					finalLines.push_back(std::string(line));
 				}
 
 				linenum++;

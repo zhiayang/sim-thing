@@ -141,6 +141,12 @@ namespace lx
 	}
 
 
+	fmat4x4 fmat4x4::rotated(const quat& rot) const
+	{
+		return this->rotated(rot.angle(), tof(rot.axis()));
+	}
+
+
 	fmat4x4 fmat4x4::rotationOnly() const
 	{
 		fmat4x4 result;

@@ -141,6 +141,11 @@ namespace lx
 		return (*this) * ret;
 	}
 
+	mat4x4 mat4x4::rotated(const quat& rot) const
+	{
+		return this->rotated(rot.angle(), rot.axis());
+	}
+
 	mat4x4 mat4x4::rotationOnly() const
 	{
 		mat4x4 result;

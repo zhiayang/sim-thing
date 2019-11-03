@@ -27,7 +27,6 @@ namespace px
 		double mass;
 		bool immovable;
 		lx::mat3 _bodyInertiaTensor;
-		lx::mat3 _inverseBodyInertiaTensor;
 
 		// state
 		lx::vec3 _pos;
@@ -68,6 +67,7 @@ namespace px
 
 
 		void addRelForceAt(const lx::vec3& pos, const lx::vec3& force);
+		void addForceAt(const lx::vec3& pos, const lx::vec3& force);
 		void addRelTorque(const lx::vec3& torque);
 
 		void addForce(const lx::vec3& force);
@@ -123,8 +123,6 @@ namespace px
 	{
 		void Symplectic4(RigidBody& body, const World& world, double dt);
 		void Symplectic3(RigidBody& body, const World& world, double dt);
-		void Verlet2(RigidBody& body, const World& world, double dt);
-		void Euler1(RigidBody& body, const World& world, double dt);
 	}
 
 }

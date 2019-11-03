@@ -5,6 +5,10 @@
 #include "px.h"
 #include "tinyformat.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 namespace px {
 namespace integrators
 {
@@ -12,27 +16,27 @@ namespace integrators
 	{
 		for(int i = 0; i < steps; i++)
 		{
-			lx::vec3 force, torque;
-			std::tie(force, torque) = calculateForceAndTorque(body, world, dt);
+			auto [ force, torque ] = calculateForceAndTorque(body, world, dt);
 
-			body._linearMtm += force * c[i] * dt;
+			body._pos += body._vel * c[i] * dt;
+			body._linearMtm += force * d[i] * dt;
 			body._vel = body._linearMtm / body.mass;
-			body._pos += body._vel * d[i] * dt;
-
 
 			// transform the body-space inertia tensor matrix into a world-space one
-			auto rotmat = body.rotation().toRotationMatrix();
-			auto invtensor = rotmat * (body._bodyInertiaTensor * body.mass).inversed() * rotmat.transposed();
+			auto rotmat = body._rot.normalised().toRotationMatrix();
 
-			body._angularMtm += torque * c[i] * dt;
-			body._angVel = body._inputOmega + (invtensor * body._angularMtm);
+			auto iibody = (body._bodyInertiaTensor * body.mass).inversed();
+			auto tensor = rotmat * iibody * rotmat.transposed();
 
-			lx::quat qdot = 0.5 * body._rot * lx::quat(0, body._angVel) * d[i] * dt;
-			body._rot += qdot;
+			body._rot += body._rot * lx::quat(0, body._angVel) * 0.5 * c[i] * dt;
 			body._rot = body._rot.normalised();
+
+			body._angularMtm += torque * d[i] * dt;
+			body._angVel = body._inputOmega + (tensor * body._angularMtm);
+
+			// tfm::printfln("τ = %s, L = %s, ω = %s", torque, body._angularMtm, body._angVel);
 		}
 	}
-
 
 
 
@@ -71,21 +75,6 @@ namespace integrators
 		};
 
 		_doSymplectic(c, d, 3, body, world, dt);
-	}
-
-
-	void Verlet2(RigidBody& body, const World& world, double dt)
-	{
-		body._pos += body._vel * 0.5 * dt;
-		body._linearMtm += calculateForceAndTorque(body, world, dt).first * dt;
-		body._pos += body._vel * 0.5 * dt;
-	}
-
-
-	void Euler1(RigidBody& body, const World& world, double dt)
-	{
-		body._linearMtm += calculateForceAndTorque(body, world, dt).first * dt;
-		body._pos += body._vel * dt;
 	}
 }
 }

@@ -34,8 +34,8 @@ FRAMEWORKS		:= -framework GLUT -framework OpenGL -framework CoreVideo -framework
 
 SANITISE		:=
 
-CXXFLAGS		+= -std=c++17 -O0 -g -c -Wall -frtti -fexceptions -fno-omit-frame-pointer -Wno-old-style-cast
-CFLAGS			+= -std=c11 -O0 -g -c -Wall -fno-omit-frame-pointer -Wno-overlength-strings
+CXXFLAGS		+= -std=c++17 -O3 -g -c -Wall -frtti -fexceptions -fno-omit-frame-pointer -Wno-old-style-cast
+CFLAGS			+= -std=c11 -O3 -g -c -Wall -fno-omit-frame-pointer -Wno-overlength-strings
 
 LDFLAGS			+= $(SANITISE) -lsdl2 -lglbinding
 
