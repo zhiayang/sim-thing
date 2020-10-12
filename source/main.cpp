@@ -210,8 +210,6 @@ int main(int argc, char** argv)
 
 	struct pid_controller
 	{
-		lx::vec3 set_pos;
-
 		double prev_rot_error = 0;
 		double accum_rot_error = 0;
 
@@ -240,12 +238,34 @@ int main(int argc, char** argv)
 		const double dep_Ki = 0.0000;
 		const double dep_Kd = 4.0000;
 
+		lx::vec3 set_pos;
+		lx::vec3 set_vel;
+
+		lx::vec3 prev_vel_error;
+		lx::vec3 accum_vel_error;
+		const double vel_Kp = 0.1000;
+		const double vel_Ki = 0.0000;
+		const double vel_Kd = 0.4000;
+
+		double start_time = 0;
+		double cur_time = 0;
+		double end_time = 0;
+
+		const double target_vel = 0.25;
+		void set(const px::RigidBody& rb, const lx::vec3& pos)
+		{
+			auto dist = (pos - rb.position()).magnitude();
+			end_time = dist / target_vel;
+		}
+
 		auto update(const px::RigidBody& rb, double dt) -> decltype(thruster_control)
 		{
+			cur_time += dt;
+
 			// current algo is to ensure rotation is good before we start moving.
 			decltype(thruster_control) ret;
 
-			auto makepid = [&dt](double e, double p_e, double& a_e, double kp, double ki, double kd) -> double {
+			auto makepid = [&dt](auto e, auto p_e, auto& a_e, double kp, double ki, double kd) -> auto {
 				auto d_error = e - p_e;
 
 				auto p = (kp * e);
@@ -258,6 +278,8 @@ int main(int argc, char** argv)
 			// TODO: superposition of thruster value: scale everything by the max value
 
 			// linear control
+
+			#if 0
 			{
 				// ok we can start to move now.
 				auto error = set_pos.xz().magnitude() - rb.position().xz().magnitude();
@@ -282,6 +304,16 @@ int main(int argc, char** argv)
 
 				prev_lin_error = error;
 			}
+			#else
+			{
+				// wtf? how does this work
+
+				auto cur_vel = rb.velocity();
+
+				auto error = set_vel - cur_vel;
+				makepid(error, prev_vel_error, accum_vel_error, vel_Kp, vel_Ki, vel_Kd);
+			}
+			#endif
 
 
 			// yaw control
